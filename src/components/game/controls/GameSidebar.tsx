@@ -47,8 +47,25 @@ interface GameStatsData {
   winRate?: number;
 }
 
+// Add this interface to define the Hand structure
+interface Hand {
+  cards: string[];
+  value?: number;
+  isSoft?: boolean;
+  status?: string;
+}
+
+// Update the ExtendedGameStore interface
+interface ExtendedGameStore extends GameStore {
+  entities?: {
+    hands?: Record<string, Hand>;
+  };
+  gamePhase?: string;
+}
+
+// Update the GameSidebarProps interface
 interface GameSidebarProps {
-  gameStore: GameStore;
+  gameStore: ExtendedGameStore;
   enhancedSettings: EnhancedSettingsStore;
   analytics: {
     gameStats?: GameStatsData;
@@ -67,9 +84,18 @@ export const GameSidebar: React.FC<GameSidebarProps> = ({
 }) => {
   const [isTableRotated, setIsTableRotated] = React.useState(false);
 
-  // Use the type guard instead of unsafe assertion
-  const gameState = gameStore.gameState;
+  // Use the type guard with a fallback for missing gameState
+  const gameState = gameStore.gameState || {};
   const extendedGameState = hasExtendedProperties(gameState) ? gameState : undefined;
+
+  // Add console log for debugging
+  React.useEffect(() => {
+    console.log('GameSidebar mounted with gameStore:', {
+      hasGameState: !!gameStore.gameState,
+      hasEntities: !!gameStore.entities,
+      gamePhase: gameStore.gamePhase
+    });
+  }, [gameStore]);
 
   // Helper functions to extract nested ternary operations
   const getCountTextColor = (count: number | undefined): string => {
@@ -101,8 +127,10 @@ export const GameSidebar: React.FC<GameSidebarProps> = ({
       {/* Game message */}
       <MessageDisplay message={gameStore.lastAction ?? ''} />
 
-      {/* Auto Strategy component */}
-      <AutoStrategyPlayer className="p-4 border rounded-lg bg-black/30 backdrop-blur-sm border-slate-700" />
+      {/* Auto Strategy component - only render when game is fully initialized */}
+      {gameStore?.entities?.hands && (
+        <AutoStrategyPlayer className="p-4 border rounded-lg bg-black/30 backdrop-blur-sm border-slate-700" />
+      )}
 
       {/* Probability display */}
       {enhancedSettings.showProbabilities && gameStore.gameState?.currentPhase !== 'betting' && (

@@ -41,6 +41,16 @@ const BET_TYPE_DESCRIPTIONS: Record<string, string> = {
   'overUnder13': 'Bet on whether your first two cards total over or under 13'
 };
 
+// Local mapping for bet types
+const BET_TYPE_MAP: Record<string, string> = {
+  'insurance': 'insurance',
+  'perfectPairs': 'perfect-pairs',
+  '21+3': 'twenty-one-plus-three',
+  'luckyLadies': 'lucky-lucky',
+  'royalMatch': 'royal-match',
+  'overUnder13': 'over-under-13'
+};
+
 export const SideBetsPanel: React.FC<SideBetsPanelProps> = ({
   className = '',
   playerChips,
@@ -60,7 +70,7 @@ export const SideBetsPanel: React.FC<SideBetsPanelProps> = ({
 
     // Set initial bet amount to minimum for this bet type
     const betConfig = sideBetsStore.availableSideBets.find(
-      b => b.name === sideBetsStore._betTypeMap[betType] || betType
+      b => b.name === BET_TYPE_MAP[betType] || betType
     );
 
     if (betConfig) {
@@ -94,14 +104,14 @@ export const SideBetsPanel: React.FC<SideBetsPanelProps> = ({
 
   // Get payouts from store for a bet type
   const getPayoutsForBetType = (betType: string) => {
-    const actualBetType = sideBetsStore._betTypeMap[betType] || betType;
+    const actualBetType = BET_TYPE_MAP[betType] || betType;
     const betConfig = sideBetsStore.availableSideBets.find(b => b.name === actualBetType);
     return betConfig?.payouts || {};
   };
 
   // Get min/max bet limits for a bet type
   const getBetLimitsForType = (betType: string) => {
-    const actualBetType = sideBetsStore._betTypeMap[betType] || betType;
+    const actualBetType = BET_TYPE_MAP[betType] || betType;
     const betConfig = sideBetsStore.availableSideBets.find(b => b.name === actualBetType);
     return {
       min: betConfig?.minBet ?? 5,

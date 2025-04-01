@@ -5,6 +5,10 @@ import { cn } from '@/lib/utils/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import ActionButton, { GameAction } from './ActionButton';
 
+// Import types to replace 'any'
+import { CardData } from '../hand/Hand';
+import { ChipValue } from '../../betting/Chip';
+
 export interface GameActionState {
     hit: boolean;
     stand: boolean;
@@ -29,6 +33,15 @@ export interface ActionPanelProps {
     animateEntry?: boolean;
     player?: string;
     handId?: string;
+    activeHandData?: {
+        id: string;
+        cards: CardData[];
+        bet: number;
+        betChips: Array<{ value: ChipValue; count: number }>;
+        isActive?: boolean;
+        result?: 'win' | 'lose' | 'push' | 'blackjack';
+        insurance?: number;
+    };
 }
 
 const ActionPanel = ({
@@ -43,6 +56,7 @@ const ActionPanel = ({
     animateEntry = true,
     player,
     handId,
+    activeHandData,
 }: ActionPanelProps) => {
     // Handle keyboard shortcuts
     useEffect(() => {
@@ -54,6 +68,11 @@ const ActionPanel = ({
                 document.activeElement?.tagName === 'INPUT' ||
                 document.activeElement?.tagName === 'TEXTAREA'
             ) {
+                return;
+            }
+
+            // If the active hand has a result (game over), only allow deal/rebet actions
+            if (activeHandData?.result && !(availableActions.deal || availableActions.rebet)) {
                 return;
             }
 
@@ -93,7 +112,7 @@ const ActionPanel = ({
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [availableActions, recommendedAction, onAction, disabled]);
+    }, [availableActions, recommendedAction, onAction, disabled, activeHandData]);
 
     // Animation variants for action panel
     const panelVariants = {
@@ -164,6 +183,17 @@ const ActionPanel = ({
 
     // Get action variant based on action type
     const getActionVariant = (action: GameAction) => {
+        // If we have a blackjack result and it's an even-money action, highlight it
+        if (action === 'even-money' && activeHandData?.result === 'blackjack') {
+            return 'success';
+        }
+
+        // If a hand has a bet and it's a double action, make it more prominent
+        if (action === 'double' && activeHandData?.bet && activeHandData.bet > 0) {
+            return 'success';
+        }
+
+        // Default action styling
         switch (action) {
             case 'stand': return 'primary';
             case 'hit': return 'secondary';
@@ -210,7 +240,7 @@ const ActionPanel = ({
     return (
         <AnimatePresence mode="wait">
             <motion.div
-                key={`action-panel-${player}-${handId}`}
+                key={`action-panel-${player}-${handId}-${activeHandData?.bet}-${activeHandData?.result}`}
                 className={cn(
                     'flex justify-center gap-2 p-2 rounded-lg bg-black/30 backdrop-blur-sm',
                     vertical ? 'flex-col' : 'flex-row',

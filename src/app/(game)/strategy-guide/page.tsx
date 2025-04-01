@@ -230,7 +230,7 @@ export default function StrategyGuidePage() {
 
 													<div className="relative h-[300px] rounded-lg overflow-hidden group">
 														<Image
-															src="/images/ai-strategy.webp"
+															src="/images/premium-experience.webp"
 															alt="Basic Strategy Chart"
 															fill
 															className="object-cover transition-transform duration-300 group-hover:scale-105"

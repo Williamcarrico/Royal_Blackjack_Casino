@@ -72,9 +72,21 @@ const BettingControls: React.FC<BettingControlsProps> = ({
 
     // Handle chip selection
     const handleChipSelect = (value: ChipValue) => {
-        if (!canSelectChip(value)) return;
+        console.log('Chip selection attempt:', { value, canSelect: canSelectChip(value), disabled, balance, maxBet });
+
+        if (!canSelectChip(value)) {
+            console.log('Cannot select chip:', {
+                isDisabled: disabled,
+                isInDisabledList: disabledChips.includes(value),
+                isNotAvailable: !availableChips.includes(value),
+                isGreaterThanBalance: value > balance,
+                wouldExceedMaxBet: pendingBet + value > maxBet
+            });
+            return;
+        }
 
         setSelectedChip(value);
+        console.log('Chip selected:', value);
 
         if (autoConfirm) {
             addChipToBet(value);
@@ -83,7 +95,12 @@ const BettingControls: React.FC<BettingControlsProps> = ({
 
     // Add selected chip to bet
     const addChipToBet = (value: ChipValue) => {
-        if (!isChipAvailable(value)) return;
+        console.log('Adding chip to bet:', { value, pendingBet, newBet: pendingBet + value });
+
+        if (!isChipAvailable(value)) {
+            console.log('Chip not available for bet');
+            return;
+        }
 
         const newBet = pendingBet + value;
         setPendingBet(newBet);
@@ -96,6 +113,7 @@ const BettingControls: React.FC<BettingControlsProps> = ({
         });
 
         if (autoConfirm) {
+            console.log('Auto confirming bet:', newBet);
             onPlaceBet?.(newBet);
         }
     };

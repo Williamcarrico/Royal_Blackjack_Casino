@@ -97,7 +97,7 @@ const BlackjackTable = ({
     const currentPlayer = players?.find(player => player.id === currentPlayerId);
 
     // Find active hand of current player
-    // const activeHand = currentPlayer?.hands.find(hand => hand.id === activeHandId);
+    const activeHand = currentPlayer?.hands.find(hand => hand.id === activeHandId);
 
     // Handle action callback
     const handleAction = (action: GameAction) => {
@@ -234,6 +234,7 @@ const BlackjackTable = ({
                                 player={currentPlayerId}
                                 handId={activeHandId}
                                 animateEntry={true}
+                                activeHandData={activeHand}
                             />
                         </motion.div>
                     </AnimatePresence>

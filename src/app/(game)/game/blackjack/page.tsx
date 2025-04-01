@@ -79,6 +79,16 @@ interface ExtendedGameStore {
     dealtCards: string[];
     shoe: string[];
     showInsurance: boolean;
+    gameState?: {
+        currentPhase: string;
+        count: {
+            running: number;
+            true: number;
+        };
+        deck: {
+            remainingCards: number;
+        };
+    };
 
     // Methods
     initializeGame: () => void;
@@ -205,6 +215,7 @@ const BlackjackPage = () => {
     const [tutorialMode, setTutorialMode] = useState(false);
     const [statusMessage, setStatusMessage] = useState('');
     const [messageType, setMessageType] = useState<'info' | 'success' | 'warning' | 'error'>('info');
+    const [welcomeShown, setWelcomeShown] = useState(false);
 
     // Player spots state - used to track and update player positions
     const [playerSpots, setPlayerSpots] = useState<PlayerSpot[]>([
@@ -232,11 +243,14 @@ const BlackjackPage = () => {
                 gameStore.initializeGame();
             }
 
-            // Show welcome toast
-            toast.success('Welcome to Royal Edge Casino', {
-                description: 'Place your bets to begin playing!',
-                duration: 5000,
-            });
+            // Show welcome toast only once
+            if (!welcomeShown) {
+                toast.success('Welcome to Royal Edge Casino', {
+                    description: 'Place your bets to begin playing!',
+                    duration: 5000,
+                });
+                setWelcomeShown(true);
+            }
 
             // Display intro animation
             setIsIntroShown(true);
@@ -262,7 +276,7 @@ const BlackjackPage = () => {
                 sound.currentTime = 0;
             });
         };
-    }, [analytics, gameStore]);
+    }, [gameStore.isInitialized, analytics.sessionActive, welcomeShown, analytics, gameStore]);
 
     // Update status message based on game state
     useEffect(() => {
@@ -414,8 +428,11 @@ const BlackjackPage = () => {
 
     // Game action handlers
     const handlePlaceBet = useCallback((playerId: number, amount: number) => {
+        console.log('handlePlaceBet called with:', { playerId, amount, phase: gameStore.gamePhase });
+
         // Place bet in the game store
         gameStore.placeBet(amount);
+        console.log('Bet placed in gameStore, new chips:', gameStore.chips);
 
         // Record bet in analytics store
         analytics.recordBet({
@@ -525,8 +542,11 @@ const BlackjackPage = () => {
     // }, [gameStore]);
 
     const handleBetConfirm = useCallback((amount: number) => {
+        console.log('handleBetConfirm called with:', { amount, phase: gameStore.gamePhase });
+
         // Place the bet
         gameStore.placeBet(amount);
+        console.log('Bet confirmed in gameStore, new bet amount:', gameStore.bet);
 
         // Record bet in analytics
         analytics.recordBet({
@@ -968,6 +988,33 @@ const BlackjackPage = () => {
                                     onDealCards={handleDealCards}
                                 />
 
+                                {/* Game controls - positioned below the table */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.4, duration: 0.8 }}
+                                    className="w-full py-4 mt-4"
+                                >
+                                    <GameControls
+                                        gamePhase={convertGamePhase(gameStore.gamePhase) as GamePhaseType}
+                                        isPlaying={isGamePlaying}
+                                        isMuted={!soundEnabled}
+                                        isTutorialMode={tutorialMode}
+                                        isCollapsed={false}
+                                        showTutorial={true}
+                                        showSettings={true}
+                                        showStatistics={true}
+                                        onStart={handleStartStop}
+                                        onStop={handleStartStop}
+                                        onReset={handleReset}
+                                        onNewGame={handleNewGame}
+                                        onMuteToggle={() => setSoundEnabled(!soundEnabled)}
+                                        onShowTutorial={handleToggleTutorial}
+                                        onShowSettings={() => setShowSettings(true)}
+                                        onShowStatistics={() => setActiveTab('analysis')}
+                                    />
+                                </motion.div>
+
                                 {/* Probability display when enabled */}
                                 {enhancedSettings.showProbabilities && gameStore.activePlayerHandId && (
                                     <div className="absolute w-64 bottom-4 left-4">
@@ -1008,15 +1055,35 @@ const BlackjackPage = () => {
 
                             {/* Sidebar content */}
                             <div className="flex flex-col space-y-4">
+                                {/* Always render GameSidebar with fallbacks for missing properties */}
                                 <GameSidebar
-                                    gameStore={gameStore as unknown as GameStore}
-                                    enhancedSettings={enhancedSettings as unknown as EnhancedSettingsStore}
+                                    gameStore={{
+                                        ...gameStore,
+                                        gameState: gameStore.gameState || {
+                                            currentPhase: gameStore.gamePhase,
+                                            count: {
+                                                running: gameStore.runningCount || 0,
+                                                true: gameStore.trueCount || 0
+                                            },
+                                            deck: {
+                                                remainingCards: gameStore.shoe?.length || 0
+                                            }
+                                        },
+                                        lastAction: gameStore.message || ''
+                                    } as unknown as GameStore}
+                                    enhancedSettings={{
+                                        ...enhancedSettings,
+                                        countingSystem: enhancedSettings.showCountingInfo ? 'hi-lo' : 'none'
+                                    } as unknown as EnhancedSettingsStore}
                                     analytics={{
                                         ...analytics,
                                         gameStats: {
-                                            ...analytics.gameStats,
-                                            handsPushed: analytics.gameStats.pushes,
-                                            blackjacks: analytics.gameStats.handsWon || 0 // Default to 0 if handsWon is undefined
+                                            handsPlayed: analytics.gameStats?.handsPlayed || 0,
+                                            handsWon: analytics.gameStats?.handsWon || 0,
+                                            handsLost: analytics.gameStats?.handsLost || 0,
+                                            handsPushed: analytics.gameStats?.pushes || 0,
+                                            blackjacks: analytics.gameStats?.handsWon || 0,
+                                            netProfit: analytics.gameStats?.netProfit || 0
                                         }
                                     }}
                                     setShowRulesDialog={setShowRulesDialog}
@@ -1121,35 +1188,8 @@ const BlackjackPage = () => {
                             </div>
                         </div>
 
-                        {/* Game controls */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4, duration: 0.8 }}
-                            className="fixed z-30 bottom-24 right-8"
-                        >
-                            <GameControls
-                                gamePhase={convertGamePhase(gameStore.gamePhase) as GamePhaseType}
-                                isPlaying={isGamePlaying}
-                                isMuted={!soundEnabled}
-                                isTutorialMode={tutorialMode}
-                                isCollapsed={false}
-                                showTutorial={true}
-                                showSettings={true}
-                                showStatistics={true}
-                                onStart={handleStartStop}
-                                onStop={handleStartStop}
-                                onReset={handleReset}
-                                onNewGame={handleNewGame}
-                                onMuteToggle={() => setSoundEnabled(!soundEnabled)}
-                                onShowTutorial={handleToggleTutorial}
-                                onShowSettings={() => setShowSettings(true)}
-                                onShowStatistics={() => setActiveTab('analysis')}
-                            />
-                        </motion.div>
-
                         {/* Betting controls - only shown in betting phase */}
-                        {gameStore.gamePhase === 'betting' && (
+                        {(gameStore.gamePhase === 'betting' || gameStore.gamePhase === 'waiting' || gameStore.gamePhase === 'initial') && (
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -1164,7 +1204,7 @@ const BlackjackPage = () => {
                                         currentBet={gameStore?.bet || 0}
                                         onPlaceBet={handleBetConfirm}
                                         onClearBet={handleClearBet}
-                                        disabled={gameStore.gamePhase !== 'betting'}
+                                        disabled={gameStore.gamePhase !== 'betting' && gameStore.gamePhase !== 'waiting' && gameStore.gamePhase !== 'initial'}
                                         className="p-4 border rounded-lg bg-black/70 backdrop-blur-sm border-slate-700"
                                     />
                                 </div>

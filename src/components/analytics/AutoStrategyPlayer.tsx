@@ -76,14 +76,22 @@ const AutoStrategyPlayer: React.FC<AutoStrategyPlayerProps> = ({ className = '' 
             return undefined;
         }
 
+        // Make sure entities.hands exists before using it
+        if (!gameStore.entities.hands) {
+            setRecommendedAction(null);
+            setReasoning('');
+            setIsActive(false);
+            return undefined;
+        }
+
         setIsActive(true);
 
         // Get player's active hand and dealer's up card
-        const playerHand = gameStore.activePlayerHandId && gameStore.entities?.hands
+        const playerHand = gameStore.activePlayerHandId && gameStore.entities.hands
             ? gameStore.entities.hands[gameStore.activePlayerHandId]
             : null;
 
-        const dealerHand = gameStore.dealerHandId && gameStore.entities?.hands
+        const dealerHand = gameStore.dealerHandId && gameStore.entities.hands
             ? gameStore.entities.hands[gameStore.dealerHandId]
             : null;
 
@@ -304,7 +312,7 @@ const AutoStrategyPlayer: React.FC<AutoStrategyPlayerProps> = ({ className = '' 
         setReasoning(reason);
 
         // Auto-play if enabled
-        if (autoPlayEnabled && autoPlayBasicStrategy && action) {
+        if (autoPlayEnabled && autoPlayBasicStrategy && action && gameStore.entities && gameStore.entities.hands) {
             const timeout = setTimeout(() => {
                 switch (action) {
                     case 'hit':
@@ -329,7 +337,7 @@ const AutoStrategyPlayer: React.FC<AutoStrategyPlayerProps> = ({ className = '' 
         }
 
         return undefined;
-    }, [gameStore.gamePhase, gameStore.activePlayerHandId, gameStore.dealerHandId, gameStore.entities.hands, gameStore.entities.cards, gameStore.trueCount, autoPlayEnabled, autoPlayBasicStrategy, settings.countingSystem, isGameStoreInitialized, gameStore.hit, gameStore.stand, gameStore.doubleDown, gameStore.split, gameStore.surrender, gameStore]);
+    }, [gameStore.gamePhase, gameStore.activePlayerHandId, gameStore.dealerHandId, gameStore.entities, gameStore.entities?.hands, gameStore.entities?.cards, gameStore.trueCount, autoPlayEnabled, autoPlayBasicStrategy, settings.countingSystem, isGameStoreInitialized, gameStore.hit, gameStore.stand, gameStore.doubleDown, gameStore.split, gameStore.surrender, gameStore]);
 
     // Toggle auto-play mode
     const toggleAutoPlay = () => {
