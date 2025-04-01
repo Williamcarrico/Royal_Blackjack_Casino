@@ -116,6 +116,38 @@ const shimmerVariants = {
     }
 };
 
+// Create ambient particles effect
+const Particles = () => {
+    // Generate stable IDs for particles
+    const particleIds = useRef(Array.from({ length: 30 }, () => crypto.randomUUID()));
+
+    return (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {particleIds.current.map((id) => (
+                <motion.div
+                    key={id}
+                    className="absolute w-1 h-1 rounded-full bg-amber-500/20"
+                    initial={{
+                        x: Math.random() * 100 + "%",
+                        y: -10,
+                        opacity: Math.random() * 0.5 + 0.3
+                    }}
+                    animate={{
+                        y: "120%",
+                        opacity: 0
+                    }}
+                    transition={{
+                        duration: Math.random() * 10 + 10,
+                        repeat: Infinity,
+                        delay: Math.random() * 5
+                    }}
+                    style={{ left: `${Math.random() * 100}%` }}
+                />
+            ))}
+        </div>
+    );
+};
+
 // Define tutorial steps
 const tutorialSteps = [
     {
@@ -204,33 +236,6 @@ const TutorialPage = () => {
     const handleStartGame = () => {
         router.push('/game/blackjack');
     };
-
-    // Create ambient particles effect
-    const Particles = () => (
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {Array.from({ length: 30 }).map((_, i) => (
-                <motion.div
-                    key={`particle-${i}`}
-                    className="absolute w-1 h-1 rounded-full bg-amber-500/20"
-                    initial={{
-                        x: Math.random() * 100 + "%",
-                        y: -10,
-                        opacity: Math.random() * 0.5 + 0.3
-                    }}
-                    animate={{
-                        y: "120%",
-                        opacity: 0
-                    }}
-                    transition={{
-                        duration: Math.random() * 10 + 10,
-                        repeat: Infinity,
-                        delay: Math.random() * 5
-                    }}
-                    style={{ left: `${Math.random() * 100}%` }}
-                />
-            ))}
-        </div>
-    );
 
     return (
         <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-900 via-slate-800 to-black">
@@ -351,7 +356,7 @@ const TutorialPage = () => {
                             >
                                 <div className="absolute inset-0 overflow-hidden">
                                     <Image
-                                        src="/images/cards-background.jpg"
+                                        src="/public/images/classic-blackjack.png"
                                         alt="Blackjack cards"
                                         fill
                                         className="object-cover opacity-20"
@@ -397,7 +402,7 @@ const TutorialPage = () => {
                                     >
                                         <div className="absolute transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 rotate-12">
                                             <Image
-                                                src="/images/card-ace-spades.png"
+                                                src="public/card/fronts/spades_ace.svg"
                                                 alt="Ace of Spades"
                                                 width={120}
                                                 height={170}
@@ -406,7 +411,7 @@ const TutorialPage = () => {
                                         </div>
                                         <div className="absolute transform -translate-x-1/2 translate-y-5 top-1/2 left-1/2 -rotate-15">
                                             <Image
-                                                src="/images/card-king-hearts.png"
+                                                src="public/card/fronts/hearts_king.svg"
                                                 alt="King of Hearts"
                                                 width={120}
                                                 height={170}
