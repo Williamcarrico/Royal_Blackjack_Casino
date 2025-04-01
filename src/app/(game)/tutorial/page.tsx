@@ -356,7 +356,7 @@ const TutorialPage = () => {
                             >
                                 <div className="absolute inset-0 overflow-hidden">
                                     <Image
-                                        src="/public/images/classic-blackjack.png"
+                                        src="/images/classic-blackjack.png"
                                         alt="Blackjack cards"
                                         fill
                                         className="object-cover opacity-20"
@@ -402,7 +402,7 @@ const TutorialPage = () => {
                                     >
                                         <div className="absolute transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 rotate-12">
                                             <Image
-                                                src="public/card/fronts/spades_ace.svg"
+                                                src="/card/fronts/spades_ace.svg"
                                                 alt="Ace of Spades"
                                                 width={120}
                                                 height={170}
@@ -411,7 +411,7 @@ const TutorialPage = () => {
                                         </div>
                                         <div className="absolute transform -translate-x-1/2 translate-y-5 top-1/2 left-1/2 -rotate-15">
                                             <Image
-                                                src="public/card/fronts/hearts_king.svg"
+                                                src="/card/fronts/hearts_king.svg"
                                                 alt="King of Hearts"
                                                 width={120}
                                                 height={170}
