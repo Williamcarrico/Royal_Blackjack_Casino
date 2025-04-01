@@ -552,7 +552,7 @@ const TutorialPage = () => {
                                 transition={{ duration: 0.5 }}
                             >
                                 <Image
-                                    src="/images/practice-table.jpg"
+                                    src="/images/classic-blackjack.png"
                                     alt="Practice Blackjack"
                                     width={400}
                                     height={240}
