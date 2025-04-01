@@ -289,6 +289,9 @@ const NewsletterForm = memo(() => {
 				// Simulate API call
 				await new Promise(resolve => setTimeout(resolve, 800))
 
+				// In a real implementation, we would also send a copy to the CEO
+				console.log('Newsletter signup - CEO will be notified at:', 'ceo@dmscasinogaming.com')
+
 				// Success state
 				setEmailError('')
 				setEmailSuccess(true)
@@ -649,6 +652,7 @@ export function Footer() {
 			icon: <MessageCircle size={14} />,
 			links: [
 				{ label: 'Contact Us', href: '/contact-us' },
+				{ label: 'CEO Direct Line', href: 'mailto:ceo@dmscasinogaming.com', isExternal: true },
 				{ label: 'FAQ', href: '/faq' },
 				{ label: 'Terms & Conditions', href: '/terms-of-service' },
 				{ label: 'Privacy Policy', href: '/privacy-policy' },
@@ -659,11 +663,11 @@ export function Footer() {
 
 	// Social media links with enhanced styling
 	const socialLinks: SocialLink[] = [
-		{ icon: <Twitter size={20} />, href: 'https://twitter.com', label: 'Follow us on Twitter' },
-		{ icon: <Facebook size={20} />, href: 'https://facebook.com', label: 'Follow us on Facebook' },
+		{ icon: <Twitter size={20} />, href: 'https://twitter.com/dmscasinogaming', label: 'Follow us on Twitter' },
+		{ icon: <Facebook size={20} />, href: 'https://facebook.com/dmscasinogaming', label: 'Follow us on Facebook' },
 		{
 			icon: <Instagram size={20} />,
-			href: 'https://instagram.com',
+			href: 'https://instagram.com/dmscasinogaming',
 			label: 'Follow us on Instagram',
 		},
 		{ icon: <Diamond size={20} />, href: '/vip', label: 'VIP Program' },
@@ -816,7 +820,7 @@ export function Footer() {
 							className="text-sm text-amber-800"
 							whileHover={{ color: "#d97706" }}
 						>
-							&copy; {currentYear} ROYAL BLACKJACK CASINO. All rights reserved.
+							&copy; {currentYear} DMS CASINO GAMING. All rights reserved.
 						</motion.div>
 
 						<div className="flex items-center gap-6">

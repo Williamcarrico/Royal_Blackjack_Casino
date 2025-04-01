@@ -153,9 +153,16 @@ interface TeamMember {
 	name: string
 	role: string
 	image: string
+	email?: string
 }
 
 const teamMembers: TeamMember[] = [
+	{
+		name: 'David Smith',
+		role: 'Chief Executive Officer',
+		image: 'https://randomuser.me/api/portraits/men/45.jpg',
+		email: 'ceo@dmscasinogaming.com'
+	},
 	{
 		name: 'William Carrico',
 		role: 'Lead Game Developer',
@@ -377,7 +384,7 @@ export default function AboutUs() {
 						</TabsList>
 
 						<AnimatePresence mode="wait">
-							<TabsContent value="performance" className="space-y-4">
+							<TabsContent key="performance-tab" value="performance" className="space-y-4">
 								<motion.div
 									initial={{ opacity: 0, y: 10 }}
 									animate={{ opacity: 1, y: 0 }}
@@ -406,7 +413,7 @@ export default function AboutUs() {
 								</motion.div>
 							</TabsContent>
 
-							<TabsContent value="security" className="space-y-4">
+							<TabsContent key="security-tab" value="security" className="space-y-4">
 								<motion.div
 									initial={{ opacity: 0, y: 10 }}
 									animate={{ opacity: 1, y: 0 }}
@@ -435,7 +442,7 @@ export default function AboutUs() {
 								</motion.div>
 							</TabsContent>
 
-							<TabsContent value="architecture" className="space-y-4">
+							<TabsContent key="architecture-tab" value="architecture" className="space-y-4">
 								<motion.div
 									initial={{ opacity: 0, y: 10 }}
 									animate={{ opacity: 1, y: 0 }}

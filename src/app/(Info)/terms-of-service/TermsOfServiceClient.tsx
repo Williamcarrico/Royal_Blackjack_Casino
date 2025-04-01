@@ -116,6 +116,17 @@ const sections: TermSection[] = [
 			'5.5. Branding: All trademarks and logos are protected',
 		],
 	},
+	{
+		id: 'contact-information',
+		title: '6. Contact Information',
+		content: [
+			'6.1. General Support: For general inquiries, contact support@dmscasinogaming.com',
+			'6.2. Technical Issues: For technical assistance, contact technical@dmscasinogaming.com',
+			'6.3. Executive Contact: For urgent matters requiring executive attention, contact our CEO at ceo@dmscasinogaming.com',
+			'6.4. Response Time: We aim to respond to all inquiries within 2 business days',
+			'6.5. Postal Address: DMS Casino Gaming, 123 Casino Boulevard, Suite 500, Las Vegas, NV 89109, USA',
+		],
+	},
 ]
 
 export default function TermsOfServiceClient() {
@@ -324,7 +335,7 @@ export default function TermsOfServiceClient() {
 						})}
 					</p>
 					<p className="mt-2 text-sm font-light">
-						© {lastUpdated.getFullYear()} Royal Edge Casino Blackjack. All rights reserved.
+						© {lastUpdated.getFullYear()} DMS Casino Gaming. All rights reserved.
 					</p>
 					<p className="max-w-md mx-auto mt-4 text-xs text-gray-500">
 						By using our platform, you acknowledge that you have read, understood, and agree to be

@@ -229,6 +229,7 @@ const formSchema = z.object({
 	reason: z.enum(['general', 'support', 'business', 'feedback']).default('general'),
 	priority: z.enum(['low', 'medium', 'high']).default('medium'),
 	newsletter: z.boolean().default(false),
+	copyCEO: z.boolean().default(false),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -238,7 +239,8 @@ const businessInfo = {
 	name: 'Royal Edge Casino Blackjack',
 	address: '123 Casino Ave, Gulf Breeze, FL 32561',
 	phone: '(850) 555-1234',
-	email: 'support@royaledgecasino.com',
+	email: 'support@dmscasinogaming.com',
+	ceo_email: 'ceo@dmscasinogaming.com',
 	hours: [
 		{ days: 'Monday - Thursday', time: '12:00 PM - 12:00 AM' },
 		{ days: 'Friday - Saturday', time: '10:00 AM - 2:00 AM' },
@@ -248,41 +250,47 @@ const businessInfo = {
 		{
 			name: 'Facebook',
 			icon: <Facebook className="w-5 h-5" />,
-			url: 'https://facebook.com/royaledgecasino',
+			url: 'https://facebook.com/dmscasinogaming',
 		},
 		{
 			name: 'Twitter',
 			icon: <Twitter className="w-5 h-5" />,
-			url: 'https://twitter.com/royaledgecasino',
+			url: 'https://twitter.com/dmscasinogaming',
 		},
 		{
 			name: 'Instagram',
 			icon: <Instagram className="w-5 h-5" />,
-			url: 'https://instagram.com/royaledgecasino',
+			url: 'https://instagram.com/dmscasinogaming',
 		},
 		{
 			name: 'LinkedIn',
 			icon: <Linkedin className="w-5 h-5" />,
-			url: 'https://linkedin.com/company/royaledgecasino',
+			url: 'https://linkedin.com/company/dmscasinogaming',
 		},
 	],
 	staff: [
 		{
+			name: 'David Smith',
+			position: 'CEO',
+			email: 'ceo@dmscasinogaming.com',
+			avatar: 'https://randomuser.me/api/portraits/men/45.jpg'
+		},
+		{
 			name: 'Alexis Morgan',
 			position: 'Customer Relations Manager',
-			email: 'alexis@royaledgecasino.com',
+			email: 'alexis@dmscasinogaming.com',
 			avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
 		},
 		{
 			name: 'James Wilson',
 			position: 'VIP Services Coordinator',
-			email: 'james@royaledgecasino.com',
+			email: 'james@dmscasinogaming.com',
 			avatar: 'https://randomuser.me/api/portraits/men/32.jpg'
 		},
 		{
 			name: 'Sarah Chen',
 			position: 'Technical Support Lead',
-			email: 'sarah@royaledgecasino.com',
+			email: 'sarah@dmscasinogaming.com',
 			avatar: 'https://randomuser.me/api/portraits/women/63.jpg'
 		}
 	],
@@ -481,6 +489,7 @@ export default function ContactUs() {
 			reason: 'general',
 			priority: 'medium',
 			newsletter: false,
+			copyCEO: false,
 		},
 	})
 
@@ -492,6 +501,13 @@ export default function ContactUs() {
 			// In a real application, you would send the form data to your backend
 			await new Promise(resolve => setTimeout(resolve, 1500))
 			console.log('Form submitted:', data)
+
+			// Log if a copy should be sent to the CEO
+			if (data.copyCEO) {
+				console.log('Sending a copy to the CEO:', businessInfo.ceo_email)
+				// In a real implementation, you would add the CEO's email address to the recipients list
+			}
+
 			setFormStatus('success')
 			form.reset()
 		} catch (error) {
@@ -1052,6 +1068,28 @@ export default function ContactUs() {
 																	</FormItem>
 																)}
 															/>
+
+															<FormField
+																control={form.control}
+																name="copyCEO"
+																render={({ field }) => (
+																	<FormItem className="flex flex-row items-start mt-4 space-x-3 space-y-0">
+																		<FormControl>
+																			<Switch
+																				checked={field.value}
+																				onCheckedChange={field.onChange}
+																				className="data-[state=checked]:bg-primary"
+																			/>
+																		</FormControl>
+																		<div className="space-y-1 leading-none">
+																			<FormLabel>Send Copy to CEO</FormLabel>
+																			<p className="text-xs text-muted-foreground">
+																				Also send a copy to our CEO ({businessInfo.ceo_email})
+																			</p>
+																		</div>
+																	</FormItem>
+																)}
+															/>
 														</div>
 
 														<Button
@@ -1155,6 +1193,9 @@ export default function ContactUs() {
 														<div>
 															<h3 className="font-medium">Email</h3>
 															<p className="text-muted-foreground">{businessInfo.email}</p>
+															<p className="mt-1 text-xs text-muted-foreground">
+																CEO: <a href={`mailto:${businessInfo.ceo_email}`} className="text-primary hover:underline">{businessInfo.ceo_email}</a>
+															</p>
 														</div>
 													</div>
 												</div>

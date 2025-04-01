@@ -251,6 +251,23 @@ export const faqs: FAQ[] = [
 		popularity: 70,
 		tags: ['house-edge', 'advantage', 'odds', 'strategy', 'basic-strategy'],
 	},
+	{
+		id: 'faq-36',
+		question: 'How can I contact the CEO directly?',
+		answer:
+			'You can contact our CEO directly via email at ceo@dmscasinogaming.com. For urgent matters or specific concerns that require executive attention, this direct line of communication ensures your feedback reaches the top leadership.',
+		category: 'account',
+		details: [
+			'Email the CEO at ceo@dmscasinogaming.com',
+			'Include your account details for reference',
+			'Specify the nature of your inquiry',
+			'Allow 24-48 hours for a response',
+			'For general inquiries, our regular support team is still the fastest option',
+		],
+		popularity: 50,
+		tags: ['contact', 'CEO', 'executive', 'feedback', 'support'],
+		relatedFAQs: ['faq-5'],
+	},
 ]
 
 // Helper function to sort FAQs by popularity
