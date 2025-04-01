@@ -175,9 +175,16 @@ const useGameStore = create<GameStore>((set, get) => ({
     },
 
     initializeGame: (options = DEFAULT_GAME_OPTIONS) => {
-        set({ isLoading: true });
+        set(state => {
+            // If a game is already initialized with the same options, don't recreate
+            if (state.gameState?.id &&
+                JSON.stringify(state.gameState.options) === JSON.stringify(options)) {
+                return {
+                    lastAction: 'Game already initialized with same options',
+                    isLoading: false
+                };
+            }
 
-        try {
             const gameId = uuidv4();
 
             // Create initial empty shoe (will be populated later)
@@ -224,19 +231,13 @@ const useGameStore = create<GameStore>((set, get) => ({
                 deckPenetration: options.penetration
             };
 
-            set({
+            return {
                 gameState,
                 isLoading: false,
                 error: null,
                 lastAction: 'Game initialized'
-            });
-
-        } catch (error) {
-            set({
-                isLoading: false,
-                error: error instanceof Error ? error.message : 'Failed to initialize game'
-            });
-        }
+            };
+        });
     },
 
     placeBet: (playerId, amount) => {

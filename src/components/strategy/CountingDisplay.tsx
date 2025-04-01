@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils/utils';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -134,6 +134,7 @@ const CountingDisplay = ({
         { time: Date.now(), count: 0, trueCount: 0 }
     ]);
     const [manualMode, setManualMode] = useState<boolean>(!autoCount);
+    const lastProcessedCardIndex = useRef<number>(-1);
 
     // Calculate remaining decks approximately
     const cardsPerDeck = 52;
@@ -155,18 +156,25 @@ const CountingDisplay = ({
         if (playedCards.length === 0) {
             setRunningCount(0);
             setCountHistory([{ time: Date.now(), count: 0, trueCount: 0 }]);
+            lastProcessedCardIndex.current = -1;
             return;
         }
 
-        // Only count the most recently played card
-        if (playedCards.length > 0) {
-            const lastCard = playedCards[playedCards.length - 1]!;
-            const cardValue = countSystems[countingSystem][lastCard.rank as keyof CardCountValues] || 0;
+        // Only process new cards that haven't been counted yet
+        if (playedCards.length > 0 && lastProcessedCardIndex.current < playedCards.length - 1) {
+            // Get the new cards since last update
+            const newCards = playedCards.slice(lastProcessedCardIndex.current + 1);
 
             setRunningCount(prev => {
-                const newCount = prev + cardValue;
+                let newCount = prev;
 
-                // Update history
+                // Process each new card
+                newCards.forEach(card => {
+                    const cardValue = countSystems[countingSystem][card.rank as keyof CardCountValues] || 0;
+                    newCount += cardValue;
+                });
+
+                // Update history once after processing all new cards
                 const newTrueCount = remainingDecks > 0 ? newCount / remainingDecks : newCount;
                 setCountHistory(prev => [...prev, {
                     time: Date.now(),
@@ -174,13 +182,16 @@ const CountingDisplay = ({
                     trueCount: newTrueCount
                 }]);
 
-                // Notify parent
+                // Notify parent only once
                 onRunningCountChange?.(newCount, newTrueCount);
 
                 return newCount;
             });
+
+            // Update the last processed card index
+            lastProcessedCardIndex.current = playedCards.length - 1;
         }
-    }, [playedCards, countingSystem, autoCount, manualMode, onRunningCountChange, remainingDecks]);
+    }, [playedCards, countingSystem, autoCount, manualMode, onRunningCountChange]);
 
     // Reset count
     const handleReset = () => {

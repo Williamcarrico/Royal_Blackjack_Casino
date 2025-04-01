@@ -175,7 +175,7 @@ export default function LandingPage() {
               <Button
                 size="lg"
                 className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-black font-semibold px-8 py-6 text-lg rounded-md shadow-[0_0_15px_rgba(255,215,0,0.5)]"
-                onClick={() => router.push('/game')}
+                onClick={() => router.push('/game/blackjack')}
               >
                 Play Now
               </Button>
@@ -183,7 +183,7 @@ export default function LandingPage() {
                 variant="outline"
                 size="lg"
                 className="px-8 py-6 text-lg border-2 rounded-md border-amber-500/50 text-amber-400 hover:bg-amber-950/30"
-                onClick={() => router.push('/auth')}
+                onClick={() => router.push('/auth/sign-up')}
               >
                 Sign Up
               </Button>

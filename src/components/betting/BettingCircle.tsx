@@ -96,11 +96,11 @@ const BettingCircle = ({
     };
 
     return (
-        <div className={cn('relative flex flex-col items-center', className)}>
+        <div className={cn('relative flex flex-col items-center z-20', className)}>
             {/* Betting circle */}
             <motion.div
                 className={cn(
-                    'relative w-24 h-24 rounded-full flex items-center justify-center',
+                    'relative w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center',
                     'transition-all duration-200',
                     circleStyle,
                     !disabled && betAmount > 0 && allowRemoval && 'cursor-pointer',
@@ -195,7 +195,7 @@ const BettingCircle = ({
 
             {/* Bet amount display */}
             {betAmount > 0 && (
-                <div className="mt-2 font-medium text-white">
+                <div className="mt-2 text-sm font-medium text-white py-1 px-2 rounded bg-black/40">
                     ${betAmount.toLocaleString()}
                 </div>
             )}

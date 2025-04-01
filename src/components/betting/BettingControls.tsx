@@ -172,8 +172,8 @@ const BettingControls: React.FC<BettingControlsProps> = ({
 
     // Generate the appropriate classes for the container
     const containerClasses = cn(
-        'flex items-center justify-center gap-2 p-2 rounded-lg',
-        vertical ? 'flex-col' : 'flex-row',
+        'flex items-center justify-center gap-3 p-3 rounded-lg',
+        vertical ? 'flex-col' : 'flex-row flex-wrap',
         compact ? 'scale-90' : '',
         className
     );
@@ -195,7 +195,7 @@ const BettingControls: React.FC<BettingControlsProps> = ({
     };
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 w-full max-w-md mx-auto">
             {/* Chip selection */}
             <div className={containerClasses}>
                 <AnimatePresence mode="wait">
@@ -223,7 +223,7 @@ const BettingControls: React.FC<BettingControlsProps> = ({
 
             {/* Visual chip stack indicator for pending bet */}
             {pendingBet > 0 && lastUsedChips.length > 0 && (
-                <div className="flex justify-center mt-1 -mb-2">
+                <div className="flex justify-center mt-1 mb-2">
                     {lastUsedChips.map((chip, index) => (
                         <div
                             key={`used-chip-${chip}-${index}`}
@@ -246,7 +246,7 @@ const BettingControls: React.FC<BettingControlsProps> = ({
             {/* Betting actions */}
             <div className={cn(
                 'flex items-center gap-2',
-                vertical ? 'flex-col w-full' : 'flex-row justify-center'
+                vertical ? 'flex-col w-full' : 'flex-row flex-wrap justify-center'
             )}>
                 <Button
                     variant="outline"
@@ -254,7 +254,7 @@ const BettingControls: React.FC<BettingControlsProps> = ({
                     disabled={pendingBet === 0 || disabled}
                     onClick={handleClearBet}
                     className={cn(
-                        'min-w-20',
+                        'min-w-[4.5rem]',
                         pendingBet === 0 && 'opacity-50'
                     )}
                 >
@@ -268,7 +268,7 @@ const BettingControls: React.FC<BettingControlsProps> = ({
                             size={compact ? 'sm' : 'default'}
                             disabled={!canDouble}
                             onClick={handleDoubleBet}
-                            className="min-w-20"
+                            className="min-w-[4.5rem]"
                         >
                             Double
                         </Button>
@@ -278,7 +278,7 @@ const BettingControls: React.FC<BettingControlsProps> = ({
                             size={compact ? 'sm' : 'default'}
                             disabled={balance === 0 || disabled || balance < minBet}
                             onClick={handleMaxBet}
-                            className="min-w-20"
+                            className="min-w-[4.5rem]"
                         >
                             Max Bet
                         </Button>
@@ -290,7 +290,7 @@ const BettingControls: React.FC<BettingControlsProps> = ({
                                 disabled={pendingBet < minBet || disabled}
                                 onClick={handleConfirmBet}
                                 className={cn(
-                                    'bg-primary hover:bg-primary/90 text-primary-foreground min-w-20',
+                                    'bg-primary hover:bg-primary/90 text-primary-foreground min-w-[4.5rem]',
                                     pendingBet < minBet && 'opacity-50'
                                 )}
                                 style={pendingBet >= minBet ? {
@@ -307,7 +307,7 @@ const BettingControls: React.FC<BettingControlsProps> = ({
             </div>
 
             {/* Bet limits indicator */}
-            <div className="text-xs text-center text-muted-foreground">
+            <div className="text-xs text-center text-muted-foreground bg-black/30 py-1 px-2 rounded">
                 <span>Min: ${minBet}</span>
                 <span className="mx-2">|</span>
                 <span>Max: ${maxBet}</span>
