@@ -1,0 +1,352 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1200 600">
+  <!-- Definitions for reusable elements -->
+  <defs>
+    <!-- Luxury Vegas-inspired Gradients -->
+    <linearGradient id="backgroundGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f0b1a"/>
+      <stop offset="100%" stop-color="#1f1424"/>
+    </linearGradient>
+    
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9333ea"/>
+      <stop offset="100%" stop-color="#7e22ce"/>
+    </linearGradient>
+    
+    <linearGradient id="cardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+    
+    <linearGradient id="luxuryGoldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fcd34d"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    
+    <linearGradient id="deepRedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b91c1c"/>
+      <stop offset="100%" stop-color="#7f1d1d"/>
+    </linearGradient>
+    
+    <linearGradient id="blueChipGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e40af"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </linearGradient>
+    
+    <linearGradient id="greenChipGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#15803d"/>
+      <stop offset="100%" stop-color="#166534"/>
+    </linearGradient>
+    
+    <linearGradient id="blackChipGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    
+    <linearGradient id="purpleChipGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7e22ce"/>
+      <stop offset="100%" stop-color="#581c87"/>
+    </linearGradient>
+    
+    <linearGradient id="glassEffect" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.05"/>
+    </linearGradient>
+    
+    <!-- Vegas-inspired Texture Patterns -->
+    <pattern id="luxuryPattern" width="60" height="60" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="60" height="60" fill="#1f1424"/>
+      <path d="M30,0 L30,60 M0,30 L60,30" stroke="#2d1b36" stroke-width="0.5"/>
+      <circle cx="30" cy="30" r="15" fill="none" stroke="#2d1b36" stroke-width="0.5"/>
+      <path d="M10,10 L50,50 M50,10 L10,50" stroke="#2d1b36" stroke-width="0.5"/>
+    </pattern>
+    
+    <!-- Card and Chip Components -->
+    <g id="luxuryCard">
+      <rect width="140" height="200" rx="12" ry="12" fill="url(#cardGradient)" filter="drop-shadow(0px 8px 12px rgba(0, 0, 0, 0.3))"/>
+      <rect x="10" y="10" width="120" height="180" rx="8" ry="8" fill="none" stroke="#e5e7eb" stroke-width="2"/>
+      <rect x="15" y="15" width="110" height="170" rx="6" ry="6" fill="none" stroke="#e5e7eb" stroke-width="0.5"/>
+      <!-- Add subtle card texture -->
+      <path d="M20,20 L120,180 M120,20 L20,180" stroke="#f8fafc" stroke-width="0.2" opacity="0.1"/>
+    </g>
+    
+    <g id="luxuryCardBack">
+      <rect width="140" height="200" rx="12" ry="12" fill="#252830" filter="drop-shadow(0px 8px 12px rgba(0, 0, 0, 0.3))"/>
+      <rect x="10" y="10" width="120" height="180" rx="8" ry="8" fill="none" stroke="url(#luxuryGoldGradient)" stroke-width="2"/>
+      <rect x="15" y="15" width="110" height="170" rx="6" ry="6" fill="none" stroke="url(#luxuryGoldGradient)" stroke-width="0.5"/>
+      <path d="M40,40 L100,40 L100,160 L40,160 Z" fill="none" stroke="url(#luxuryGoldGradient)" stroke-width="1"/>
+      <path d="M70,45 L70,155 M45,100 L95,100" stroke="url(#luxuryGoldGradient)" stroke-width="1"/>
+      <circle cx="70" cy="100" r="30" fill="none" stroke="url(#luxuryGoldGradient)" stroke-width="1"/>
+      <!-- Ornate pattern with enhanced visibility -->
+      <path d="M70,70 C75,75 80,75 85,80 C90,85 90,90 95,95 C90,100 90,105 85,110 C80,115 75,115 70,120 C65,115 60,115 55,110 C50,105 50,100 45,95 C50,90 50,85 55,80 C60,75 65,75 70,70 Z" fill="none" stroke="url(#luxuryGoldGradient)" stroke-width="0.8"/>
+    </g>
+    
+    <g id="luxuryChip">
+      <circle r="35" fill="url(#blackChipGradient)" filter="drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.3))"/>
+      <circle r="33" fill="none" stroke="#a1a1aa" stroke-width="0.8"/>
+      <circle r="29" fill="none" stroke="#a1a1aa" stroke-width="0.8"/>
+      <!-- Chip edge pattern -->
+      <path d="M-29,0 A29,29 0 0,1 29,0" fill="none" stroke="#e4e4e7" stroke-width="0.8" transform="rotate(0)"/>
+      <path d="M-29,0 A29,29 0 0,1 29,0" fill="none" stroke="#e4e4e7" stroke-width="0.8" transform="rotate(30)"/>
+      <path d="M-29,0 A29,29 0 0,1 29,0" fill="none" stroke="#e4e4e7" stroke-width="0.8" transform="rotate(60)"/>
+      <path d="M-29,0 A29,29 0 0,1 29,0" fill="none" stroke="#e4e4e7" stroke-width="0.8" transform="rotate(90)"/>
+      <path d="M-29,0 A29,29 0 0,1 29,0" fill="none" stroke="#e4e4e7" stroke-width="0.8" transform="rotate(120)"/>
+      <path d="M-29,0 A29,29 0 0,1 29,0" fill="none" stroke="#e4e4e7" stroke-width="0.8" transform="rotate(150)"/>
+    </g>
+    
+    <!-- Card Suits with Luxury Styling -->
+    <g id="spadeSymbol" fill="#0f172a">
+      <path d="M0,-5 C0,-5 -10,5 -7,10 C-4,15 0,15 0,10 C0,15 4,15 7,10 C10,5 0,-5 0,-5 Z"/>
+      <path d="M0,10 L0,15" stroke="#0f172a" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    
+    <g id="heartSymbol" fill="#b91c1c">
+      <path d="M0,5 C-5,-2 -10,0 -10,5 C-10,10 -5,15 0,20 C5,15 10,10 10,5 C10,0 5,-2 0,5 Z"/>
+    </g>
+    
+    <g id="diamondSymbol" fill="#b91c1c">
+      <path d="M0,-10 L10,0 L0,10 L-10,0 Z"/>
+    </g>
+    
+    <g id="clubSymbol" fill="#0f172a">
+      <path d="M0,0 C0,-5 -5,-5 -5,-2 C-5,1 -2,3 0,3 C2,3 5,1 5,-2 C5,-5 0,-5 0,0 M0,3 L0,10" stroke="#0f172a" stroke-width="0.5" fill="#0f172a"/>
+    </g>
+    
+    <!-- Vegas-style Lighting Effects -->
+    <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    
+    <radialGradient id="spotlightGradient" cx="50%" cy="50%" r="50%" fx="40%" fy="40%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    
+    <!-- Data Visualization Elements -->
+    <linearGradient id="barGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9333ea"/>
+      <stop offset="100%" stop-color="#7e22ce"/>
+    </linearGradient>
+    
+    <linearGradient id="barGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Main Background -->
+  <rect width="1200" height="600" fill="url(#backgroundGradient)"/>
+  <rect width="1200" height="600" fill="url(#luxuryPattern)" opacity="0.08"/>
+  
+  <!-- Vegas-style Lighting Effects -->
+  <ellipse cx="600" cy="0" rx="700" ry="300" fill="url(#spotlightGradient)" opacity="0.3"/>
+  <ellipse cx="300" cy="280" rx="200" ry="150" fill="url(#accentGradient)" opacity="0.08" filter="blur(60px)"/>
+  <ellipse cx="900" cy="380" rx="200" ry="150" fill="url(#luxuryGoldGradient)" opacity="0.08" filter="blur(60px)"/>
+  <ellipse cx="600" cy="480" rx="800" ry="200" fill="#000000" opacity="0.3" filter="blur(40px)"/>
+  
+  <!-- Vegas Skyline Silhouette -->
+  <g opacity="0.15" transform="translate(0, 500)">
+    <path d="M0,0 L50,0 L50,-80 L70,-80 L70,-120 L90,-120 L90,-80 L110,-80 L110,-150 L130,-150 L130,-100 L150,-100 L150,-180 L170,-180 L170,-130 L190,-130 L190,-200 L210,-200 L210,-150 L230,-150 L230,-230 L250,-230 L250,-180 L270,-180 L270,-120 L290,-120 L290,-200 L310,-200 L310,-100 L330,-100 L330,-250 L350,-250 L350,-150 L370,-150 L370,-200 L390,-200 L390,-150 L410,-150 L410,-230 L430,-230 L430,-180 L450,-180 L450,-120 L470,-120 L470,-200 L490,-200 L490,-100 L510,-100 L510,-250 L530,-250 L530,-150 L550,-150 L550,-200 L570,-200 L570,-150 L590,-150 L590,-230 L610,-230 L610,-180 L630,-180 L630,-120 L650,-120 L650,-200 L670,-200 L670,-100 L690,-100 L690,-250 L710,-250 L710,-150 L730,-150 L730,-200 L750,-200 L750,-150 L770,-150 L770,-230 L790,-230 L790,-180 L810,-180 L810,-120 L830,-120 L830,-200 L850,-200 L850,-100 L870,-100 L870,-250 L890,-250 L890,-150 L910,-150 L910,-200 L930,-200 L930,-150 L950,-150 L950,-230 L970,-230 L970,-180 L990,-180 L990,-120 L1010,-120 L1010,-200 L1030,-200 L1030,-100 L1050,-100 L1050,-250 L1070,-250 L1070,-150 L1090,-150 L1090,-200 L1110,-200 L1110,-150 L1130,-150 L1130,-80 L1150,-80 L1150,-120 L1170,-120 L1170,-80 L1190,-80 L1190,0 L0,0 Z" fill="#000000"/>
+  </g>
+  
+  <!-- VIP Membership Display -->
+  <g transform="translate(230, 330)">
+    <rect x="-150" y="-180" width="300" height="360" rx="15" ry="15" fill="rgba(15, 11, 26, 0.8)" stroke="url(#luxuryGoldGradient)" stroke-width="1.5"/>
+    
+    <!-- VIP badge -->
+    <g transform="translate(0, -100)">
+      <circle r="70" fill="url(#blackChipGradient)" stroke="url(#luxuryGoldGradient)" stroke-width="2"/>
+      <circle r="65" fill="none" stroke="url(#luxuryGoldGradient)" stroke-width="1" opacity="0.8"/>
+      <circle r="55" fill="none" stroke="url(#luxuryGoldGradient)" stroke-width="1" opacity="0.6"/>
+      <text x="0" y="0" font-family="Georgia, serif" font-size="40" font-weight="bold" text-anchor="middle" dominant-baseline="middle" fill="url(#luxuryGoldGradient)">VIP</text>
+      <text x="0" y="25" font-family="Georgia, serif" font-size="16" font-weight="bold" text-anchor="middle" dominant-baseline="middle" fill="#f8fafc">MEMBER</text>
+    </g>
+    
+    <!-- Decorative elements -->
+    <path d="M-100,-10 L100,-10" stroke="url(#luxuryGoldGradient)" stroke-width="1.5" opacity="0.8"/>
+    <path d="M-100,10 L100,10" stroke="url(#luxuryGoldGradient)" stroke-width="1.5" opacity="0.8"/>
+    
+    <!-- Luxury Gaming Experience text with improved visibility -->
+    <g transform="translate(0, 50)">
+      <rect x="-140" y="-15" width="280" height="30" rx="3" ry="3" fill="#0f0b1a" opacity="0.5"/>
+      <text x="0" y="5" font-family="Georgia, serif" font-size="22" font-weight="bold" text-anchor="middle" fill="url(#luxuryGoldGradient)">LUXURY GAMING</text>
+    </g>
+    <g transform="translate(0, 80)">
+      <rect x="-140" y="-15" width="280" height="30" rx="3" ry="3" fill="#0f0b1a" opacity="0.5"/>
+      <text x="0" y="5" font-family="Georgia, serif" font-size="22" font-weight="bold" text-anchor="middle" fill="url(#luxuryGoldGradient)">EXPERIENCE</text>
+    </g>
+    
+    <!-- Casino elements with increased visibility -->
+    <g transform="translate(0, 140)">
+      <use xlink:href="#spadeSymbol" transform="translate(-70, 0) scale(2.5)" fill="url(#luxuryGoldGradient)"/>
+      <use xlink:href="#heartSymbol" transform="translate(-25, 0) scale(2.5)" fill="url(#deepRedGradient)"/>
+      <use xlink:href="#diamondSymbol" transform="translate(25, 0) scale(2.5)" fill="url(#deepRedGradient)"/>
+      <use xlink:href="#clubSymbol" transform="translate(70, 0) scale(2.5)" fill="url(#luxuryGoldGradient)"/>
+    </g>
+  </g>
+  
+  <!-- Luxury Card Table Surface with Felt Texture -->
+  <g transform="translate(675, 330)">
+    <ellipse cx="0" cy="0" rx="350" ry="190" fill="#0f3621" opacity="0.7"/>
+    <ellipse cx="0" cy="0" rx="345" ry="185" fill="none" stroke="url(#luxuryGoldGradient)" stroke-width="1" opacity="0.5"/>
+    
+    <!-- Felt texture pattern -->
+    <g opacity="0.1">
+      <path d="M-300,-150 L300,150 M-300,150 L300,-150" stroke="#ffffff" stroke-width="0.5"/>
+      <path d="M-300,-50 L300,50 M-300,50 L300,-50" stroke="#ffffff" stroke-width="0.5"/>
+      <path d="M-100,-150 L-100,150 M0,-150 L0,150 M100,-150 L100,150" stroke="#ffffff" stroke-width="0.5"/>
+    </g>
+    
+    <!-- Table lighting effect -->
+    <ellipse cx="0" cy="0" rx="300" ry="150" fill="url(#spotlightGradient)" opacity="0.2"/>
+  </g>
+  
+  <!-- Luxury Cards Layout -->
+  <g transform="translate(675, 310)">
+    <!-- Blackjack Hand -->
+    <g transform="translate(-90, 0) rotate(-15)">
+      <use xlink:href="#luxuryCard"/>
+      <text x="25" y="45" font-family="Georgia, serif" font-size="34" font-weight="bold">A</text>
+      <use xlink:href="#spadeSymbol" transform="translate(35, 80) scale(3)"/>
+      <text x="115" y="175" font-family="Georgia, serif" font-size="34" font-weight="bold" text-anchor="end">A</text>
+    </g>
+    
+    <g transform="translate(30, 10) rotate(-5)">
+      <use xlink:href="#luxuryCard"/>
+      <text x="25" y="45" font-family="Georgia, serif" font-size="34" font-weight="bold" fill="#b91c1c">K</text>
+      <use xlink:href="#heartSymbol" transform="translate(35, 80) scale(2.5)"/>
+      <text x="115" y="175" font-family="Georgia, serif" font-size="34" font-weight="bold" fill="#b91c1c" text-anchor="end">K</text>
+      
+      <!-- King design -->
+      <g transform="translate(70, 110)">
+        <rect x="-20" y="-30" width="40" height="60" rx="4" ry="4" fill="none" stroke="#b91c1c" stroke-width="1.5"/>
+        <path d="M-10,-20 L10,20 M10,-20 L-10,20 M-15,0 L15,0" stroke="#b91c1c" stroke-width="2"/>
+        <circle cx="0" cy="-35" r="10" fill="none" stroke="#b91c1c" stroke-width="1.5"/>
+      </g>
+    </g>
+    
+    <g transform="translate(150, 20) rotate(5)">
+      <use xlink:href="#luxuryCardBack"/>
+    </g>
+  </g>
+  
+  <!-- Luxury Chip Stacks -->
+  <g>
+    <!-- Gold Chip Stack -->
+    <g transform="translate(550, 430)">
+      <g transform="translate(0, 0)">
+        <use xlink:href="#luxuryChip" fill="url(#luxuryGoldGradient)"/>
+        <circle r="25" cx="0" cy="0" fill="url(#luxuryGoldGradient)" opacity="0.9"/>
+        <text x="0" y="5" font-family="Georgia, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#ffffff">100</text>
+      </g>
+      <g transform="translate(0, -4)">
+        <use xlink:href="#luxuryChip" fill="url(#luxuryGoldGradient)"/>
+        <circle r="25" cx="0" cy="0" fill="url(#luxuryGoldGradient)" opacity="0.9"/>
+        <text x="0" y="5" font-family="Georgia, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#ffffff">100</text>
+      </g>
+      <g transform="translate(0, -8)">
+        <use xlink:href="#luxuryChip" fill="url(#luxuryGoldGradient)"/>
+        <circle r="25" cx="0" cy="0" fill="url(#luxuryGoldGradient)" opacity="0.9"/>
+        <text x="0" y="5" font-family="Georgia, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#ffffff">100</text>
+      </g>
+    </g>
+    
+    <!-- Red Chip Stack -->
+    <g transform="translate(650, 440)">
+      <g transform="translate(0, 0)">
+        <use xlink:href="#luxuryChip" fill="url(#deepRedGradient)"/>
+        <circle r="25" cx="0" cy="0" fill="url(#deepRedGradient)" opacity="0.9"/>
+        <text x="0" y="5" font-family="Georgia, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#ffffff">25</text>
+      </g>
+      <g transform="translate(0, -4)">
+        <use xlink:href="#luxuryChip" fill="url(#deepRedGradient)"/>
+        <circle r="25" cx="0" cy="0" fill="url(#deepRedGradient)" opacity="0.9"/>
+        <text x="0" y="5" font-family="Georgia, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#ffffff">25</text>
+      </g>
+      <g transform="translate(0, -8)">
+        <use xlink:href="#luxuryChip" fill="url(#deepRedGradient)"/>
+        <circle r="25" cx="0" cy="0" fill="url(#deepRedGradient)" opacity="0.9"/>
+        <text x="0" y="5" font-family="Georgia, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#ffffff">25</text>
+      </g>
+      <g transform="translate(0, -12)">
+        <use xlink:href="#luxuryChip" fill="url(#deepRedGradient)"/>
+        <circle r="25" cx="0" cy="0" fill="url(#deepRedGradient)" opacity="0.9"/>
+        <text x="0" y="5" font-family="Georgia, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#ffffff">25</text>
+      </g>
+    </g>
+    
+    <!-- Black Chip Stack -->
+    <g transform="translate(750, 450)">
+      <g transform="translate(0, 0)">
+        <use xlink:href="#luxuryChip" fill="url(#blackChipGradient)"/>
+        <circle r="25" cx="0" cy="0" fill="url(#blackChipGradient)" opacity="0.9"/>
+        <text x="0" y="5" font-family="Georgia, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#ffffff">10</text>
+      </g>
+      <g transform="translate(0, -4)">
+        <use xlink:href="#luxuryChip" fill="url(#blackChipGradient)"/>
+        <circle r="25" cx="0" cy="0" fill="url(#blackChipGradient)" opacity="0.9"/>
+        <text x="0" y="5" font-family="Georgia, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#ffffff">10</text>
+      </g>
+      <g transform="translate(0, -8)">
+        <use xlink:href="#luxuryChip" fill="url(#blackChipGradient)"/>
+        <circle r="25" cx="0" cy="0" fill="url(#blackChipGradient)" opacity="0.9"/>
+        <text x="0" y="5" font-family="Georgia, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#ffffff">10</text>
+      </g>
+    </g>
+    
+    <!-- Blue Chip Stack -->
+    <g transform="translate(850, 445)">
+      <g transform="translate(0, 0)">
+        <use xlink:href="#luxuryChip" fill="url(#blueChipGradient)"/>
+        <circle r="25" cx="0" cy="0" fill="url(#blueChipGradient)" opacity="0.9"/>
+        <text x="0" y="5" font-family="Georgia, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#ffffff">5</text>
+      </g>
+      <g transform="translate(0, -4)">
+        <use xlink:href="#luxuryChip" fill="url(#blueChipGradient)"/>
+        <circle r="25" cx="0" cy="0" fill="url(#blueChipGradient)" opacity="0.9"/>
+        <text x="0" y="5" font-family="Georgia, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#ffffff">5</text>
+      </g>
+    </g>
+  </g>
+  
+  <!-- Main Title with Improved Spacing -->
+  <g transform="translate(600, 100)">
+    <text x="0" y="0" font-family="Georgia, serif" font-size="62" font-weight="bold" text-anchor="middle" fill="#f8fafc">HOUSE EDGE</text>
+    <text x="0" y="100" font-family="Georgia, serif" font-size="70" font-weight="bold" text-anchor="middle" fill="url(#luxuryGoldGradient)">BLACKJACK</text>
+    <path d="M-300,130 L300,130" stroke="url(#luxuryGoldGradient)" stroke-width="2" opacity="0.8"/>
+    
+    <!-- Tagline with background for better visibility -->
+    <g transform="translate(0, 165)">
+      <rect x="-250" y="-15" width="500" height="40" rx="5" ry="5" fill="#0f0b1a" opacity="0.7"/>
+      <text x="0" y="10" font-family="Georgia, serif" font-size="30" font-weight="normal" letter-spacing="3" text-anchor="middle" fill="#f8fafc" stroke="#0f0b1a" stroke-width="0.5" stroke-opacity="0.5">OPTIMIZE YOUR ADVANTAGE</text>
+    </g>
+  </g>
+  
+  <!-- Vegas-style Decorative Elements -->
+  <g opacity="0.4">
+    <circle cx="100" cy="100" r="5" fill="#ffffff"/>
+    <circle cx="300" cy="200" r="3" fill="#ffffff"/>
+    <circle cx="500" cy="150" r="4" fill="#ffffff"/>
+    <circle cx="700" cy="100" r="3" fill="#ffffff"/>
+    <circle cx="900" cy="150" r="5" fill="#ffffff"/>
+    <circle cx="1100" cy="200" r="4" fill="#ffffff"/>
+    <circle cx="200" cy="500" r="3" fill="#ffffff"/>
+    <circle cx="400" cy="450" r="4" fill="#ffffff"/>
+    <circle cx="600" cy="500" r="5" fill="#ffffff"/>
+    <circle cx="800" cy="450" r="3" fill="#ffffff"/>
+    <circle cx="1000" cy="500" r="4" fill="#ffffff"/>
+  </g>
+  
+  <!-- Vegas Light Beam Effects -->
+  <g opacity="0.08" transform="translate(400, 0) rotate(20)">
+    <path d="M0,0 L100,600" stroke="#ffffff" stroke-width="40"/>
+  </g>
+  
+  <g opacity="0.08" transform="translate(800, 0) rotate(-20)">
+    <path d="M0,0 L-100,600" stroke="#ffffff" stroke-width="40"/>
+  </g>
+  
+  <!-- Subtle Animation Effect Line -->
+  <path d="M0,580 Q300,550 600,580 Q900,610 1200,580" stroke="url(#accentGradient)" stroke-width="2" opacity="0.3"/>
+</svg>

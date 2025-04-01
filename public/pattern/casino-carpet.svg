@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+    <defs>
+        <!-- Pattern Definition -->
+        <pattern id="casinoCarpetPattern" patternUnits="userSpaceOnUse" width="300" height="300">
+            <!-- Rich color gradients for casino aesthetic -->
+            <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#1e0e33" />
+                <stop offset="100%" stop-color="#2a1142" />
+            </linearGradient>
+
+            <linearGradient id="accentGradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#8b0000" />
+                <stop offset="50%" stop-color="#c71585" />
+                <stop offset="100%" stop-color="#8b0000" />
+            </linearGradient>
+
+            <linearGradient id="accentGradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#daa520" />
+                <stop offset="50%" stop-color="#ffd700" />
+                <stop offset="100%" stop-color="#daa520" />
+            </linearGradient>
+
+            <filter id="carpetTexture" x="0" y="0" width="100%" height="100%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" result="noise" />
+                <feColorMatrix type="matrix" values="0 0 0 0 0, 0 0 0 0 0, 0 0 0 0 0, 0 0 0 0.1 0" />
+                <feComposite operator="in" in2="SourceGraphic" />
+            </filter>
+
+            <!-- Background -->
+            <rect width="300" height="300" fill="url(#bgGradient)" />
+
+            <!-- Base pattern - ornate geometric layout -->
+            <!-- Main grid lines -->
+            <g stroke="url(#accentGradient1)" stroke-width="3" opacity="0.7">
+                <line x1="0" y1="0" x2="300" y2="300" />
+                <line x1="300" y1="0" x2="0" y2="300" />
+                <line x1="150" y1="0" x2="150" y2="300" />
+                <line x1="0" y1="150" x2="300" y2="150" />
+            </g>
+
+            <!-- Circular elements - typical of casino carpets -->
+            <g fill="none" stroke="url(#accentGradient2)" stroke-width="2">
+                <circle cx="75" cy="75" r="50" />
+                <circle cx="75" cy="75" r="40" />
+                <circle cx="75" cy="75" r="30" />
+
+                <circle cx="225" cy="75" r="50" />
+                <circle cx="225" cy="75" r="40" />
+                <circle cx="225" cy="75" r="30" />
+
+                <circle cx="75" cy="225" r="50" />
+                <circle cx="75" cy="225" r="40" />
+                <circle cx="75" cy="225" r="30" />
+
+                <circle cx="225" cy="225" r="50" />
+                <circle cx="225" cy="225" r="40" />
+                <circle cx="225" cy="225" r="30" />
+
+                <circle cx="150" cy="150" r="60" />
+                <circle cx="150" cy="150" r="50" />
+                <circle cx="150" cy="150" r="40" />
+            </g>
+
+            <!-- Card suit symbols - subtle background elements -->
+            <!-- Hearts -->
+            <path d="M40,40 C40,20 20,20 20,40 C20,60 40,70 40,70 C40,70 60,60 60,40 C60,20 40,20 40,40 Z" fill="#8b0000" opacity="0.3" />
+            <path d="M260,40 C260,20 240,20 240,40 C240,60 260,70 260,70 C260,70 280,60 280,40 C280,20 260,20 260,40 Z" fill="#8b0000" opacity="0.3" />
+            <path d="M40,260 C40,240 20,240 20,260 C20,280 40,290 40,290 C40,290 60,280 60,260 C60,240 40,240 40,260 Z" fill="#8b0000" opacity="0.3" />
+            <path d="M260,260 C260,240 240,240 240,260 C240,280 260,290 260,290 C260,290 280,280 280,260 C280,240 260,240 260,260 Z" fill="#8b0000" opacity="0.3" />
+
+            <!-- Spades -->
+            <path d="M150,40 C150,20 135,25 135,40 C135,55 150,65 150,65 C150,65 165,55 165,40 C165,25 150,20 150,40 Z M145,65 L155,65 L155,75 L145,75 Z" fill="#000" opacity="0.3" />
+            <path d="M150,260 C150,240 135,245 135,260 C135,275 150,285 150,285 C150,285 165,275 165,260 C165,245 150,240 150,260 Z M145,285 L155,285 L155,295 L145,295 Z" fill="#000" opacity="0.3" />
+
+            <!-- Clubs -->
+            <g opacity="0.3" fill="#000">
+                <circle cx="75" cy="150" r="10" />
+                <circle cx="90" cy="140" r="10" />
+                <circle cx="60" cy="140" r="10" />
+                <rect x="73" y="150" width="5" height="15" />
+            </g>
+            <g opacity="0.3" fill="#000">
+                <circle cx="225" cy="150" r="10" />
+                <circle cx="240" cy="140" r="10" />
+                <circle cx="210" cy="140" r="10" />
+                <rect x="223" y="150" width="5" height="15" />
+            </g>
+
+            <!-- Diamonds -->
+            <path d="M150,120 L135,150 L150,180 L165,150 Z" fill="#8b0000" opacity="0.3" />
+
+            <!-- Repeating small pattern elements -->
+            <g fill="url(#accentGradient1)" opacity="0.5">
+                <circle cx="25" cy="25" r="3" />
+                <circle cx="25" cy="50" r="3" />
+                <circle cx="25" cy="75" r="3" />
+                <circle cx="25" cy="100" r="3" />
+                <circle cx="25" cy="125" r="3" />
+                <circle cx="25" cy="150" r="3" />
+                <circle cx="25" cy="175" r="3" />
+                <circle cx="25" cy="200" r="3" />
+                <circle cx="25" cy="225" r="3" />
+                <circle cx="25" cy="250" r="3" />
+                <circle cx="25" cy="275" r="3" />
+            </g>
+
+            <g fill="url(#accentGradient1)" opacity="0.5">
+                <circle cx="50" cy="25" r="3" />
+                <circle cx="75" cy="25" r="3" />
+                <circle cx="100" cy="25" r="3" />
+                <circle cx="125" cy="25" r="3" />
+                <circle cx="150" cy="25" r="3" />
+                <circle cx="175" cy="25" r="3" />
+                <circle cx="200" cy="25" r="3" />
+                <circle cx="225" cy="25" r="3" />
+                <circle cx="250" cy="25" r="3" />
+                <circle cx="275" cy="25" r="3" />
+            </g>
+
+            <g fill="url(#accentGradient1)" opacity="0.5">
+                <circle cx="275" cy="50" r="3" />
+                <circle cx="275" cy="75" r="3" />
+                <circle cx="275" cy="100" r="3" />
+                <circle cx="275" cy="125" r="3" />
+                <circle cx="275" cy="150" r="3" />
+                <circle cx="275" cy="175" r="3" />
+                <circle cx="275" cy="200" r="3" />
+                <circle cx="275" cy="225" r="3" />
+                <circle cx="275" cy="250" r="3" />
+                <circle cx="275" cy="275" r="3" />
+            </g>
+
+            <g fill="url(#accentGradient1)" opacity="0.5">
+                <circle cx="50" cy="275" r="3" />
+                <circle cx="75" cy="275" r="3" />
+                <circle cx="100" cy="275" r="3" />
+                <circle cx="125" cy="275" r="3" />
+                <circle cx="150" cy="275" r="3" />
+                <circle cx="175" cy="275" r="3" />
+                <circle cx="200" cy="275" r="3" />
+                <circle cx="225" cy="275" r="3" />
+                <circle cx="250" cy="275" r="3" />
+            </g>
+
+            <!-- Ornate central pattern -->
+            <g transform="translate(150,150)">
+                <path d="M0,-30 L10,-10 L30,-10 L15,5 L20,25 L0,15 L-20,25 L-15,5 L-30,-10 L-10,-10 Z" fill="url(#accentGradient2)" opacity="0.8" />
+                <circle cx="0" cy="0" r="5" fill="url(#accentGradient1)" />
+            </g>
+
+            <!-- Add subtle carpet texture overlay -->
+            <rect width="300" height="300" fill="transparent" filter="url(#carpetTexture)" />
+        </pattern>
+    </defs>
+
+    <!-- Apply the pattern to the entire SVG area -->
+    <rect width="100%" height="100%" fill="url(#casinoCarpetPattern)" />
+</svg>

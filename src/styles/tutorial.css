@@ -1,0 +1,238 @@
+/**
+ * Royal Edge Casino - Tutorial/Onboarding Styles
+ *
+ * These styles control the appearance of tutorial and onboarding experiences
+ */
+
+/* Tutorial container */
+.tutorial-container {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+}
+
+/* Tutorial overlay */
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  z-index: 101;
+  transition: opacity var(--duration-normal) ease;
+  pointer-events: all;
+}
+
+/* Tutorial spotlight */
+.tutorial-spotlight {
+  position: absolute;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75);
+  border-radius: var(--radius-md);
+  z-index: 102;
+  pointer-events: none;
+  transition: all var(--duration-normal) ease;
+}
+
+/* Tutorial tooltip */
+.tutorial-tooltip {
+  position: absolute;
+  z-index: 103;
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-lg);
+  width: 300px;
+  max-width: calc(100vw - 32px);
+  pointer-events: all;
+  filter: drop-shadow(0 10px 8px rgb(0 0 0 / 0.04))
+    drop-shadow(0 4px 3px rgb(0 0 0 / 0.1));
+}
+
+/* Tutorial tooltip arrow */
+.tutorial-tooltip-arrow {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background-color: var(--popover);
+  transform: rotate(45deg);
+  z-index: 102;
+}
+
+/* Arrow positions */
+.tutorial-tooltip-arrow-top {
+  top: -8px;
+}
+
+.tutorial-tooltip-arrow-bottom {
+  bottom: -8px;
+}
+
+.tutorial-tooltip-arrow-left {
+  left: 24px;
+}
+
+.tutorial-tooltip-arrow-right {
+  right: 24px;
+}
+
+.tutorial-tooltip-arrow-center {
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+/* Tooltip content */
+.tutorial-tooltip-content {
+  position: relative;
+  z-index: 103;
+}
+
+.tutorial-tooltip-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+
+.tutorial-tooltip-description {
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-3);
+  color: var(--muted-foreground);
+}
+
+.tutorial-tooltip-counter {
+  font-size: var(--font-size-xs);
+  color: var(--muted-foreground);
+  margin-bottom: var(--space-2);
+}
+
+/* Tutorial actions */
+.tutorial-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-3);
+}
+
+/* Tutorial overlay animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.tutorial-fade-in {
+  animation: fadeIn var(--duration-normal) ease forwards;
+}
+
+.tutorial-fade-out {
+  animation: fadeOut var(--duration-normal) ease forwards;
+}
+
+/* Tooltip animations */
+@keyframes tooltipIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.tutorial-tooltip-in {
+  animation: tooltipIn var(--duration-normal) cubic-bezier(0.16, 1, 0.3, 1)
+    forwards;
+}
+
+/* Spotlight pulse animation */
+@keyframes spotlightPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75);
+  }
+  50% {
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+  }
+}
+
+.tutorial-spotlight-pulse {
+  animation: spotlightPulse 2s infinite;
+}
+
+/* Tutorial progress indicators */
+.tutorial-progress {
+  display: flex;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  justify-content: center;
+}
+
+.tutorial-progress-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--muted);
+  transition: background-color var(--duration-fast) ease;
+}
+
+.tutorial-progress-dot-active {
+  background-color: var(--primary);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .tutorial-tooltip {
+    width: calc(100vw - 32px);
+    max-width: none;
+  }
+
+  .tutorial-actions {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .tutorial-actions button {
+    width: 100%;
+  }
+}
+
+/* Interactive elements */
+.tutorial-interactive {
+  position: relative;
+  z-index: 102;
+  pointer-events: all;
+}
+
+/* Skip tutorial button */
+.tutorial-skip {
+  position: fixed;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 104;
+  pointer-events: all;
+  font-size: var(--font-size-sm);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+  border: none;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) ease;
+}
+
+.tutorial-skip:hover {
+  background-color: var(--accent);
+}

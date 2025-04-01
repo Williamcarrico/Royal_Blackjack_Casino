@@ -1,0 +1,212 @@
+/**
+ * Royal Edge Casino - Sidebar Styles
+ *
+ * These styles control the appearance of the sidebar navigation
+ * using custom design tokens defined in globals.css
+ */
+
+/* Sidebar container */
+.sidebar {
+  background-color: var(--sidebar);
+  color: var(--sidebar-foreground);
+  border-right: 1px solid var(--sidebar-border);
+  transition: width var(--duration-normal) ease,
+    transform var(--duration-normal) ease;
+  will-change: width, transform;
+  box-shadow: var(--shadow-md);
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 50;
+}
+
+/* Responsive sidebar variants */
+.sidebar-expanded {
+  width: 240px;
+}
+
+.sidebar-collapsed {
+  width: 70px;
+}
+
+/* Mobile sidebar */
+.sidebar-mobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  transform: translateX(-100%);
+  transition: transform var(--duration-normal) ease;
+}
+
+.sidebar-mobile-open {
+  transform: translateX(0);
+}
+
+/* Sidebar header */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--sidebar-border);
+}
+
+/* Sidebar logo area */
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sidebar-collapsed .sidebar-logo-text {
+  display: none;
+}
+
+/* Sidebar navigation */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2);
+}
+
+/* Sidebar navigation item */
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  color: var(--sidebar-foreground);
+  text-decoration: none;
+  transition: background-color var(--duration-fast) ease;
+  margin-bottom: var(--space-1);
+}
+
+.sidebar-nav-item:hover {
+  background-color: rgba(var(--primary-rgb), 0.1);
+}
+
+.sidebar-nav-item.active {
+  background-color: var(--sidebar-primary);
+  color: var(--sidebar-primary-foreground);
+}
+
+.sidebar-collapsed .sidebar-nav-item-text {
+  display: none;
+}
+
+/* Sidebar footer */
+.sidebar-footer {
+  margin-top: auto;
+  padding: var(--space-3);
+  border-top: 1px solid var(--sidebar-border);
+}
+
+/* Sidebar user info area */
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sidebar-collapsed .sidebar-user-info {
+  display: none;
+}
+
+/* Sidebar divider */
+.sidebar-divider {
+  height: 1px;
+  background-color: var(--sidebar-border);
+  margin: var(--space-2) 0;
+}
+
+/* Sidebar badge */
+.sidebar-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background-color: var(--sidebar-primary);
+  color: var(--sidebar-primary-foreground);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+/* Sidebar toggle button */
+.sidebar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background-color: transparent;
+  color: var(--sidebar-foreground);
+  border: none;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) ease;
+}
+
+.sidebar-toggle:hover {
+  background-color: rgba(var(--primary-rgb), 0.1);
+}
+
+/* Sidebar icons */
+.sidebar-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Sidebar menu groups */
+.sidebar-group {
+  margin-bottom: var(--space-3);
+}
+
+.sidebar-group-title {
+  padding: var(--space-2) var(--space-2);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sidebar-collapsed .sidebar-group-title {
+  display: none;
+}
+
+/* Sidebar dropdown */
+.sidebar-dropdown {
+  position: relative;
+}
+
+.sidebar-dropdown-content {
+  display: none;
+  padding-left: var(--space-8);
+}
+
+.sidebar-dropdown.open .sidebar-dropdown-content {
+  display: block;
+  animation: slideDown var(--duration-fast) ease-out;
+}
+
+/* Sidebar animation */
+@keyframes sidebarSlideIn {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.sidebar-animate-in {
+  animation: sidebarSlideIn var(--duration-normal) ease-out;
+}
