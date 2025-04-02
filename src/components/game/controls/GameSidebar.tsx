@@ -83,6 +83,7 @@ export const GameSidebar: React.FC<GameSidebarProps> = ({
   setShowBasicStrategyDialog
 }) => {
   const [isTableRotated, setIsTableRotated] = React.useState(false);
+  const [isCollapsed, setIsCollapsed] = React.useState(false);
 
   // Use the type guard with a fallback for missing gameState
   const gameState = gameStore.gameState || {};
@@ -117,103 +118,126 @@ export const GameSidebar: React.FC<GameSidebarProps> = ({
     return value > 0 ? `+${value}` : `${value}`;
   };
 
+  // Toggle sidebar collapse state
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.4, duration: 0.8 }}
-      className="space-y-4"
+      className="space-y-4 z-20 relative"
     >
-      {/* Game message */}
-      <MessageDisplay message={gameStore.lastAction ?? ''} />
-
-      {/* Auto Strategy component - only render when game is fully initialized */}
-      {gameStore?.entities?.hands && (
-        <AutoStrategyPlayer className="p-4 border rounded-lg bg-black/30 backdrop-blur-sm border-slate-700" />
-      )}
-
-      {/* Probability display */}
-      {enhancedSettings.showProbabilities && gameStore.gameState?.currentPhase !== 'betting' && (
-        <ProbabilityDisplay
-          compact
-          className="p-4 border rounded-lg bg-black/30 backdrop-blur-sm border-slate-700"
-        />
-      )}
-
-      {/* Quick buttons for additional features */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Collapse/Expand button for mobile */}
+      <div className="md:hidden flex justify-end">
         <Button
           variant="outline"
-          className="bg-black/30 backdrop-blur-sm border-slate-700 hover:bg-slate-800"
-          onClick={() => setShowBasicStrategyDialog(true)}
+          size="sm"
+          onClick={toggleCollapse}
+          className="bg-black/40 backdrop-blur-sm border-slate-700"
         >
-          <Award className="w-4 h-4 mr-2" /> Strategy
-        </Button>
-
-        <Button
-          variant="outline"
-          className="bg-black/30 backdrop-blur-sm border-slate-700 hover:bg-slate-800"
-          onClick={() => setShowRulesDialog(true)}
-        >
-          <HelpCircle className="w-4 h-4 mr-2" /> Rules
-        </Button>
-
-        <Button
-          variant="outline"
-          className="bg-black/30 backdrop-blur-sm border-slate-700 hover:bg-slate-800"
-          onClick={() => setIsTableRotated(!isTableRotated)}
-        >
-          {isTableRotated ?
-            <><ChevronDown className="w-4 h-4 mr-2" /> View</> :
-            <><ChevronUp className="w-4 h-4 mr-2" /> View</>
-          }
+          {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+          {isCollapsed ? "Show" : "Hide"} Sidebar
         </Button>
       </div>
 
-      {/* Game stats */}
-      <GameStats stats={analytics.gameStats} />
+      {/* Sidebar content - conditionally shown based on collapse state */}
+      <div className={`space-y-4 ${isCollapsed ? 'hidden' : 'block'} md:block`}>
+        {/* Game message */}
+        <div className="overflow-hidden">
+          <MessageDisplay message={gameStore.lastAction ?? ''} />
+        </div>
 
-      {/* Display active side bets when they exist */}
-      {(extendedGameState?.sideBets?.totalAmount ?? 0) > 0 && (
-        <Card className="p-4 border rounded-lg bg-black/30 backdrop-blur-sm border-slate-700">
-          <h3 className="mb-3 text-lg font-semibold text-white">Active Side Bets</h3>
-          <div className="space-y-2">
-            {extendedGameState?.sideBets?.active?.map((bet: SideBet) => (
-              bet.amount > 0 && (
-                <div key={bet.id} className="flex justify-between">
-                  <span className="text-gray-300">{bet.type}:</span>
-                  <span className="font-semibold text-amber-400">${bet.amount}</span>
-                </div>
-              )
-            ))}
-          </div>
-        </Card>
-      )}
+        {/* Auto Strategy component - only render when game is fully initialized */}
+        {gameStore?.entities?.hands && (
+          <AutoStrategyPlayer className="p-4 border rounded-lg bg-black/30 backdrop-blur-sm border-slate-700" />
+        )}
 
-      {/* Card counting information */}
-      {enhancedSettings.countingSystem !== 'none' && (
-        <Card className="p-4 border bg-black/30 backdrop-blur-sm border-slate-700">
-          <h3 className="mb-2 text-sm font-semibold text-white">Card Counting</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-300">Running Count:</span>
-              <span className={`font-semibold ${getCountTextColor(extendedGameState?.count?.running)}`}>
-                {formatRunningCount(extendedGameState?.count?.running)}
-              </span>
+        {/* Probability display */}
+        {enhancedSettings.showProbabilities && gameStore.gameState?.currentPhase !== 'betting' && (
+          <ProbabilityDisplay
+            compact
+            className="p-4 border rounded-lg bg-black/30 backdrop-blur-sm border-slate-700"
+          />
+        )}
+
+        {/* Quick buttons for additional features */}
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            variant="outline"
+            className="bg-black/30 backdrop-blur-sm border-slate-700 hover:bg-slate-800"
+            onClick={() => setShowBasicStrategyDialog(true)}
+          >
+            <Award className="w-4 h-4 mr-2" /> Strategy
+          </Button>
+
+          <Button
+            variant="outline"
+            className="bg-black/30 backdrop-blur-sm border-slate-700 hover:bg-slate-800"
+            onClick={() => setShowRulesDialog(true)}
+          >
+            <HelpCircle className="w-4 h-4 mr-2" /> Rules
+          </Button>
+
+          <Button
+            variant="outline"
+            className="bg-black/30 backdrop-blur-sm border-slate-700 hover:bg-slate-800"
+            onClick={() => setIsTableRotated(!isTableRotated)}
+          >
+            {isTableRotated ?
+              <><ChevronDown className="w-4 h-4 mr-2" /> View</> :
+              <><ChevronUp className="w-4 h-4 mr-2" /> View</>
+            }
+          </Button>
+        </div>
+
+        {/* Game stats */}
+        <GameStats stats={analytics.gameStats} />
+
+        {/* Display active side bets when they exist */}
+        {(extendedGameState?.sideBets?.totalAmount ?? 0) > 0 && (
+          <Card className="p-4 border rounded-lg bg-black/30 backdrop-blur-sm border-slate-700">
+            <h3 className="mb-3 text-lg font-semibold text-white">Active Side Bets</h3>
+            <div className="space-y-2">
+              {extendedGameState?.sideBets?.active?.map((bet: SideBet) => (
+                bet.amount > 0 && (
+                  <div key={bet.id} className="flex justify-between">
+                    <span className="text-gray-300">{bet.type}:</span>
+                    <span className="font-semibold text-amber-400">${bet.amount}</span>
+                  </div>
+                )
+              ))}
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-300">True Count:</span>
-              <span className={`font-semibold ${getTrueCountTextColor(extendedGameState?.count?.true)}`}>
-                {(extendedGameState?.count?.true ?? 0).toFixed(2)}
-              </span>
+          </Card>
+        )}
+
+        {/* Card counting information */}
+        {enhancedSettings.countingSystem !== 'none' && (
+          <Card className="p-4 border bg-black/30 backdrop-blur-sm border-slate-700">
+            <h3 className="mb-2 text-sm font-semibold text-white">Card Counting</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-300">Running Count:</span>
+                <span className={`font-semibold ${getCountTextColor(extendedGameState?.count?.running)}`}>
+                  {formatRunningCount(extendedGameState?.count?.running)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-300">True Count:</span>
+                <span className={`font-semibold ${getTrueCountTextColor(extendedGameState?.count?.true)}`}>
+                  {(extendedGameState?.count?.true ?? 0).toFixed(2)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-300">Cards Remaining:</span>
+                <span className="font-semibold text-white">{extendedGameState?.deck?.remainingCards ?? 0}</span>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-300">Cards Remaining:</span>
-              <span className="font-semibold text-white">{extendedGameState?.deck?.remainingCards ?? 0}</span>
-            </div>
-          </div>
-        </Card>
-      )}
+          </Card>
+        )}
+      </div>
     </motion.div>
   );
 };

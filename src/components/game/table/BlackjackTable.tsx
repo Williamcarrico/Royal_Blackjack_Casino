@@ -156,8 +156,8 @@ const BlackjackTable = ({
         >
             {/* Table felt background */}
             <TableFelt darkMode={darkMode}>
-                {/* Dealer position */}
-                <div className="absolute z-10 transform -translate-x-1/2 top-6 left-1/2">
+                {/* Dealer position - with proper z-index for layering */}
+                <div className="absolute z-20 transform -translate-x-1/2 top-24 left-1/2">
                     <DealerPosition
                         cards={dealer.cards}
                         isActive={dealer.isActive}
@@ -166,8 +166,8 @@ const BlackjackTable = ({
                     />
                 </div>
 
-                {/* Player positions */}
-                <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-8 px-4 pb-4">
+                {/* Player positions - increased z-index for proper layer stacking */}
+                <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-8 px-4 pb-36 md:pb-28 z-30">
                     {(players || []).map((player) => (
                         <PlayerPosition
                             key={player.id}
@@ -181,7 +181,7 @@ const BlackjackTable = ({
                     ))}
                 </div>
 
-                {/* Message display */}
+                {/* Message display - highest z-index to appear above all elements */}
                 <AnimatePresence>
                     {showMessage && message && (
                         <div className="absolute z-50 transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
@@ -191,8 +191,8 @@ const BlackjackTable = ({
                 </AnimatePresence>
             </TableFelt>
 
-            {/* Controls area */}
-            <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center gap-4 p-4 bg-gradient-to-t from-black/50 to-transparent">
+            {/* Controls area - improved z-index for controls layer */}
+            <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center gap-4 p-4 z-40 bg-gradient-to-t from-black/50 to-transparent pt-16">
                 {/* Betting controls */}
                 {shouldShowBettingControls && currentPlayer && (
                     <AnimatePresence mode="wait">

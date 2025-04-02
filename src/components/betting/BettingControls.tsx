@@ -1,10 +1,21 @@
+/**
+ * BettingControls Component
+ *
+ * Provides the UI for placing, clearing, doubling and confirming bets in a blackjack game.
+ * Handles chip selection, validation, and betting actions with proper constraints.
+ *
+ * @component
+ */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import Chip, { ChipValue, CHIP_COLORS } from './Chip';
-import { Button } from '@/components/ui/button';
+import Chip, { ChipValue } from './Chip';
+
+// Define default chip values if not exported from Chip component
+const DEFAULT_CHIP_VALUES: ChipValue[] = [1, 5, 25, 100, 500, 1000];
 
 export interface BettingControlsProps {
     balance: number;
@@ -25,8 +36,11 @@ export interface BettingControlsProps {
     compact?: boolean;
 }
 
-const DEFAULT_CHIP_VALUES: ChipValue[] = [1, 5, 25, 100, 500];
-
+/**
+ * BettingControls component provides a UI for placing and managing bets
+ * It displays chips for selection and buttons for bet operations
+ * Handles validation against balance, min and max bet constraints
+ */
 const BettingControls: React.FC<BettingControlsProps> = ({
     balance,
     minBet = 5,
@@ -45,273 +59,301 @@ const BettingControls: React.FC<BettingControlsProps> = ({
     vertical = false,
     compact = false,
 }) => {
+    // Local state
     const [selectedChip, setSelectedChip] = useState<ChipValue | null>(null);
-    const [pendingBet, setPendingBet] = useState<number>(currentBet);
-    const [lastUsedChips, setLastUsedChips] = useState<ChipValue[]>([]);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [showErrorMessage, setShowErrorMessage] = useState(false);
 
-    // Update the pending bet when the current bet changes
+    // Reset error message after a timeout
     useEffect(() => {
-        setPendingBet(currentBet);
-    }, [currentBet]);
+        if (errorMessage) {
+            setShowErrorMessage(true);
+            const timer = setTimeout(() => {
+                setShowErrorMessage(false);
+                setTimeout(() => setErrorMessage(null), 300); // Clear after animation completes
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+        return undefined;
+    }, [errorMessage]);
 
-    // Sort available chips by value
-    const sortedChips = [...availableChips].sort((a, b) => a - b);
+    /**
+     * Determines if a chip value is available based on configured chips
+     *
+     * @param {ChipValue} value - The chip value to check
+     * @returns {boolean} Whether the chip is available for selection
+     */
+    const isChipAvailable = useCallback((value: ChipValue): boolean => {
+        return availableChips.includes(value);
+    }, [availableChips]);
 
-    // Check if a chip is available
-    const isChipAvailable = (value: ChipValue) => {
-        return !disabledChips.includes(value) &&
-            availableChips.includes(value) &&
-            value <= balance &&
-            pendingBet + value <= maxBet;
-    };
+    /**
+     * Determines if a chip can be selected based on availability and balance
+     *
+     * @param {ChipValue} value - The chip value to check
+     * @returns {boolean} Whether the chip can be selected
+     */
+    const canSelectChip = useCallback((value: ChipValue): boolean => {
+        // Chip is unavailable or explicitly disabled
+        if (!isChipAvailable(value) || disabledChips.includes(value)) return false;
 
-    // Check if chip can be selected
-    const canSelectChip = (value: ChipValue) => {
-        return !disabled && isChipAvailable(value);
-    };
+        // Not enough balance for this chip
+        if (value > balance) return false;
 
-    // Handle chip selection
-    const handleChipSelect = (value: ChipValue) => {
-        console.log('Chip selection attempt:', { value, canSelect: canSelectChip(value), disabled, balance, maxBet });
+        // Current bet + chip exceeds max bet
+        if (currentBet + value > maxBet) return false;
 
-        if (!canSelectChip(value)) {
-            console.log('Cannot select chip:', {
-                isDisabled: disabled,
-                isInDisabledList: disabledChips.includes(value),
-                isNotAvailable: !availableChips.includes(value),
-                isGreaterThanBalance: value > balance,
-                wouldExceedMaxBet: pendingBet + value > maxBet
-            });
+        return true;
+    }, [isChipAvailable, disabledChips, balance, currentBet, maxBet]);
+
+    /**
+     * Handles chip selection and updates the selected chip state
+     *
+     * @param {ChipValue} value - The chip value being selected
+     */
+    const handleChipSelect = useCallback((value: ChipValue): void => {
+        if (disabled) return;
+
+        if (canSelectChip(value)) {
+            setSelectedChip(value);
+
+            // If auto confirm is enabled, immediately add the chip to bet
+            if (autoConfirm) {
+                addChipToBet(value);
+            }
+        } else {
+            // Set an appropriate error message based on the constraint violation
+            if (value > balance) {
+                setErrorMessage(`Not enough balance for a $${value} chip`);
+            } else if (currentBet + value > maxBet) {
+                setErrorMessage(`Adding $${value} would exceed max bet of $${maxBet}`);
+            } else {
+                setErrorMessage(`Cannot select $${value} chip`);
+            }
+        }
+    }, [disabled, canSelectChip, autoConfirm, balance, currentBet, maxBet]);
+
+    /**
+     * Adds a chip to the current bet with validation
+     *
+     * @param {ChipValue} value - The chip value to add to the bet
+     */
+    const addChipToBet = useCallback((value: ChipValue): void => {
+        // Calculate the new bet amount
+        const newBet = currentBet + value;
+
+        // Validate against constraints
+        if (newBet > maxBet) {
+            setErrorMessage(`Cannot exceed maximum bet of $${maxBet}`);
             return;
         }
 
-        setSelectedChip(value);
-        console.log('Chip selected:', value);
-
-        if (autoConfirm) {
-            addChipToBet(value);
-        }
-    };
-
-    // Add selected chip to bet
-    const addChipToBet = (value: ChipValue) => {
-        console.log('Adding chip to bet:', { value, pendingBet, newBet: pendingBet + value });
-
-        if (!isChipAvailable(value)) {
-            console.log('Chip not available for bet');
+        if (value > balance) {
+            setErrorMessage(`Not enough balance for a $${value} chip`);
             return;
         }
 
-        const newBet = pendingBet + value;
-        setPendingBet(newBet);
+        // Place the bet through the callback
+        onPlaceBet?.(newBet);
 
-        // Track the last used chip for visualization
-        setLastUsedChips(prev => {
-            const updated = [...prev, value];
-            // Keep only the last 3 chips used
-            return updated.slice(-3);
-        });
-
-        if (autoConfirm) {
-            console.log('Auto confirming bet:', newBet);
-            onPlaceBet?.(newBet);
-        }
-    };
-
-    // Handle bet confirmation
-    const handleConfirmBet = () => {
-        if (pendingBet < minBet || pendingBet > maxBet || disabled) return;
-
-        onPlaceBet?.(pendingBet);
+        // Clear selected chip after placing bet
         setSelectedChip(null);
-    };
+    }, [currentBet, maxBet, balance, onPlaceBet]);
 
-    // Handle clearing the bet
-    const handleClearBet = () => {
-        setPendingBet(0);
-        setLastUsedChips([]);
+    /**
+     * Handles confirmation of bet
+     * Validates minimum bet requirement before confirming
+     */
+    const handleConfirmBet = useCallback((): void => {
+        if (currentBet < minBet) {
+            setErrorMessage(`Minimum bet is $${minBet}`);
+            return;
+        }
+
+        // If there's a selected chip, add it first
+        if (selectedChip !== null) {
+            addChipToBet(selectedChip);
+        }
+    }, [currentBet, minBet, selectedChip, addChipToBet]);
+
+    /**
+     * Handles clearing of the current bet
+     */
+    const handleClearBet = useCallback((): void => {
+        setSelectedChip(null);
         onClearBet?.();
-    };
+    }, [onClearBet]);
 
-    // Handle max bet
-    const handleMaxBet = () => {
-        const newBet = Math.min(balance, maxBet);
-        setPendingBet(newBet);
+    /**
+     * Handles setting maximum bet based on balance and max bet limit
+     */
+    const handleMaxBet = useCallback((): void => {
+        // Set bet to the lesser of balance or max bet
+        const maxPossibleBet = Math.min(balance, maxBet);
 
-        // Find highest value chip to represent max bet
-        const highestChip = sortedChips[sortedChips.length - 1] || 500;
-        setLastUsedChips([highestChip]);
-
-        if (autoConfirm) {
-            onPlaceBet?.(newBet);
-        } else {
-            onMaxBet?.();
+        if (maxPossibleBet < minBet) {
+            setErrorMessage(`Not enough balance for minimum bet of $${minBet}`);
+            return;
         }
-    };
 
-    // Handle double bet
-    const handleDoubleBet = () => {
-        const newBet = Math.min(currentBet * 2, balance, maxBet);
-        setPendingBet(newBet);
+        onMaxBet?.() || onPlaceBet?.(maxPossibleBet);
+    }, [balance, maxBet, minBet, onMaxBet, onPlaceBet]);
 
-        // Duplicate the last used chips to represent doubling
-        setLastUsedChips(prev => {
-            const doubled = [...prev, ...prev];
-            return doubled.slice(-3); // Keep only the last 3
-        });
+    /**
+     * Handles doubling the current bet with validation
+     */
+    const handleDoubleBet = useCallback((): void => {
+        // Calculate doubled bet
+        const doubledBet = currentBet * 2;
 
-        if (autoConfirm) {
-            onPlaceBet?.(newBet);
-        } else {
-            onDoubleBet?.();
+        // Validate against constraints
+        if (doubledBet > maxBet) {
+            setErrorMessage(`Doubling would exceed maximum bet of $${maxBet}`);
+            return;
         }
-    };
 
-    // Check if doubling is available
-    const canDouble = currentBet > 0 && currentBet * 2 <= balance && currentBet * 2 <= maxBet && !disabled;
+        if (doubledBet > balance) {
+            setErrorMessage(`Not enough balance to double bet`);
+            return;
+        }
 
-    // Generate the appropriate classes for the container
-    const containerClasses = cn(
-        'flex items-center justify-center gap-3 p-3 rounded-lg',
-        vertical ? 'flex-col' : 'flex-row flex-wrap',
-        compact ? 'scale-90' : '',
-        className
-    );
+        // Double the bet through callback or fallback to place bet
+        onDoubleBet?.() || onPlaceBet?.(doubledBet);
+    }, [currentBet, maxBet, balance, onDoubleBet, onPlaceBet]);
 
-    // Get color for button variant based on last used chip
-    const getBetButtonStyle = () => {
-        if (lastUsedChips.length === 0 || pendingBet < minBet) return {};
-
-        // Use the last chip's color for the button
-        const lastChip = lastUsedChips[lastUsedChips.length - 1];
-        // Ensure lastChip is a valid ChipValue by providing a fallback
-        const chipColor = lastChip !== undefined ? CHIP_COLORS[lastChip] : CHIP_COLORS[1];
-
-        return {
-            background: chipColor.bg.replace('bg-', ''),
-            borderColor: chipColor.border.replace('border-', ''),
-            color: chipColor.text.replace('text-', '')
-        };
-    };
+    /**
+     * Gets appropriate styling for bet confirmation button
+     *
+     * @returns {string} Classes for the bet button
+     */
+    const getBetButtonStyle = useCallback((): string => {
+        if (currentBet < minBet) {
+            return 'bg-gray-600 hover:bg-gray-500 cursor-not-allowed opacity-50';
+        }
+        return 'bg-green-600 hover:bg-green-500';
+    }, [currentBet, minBet]);
 
     return (
-        <div className="space-y-4 w-full max-w-md mx-auto">
-            {/* Chip selection */}
-            <div className={containerClasses}>
-                <AnimatePresence mode="wait">
-                    {sortedChips.map((value) => (
-                        <motion.div
+        <div className={cn(
+            'relative flex gap-3 rounded-lg p-3 bg-black/30 backdrop-blur-md',
+            vertical ? 'flex-col' : 'flex-row items-center justify-between',
+            className
+        )}>
+            {/* Available chips */}
+            <div className={cn(
+                'flex flex-wrap gap-2',
+                vertical ? 'justify-center' : 'justify-start'
+            )}>
+                {availableChips
+                    .sort((a: ChipValue, b: ChipValue) => a - b)
+                    .map((value: ChipValue) => (
+                        <Chip
                             key={`chip-${value}`}
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="relative"
-                        >
-                            <Chip
-                                value={value}
-                                selected={selectedChip === value}
-                                disabled={!canSelectChip(value)}
-                                interactive
-                                onClick={() => handleChipSelect(value)}
-                                size={compact ? 'sm' : 'md'}
-                            />
-                        </motion.div>
-                    ))}
-                </AnimatePresence>
-            </div>
-
-            {/* Visual chip stack indicator for pending bet */}
-            {pendingBet > 0 && lastUsedChips.length > 0 && (
-                <div className="flex justify-center mt-1 mb-2">
-                    {lastUsedChips.map((chip, index) => (
-                        <div
-                            key={`used-chip-${chip}-${index}`}
-                            className={cn(
-                                "w-4 h-4 rounded-full border",
-                                CHIP_COLORS[chip].bg,
-                                CHIP_COLORS[chip].border,
-                                "transform -translate-y-1",
-                                index > 0 && "-ml-1"
-                            )}
-                            style={{
-                                zIndex: index,
-                                transform: `translateX(${index * 2}px)`
-                            }}
+                            value={value}
+                            size={compact ? 'sm' : 'md'}
+                            selected={selectedChip === value}
+                            disabled={!canSelectChip(value) || disabled}
+                            onClick={() => handleChipSelect(value)}
+                            className="cursor-pointer transition-transform hover:scale-110"
+                            aria-label={`$${value} chip${!canSelectChip(value) ? ' (not available)' : ''}`}
                         />
                     ))}
-                </div>
-            )}
+            </div>
 
             {/* Betting actions */}
             <div className={cn(
-                'flex items-center gap-2',
-                vertical ? 'flex-col w-full' : 'flex-row flex-wrap justify-center'
+                'flex gap-2',
+                vertical ? 'justify-center' : 'flex-shrink-0'
             )}>
-                <Button
-                    variant="outline"
-                    size={compact ? 'sm' : 'default'}
-                    disabled={pendingBet === 0 || disabled}
+                {/* Clear button */}
+                <button
+                    type="button"
+                    disabled={currentBet === 0 || disabled}
                     onClick={handleClearBet}
                     className={cn(
-                        'min-w-[4.5rem]',
-                        pendingBet === 0 && 'opacity-50'
+                        'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                        'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary',
+                        currentBet === 0 || disabled
+                            ? 'bg-gray-600 cursor-not-allowed opacity-50'
+                            : 'bg-red-600 hover:bg-red-500'
                     )}
+                    aria-label="Clear bet"
                 >
                     Clear
-                </Button>
+                </button>
 
-                {!autoConfirm && (
-                    <>
-                        <Button
-                            variant="outline"
-                            size={compact ? 'sm' : 'default'}
-                            disabled={!canDouble}
-                            onClick={handleDoubleBet}
-                            className="min-w-[4.5rem]"
-                        >
-                            Double
-                        </Button>
-
-                        <Button
-                            variant="outline"
-                            size={compact ? 'sm' : 'default'}
-                            disabled={balance === 0 || disabled || balance < minBet}
-                            onClick={handleMaxBet}
-                            className="min-w-[4.5rem]"
-                        >
-                            Max Bet
-                        </Button>
-
-                        {confirmEnabled && (
-                            <Button
-                                variant="default"
-                                size={compact ? 'sm' : 'default'}
-                                disabled={pendingBet < minBet || disabled}
-                                onClick={handleConfirmBet}
-                                className={cn(
-                                    'bg-primary hover:bg-primary/90 text-primary-foreground min-w-[4.5rem]',
-                                    pendingBet < minBet && 'opacity-50'
-                                )}
-                                style={pendingBet >= minBet ? {
-                                    background: `var(--${getBetButtonStyle().background}, var(--primary))`,
-                                    color: `var(--${getBetButtonStyle().color}, var(--primary-foreground))`,
-                                    borderColor: `var(--${getBetButtonStyle().borderColor}, transparent)`
-                                } : undefined}
-                            >
-                                Bet {pendingBet > 0 && `$${pendingBet}`}
-                            </Button>
+                {/* Double button - only show if there's a current bet */}
+                {currentBet > 0 && (
+                    <button
+                        type="button"
+                        disabled={currentBet * 2 > balance || currentBet * 2 > maxBet || disabled}
+                        onClick={handleDoubleBet}
+                        className={cn(
+                            'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                            'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary',
+                            currentBet * 2 > balance || currentBet * 2 > maxBet || disabled
+                                ? 'bg-gray-600 cursor-not-allowed opacity-50'
+                                : 'bg-yellow-600 hover:bg-yellow-500'
                         )}
-                    </>
+                        aria-label="Double bet"
+                    >
+                        Double
+                    </button>
+                )}
+
+                {/* Max bet button */}
+                <button
+                    type="button"
+                    disabled={balance < minBet || disabled}
+                    onClick={handleMaxBet}
+                    className={cn(
+                        'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                        'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary',
+                        balance < minBet || disabled
+                            ? 'bg-gray-600 cursor-not-allowed opacity-50'
+                            : 'bg-blue-600 hover:bg-blue-500'
+                    )}
+                    aria-label="Max bet"
+                >
+                    Max
+                </button>
+
+                {/* Bet confirmation button (if enabled and not auto-confirm) */}
+                {confirmEnabled && !autoConfirm && selectedChip !== null && (
+                    <button
+                        type="button"
+                        disabled={currentBet < minBet || disabled}
+                        onClick={handleConfirmBet}
+                        className={cn(
+                            'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                            'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary',
+                            getBetButtonStyle()
+                        )}
+                        aria-label="Confirm bet"
+                    >
+                        Bet
+                    </button>
                 )}
             </div>
 
-            {/* Bet limits indicator */}
-            <div className="text-xs text-center text-muted-foreground bg-black/30 py-1 px-2 rounded">
-                <span>Min: ${minBet}</span>
-                <span className="mx-2">|</span>
-                <span>Max: ${maxBet}</span>
+            {/* Current bet display */}
+            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-3 py-1 bg-black/70 text-white rounded-full text-sm">
+                Bet: ${currentBet.toLocaleString()} | Balance: ${balance.toLocaleString()}
             </div>
+
+            {/* Error message display */}
+            <AnimatePresence>
+                {showErrorMessage && errorMessage && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full mt-1 px-3 py-1 bg-red-600 text-white rounded-md text-sm"
+                    >
+                        {errorMessage}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

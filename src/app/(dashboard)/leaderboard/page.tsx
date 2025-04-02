@@ -66,11 +66,26 @@ type SortOption = 'winnings' | 'winRate' | 'gamesPlayed' | 'biggestWin'
 
 // SWR fetcher function
 const fetcher = async (url: string) => {
-	const response = await fetch(url)
-	if (!response.ok) {
-		throw new Error('Failed to fetch data')
+	try {
+		const response = await fetch(url)
+		if (!response.ok) {
+			// Handle different error status codes
+			if (response.status === 401) {
+				console.error('Authentication required')
+				// Handle auth error
+			} else if (response.status === 500) {
+				console.error('Server error when fetching', url)
+				// Return empty data for graceful degradation
+				return { leaderboard: [] }
+			}
+			throw new Error(`Failed to fetch data: ${response.status}`)
+		}
+		return response.json()
+	} catch (error) {
+		console.error('Error fetching data:', error)
+		// Return empty state that won't break the UI
+		return { leaderboard: [] }
 	}
-	return response.json()
 }
 
 export default function LeaderboardPage() {
@@ -108,9 +123,18 @@ export default function LeaderboardPage() {
 	)
 
 	// Fetch user's personal ranking
-	const { data: userRankData } = useSWR('/api/user/rank', fetcher, {
-		refreshInterval: 300000, // Refresh every 5 minutes
-	})
+	const { data: userRankData } = useSWR(
+		() => {
+			// Only fetch if user is likely authenticated (check from local storage or context)
+			const hasSession = typeof window !== 'undefined' &&
+				(localStorage.getItem('supabase.auth.token') || localStorage.getItem('auth.session'));
+			return hasSession ? '/api/user/rank' : null;
+		},
+		fetcher,
+		{
+			refreshInterval: 300000, // Refresh every 5 minutes
+		}
+	)
 
 	// Handle search form submission
 	const handleSearch = (e: React.FormEvent) => {

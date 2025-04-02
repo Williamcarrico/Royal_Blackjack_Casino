@@ -168,11 +168,28 @@ Object.values(ambientSounds).forEach(sound => {
 // Player position types
 export type PlayerPosition = 'left-far' | 'left' | 'center' | 'right' | 'right-far';
 
+// Message type for status messages
+type MessageType = 'info' | 'success' | 'warning' | 'error';
+
+// Player action type
+type PlayerAction = 'hit' | 'stand' | 'double' | 'split' | 'surrender';
+
+// Define valid chip values at the top of your file, after imports
+const VALID_CHIP_VALUES = [1, 5, 10, 25, 50, 100, 500, 1000] as const;
+
 // Helper function to get card key from card ID
 const getCardKey = (cardId: unknown): string => {
+    // If it's already a string, just return it
     if (typeof cardId === 'string') return cardId;
-    if (cardId && typeof cardId === 'object' && 'id' in cardId) return (cardId as { id: string }).id;
-    return String(cardId);
+
+    // Handle object with id property
+    if (cardId && typeof cardId === 'object' && 'id' in cardId) {
+        const idObj = cardId as Record<string, unknown>;
+        return String(idObj.id);
+    }
+
+    // Use formatCardId for proper stringification
+    return formatCardId(cardId);
 };
 
 // Helper function to determine text color based on count
@@ -191,60 +208,101 @@ const getRunningCountTextColor = (count: number): string => {
 
 // Helper function to get dealer card property
 
-const BlackjackPage = () => {
-    // Game state from stores
-    const gameStore = useGameStore() as unknown as ExtendedGameStore;
-    const enhancedSettings = useEnhancedSettingsStore() as unknown as ExtendedEnhancedSettingsStore;
-    const sideBetsStore = useSideBetsStore() as unknown as ExtendedSideBetsStore;
-    const analytics = useAnalyticsStore();
+// Helper function to format card ID safely
+const formatCardId = (cardId: unknown): string => {
+    if (typeof cardId === 'string') return cardId;
+    if (cardId === null || cardId === undefined) return 'unknown';
+    if (typeof cardId === 'object') {
+        // Extract id property if it exists
+        if (cardId && 'id' in cardId) {
+            const idObj = cardId as Record<string, unknown>;
+            return String(idObj.id);
+        }
+        // Create a more specific identifier for objects instead of default stringification
+        try {
+            return `card-${JSON.stringify(cardId)}`;
+        } catch {
+            return `card-object-${Math.random().toString(36).substring(2, 9)}`;
+        }
+    }
+    // For numbers or other primitives
+    return `card-${String(cardId)}`;
+};
 
-    // Add a ref to track mount status
+// Extract UI components
+const StatusMessage = ({ message, type }: { message: string, type: MessageType }) => (
+    <AnimatePresence mode="wait">
+        <motion.div
+            key={`${message}-${type}`}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+            className={cn(
+                "rounded-lg shadow-lg backdrop-blur-sm",
+                "flex items-center justify-center",
+                "text-white font-medium px-4 py-2",
+                {
+                    'bg-blue-500/70': type === 'info',
+                    'bg-green-500/70': type === 'success',
+                    'bg-amber-500/70': type === 'warning',
+                    'bg-red-500/70': type === 'error'
+                }
+            )}
+            role="alert"
+            aria-live="assertive"
+        >
+            {/* Message icon */}
+            <span className="mr-2">
+                {type === 'info' && (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                )}
+                {type === 'success' && (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                )}
+                {type === 'warning' && (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                )}
+                {type === 'error' && (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                )}
+            </span>
+            <span>{message}</span>
+        </motion.div>
+    </AnimatePresence>
+);
+
+// Extract custom hooks
+const useGameInitialization = (
+    gameStore: ExtendedGameStore,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    analytics: any,
+    welcomeShown: boolean,
+    setWelcomeShown: (shown: boolean) => void,
+    setIsIntroShown: (shown: boolean) => void,
+    setIsLoading: (loading: boolean) => void
+) => {
     const isMounted = useRef(true);
 
-    // Local state
-    const [isLoading, setIsLoading] = useState(true);
-    const [soundEnabled, setSoundEnabled] = useState(false);
-    const [activeTab, setActiveTab] = useState('game');
-    const [showRulesDialog, setShowRulesDialog] = useState(false);
-    const [showStrategyDialog, setShowStrategyDialog] = useState(false);
-    const [showSettings, setShowSettings] = useState(false);
-    const [showSideBets, setShowSideBets] = useState(false);
-    const [showMobileMenu, setShowMobileMenu] = useState(false);
-    const [isIntroShown, setIsIntroShown] = useState(false);
-    const [isGamePlaying, setIsGamePlaying] = useState(false);
-    const [tutorialMode, setTutorialMode] = useState(false);
-    const [statusMessage, setStatusMessage] = useState('');
-    const [messageType, setMessageType] = useState<'info' | 'success' | 'warning' | 'error'>('info');
-    const [welcomeShown, setWelcomeShown] = useState(false);
-
-    // Player spots state - used to track and update player positions
-    const [playerSpots, setPlayerSpots] = useState<PlayerSpot[]>([
-        {
-            id: 1,
-            position: 'center',
-            hand: null, // Initialize as null instead of empty object
-            chips: 0,
-            bet: 0,
-            isActive: false,
-            isCurrentPlayer: true,
-        }
-    ]);
-
-    // Initialize game on mount
     useEffect(() => {
         const initGame = async () => {
-            // Start analytics session only if component is still mounted
             if (isMounted.current) {
                 analytics.startSession(gameStore?.chips || 0);
             }
 
-            // Initialize game store
             if (gameStore && !gameStore.isInitialized) {
                 gameStore.initializeGame();
             }
 
-            // Show welcome toast only once
-            if (!welcomeShown) {
+            if (!welcomeShown && isMounted.current) {
                 toast.success('Welcome to Royal Edge Casino', {
                     description: 'Place your bets to begin playing!',
                     duration: 5000,
@@ -252,21 +310,14 @@ const BlackjackPage = () => {
                 setWelcomeShown(true);
             }
 
-            // Display intro animation
             setIsIntroShown(true);
-
-            // Finish loading
             setIsLoading(false);
         };
 
         initGame();
 
-        // Clean up on component unmount
         return () => {
-            // Mark component as unmounted first
             isMounted.current = false;
-
-            // Only end the session if it's active
             if (analytics.sessionActive && gameStore) {
                 analytics.endSession(gameStore?.chips || 0);
             }
@@ -276,62 +327,66 @@ const BlackjackPage = () => {
                 sound.currentTime = 0;
             });
         };
-    }, [gameStore.isInitialized, analytics.sessionActive, welcomeShown, analytics, gameStore]);
+    }, [analytics, welcomeShown, gameStore, setWelcomeShown, setIsIntroShown, setIsLoading]);
 
-    // Update status message based on game state
+    return isMounted;
+};
+
+const useGameMessages = (gameStore: ExtendedGameStore) => {
+    const [statusMessage, setStatusMessage] = useState('');
+    const [messageType, setMessageType] = useState<MessageType>('info');
+
+    const getMessageType = useCallback((message: string): MessageType => {
+        if (message.includes('win') || message.includes('blackjack')) return 'success';
+        if (message.includes('lose') || message.includes('bust')) return 'error';
+        if (message.includes('push')) return 'warning';
+        return 'info';
+    }, []);
+
+    const getSettlementMessage = useCallback((result: string | null, bet: number): [string, MessageType] => {
+        if (result === 'win') return [`You won $${bet}!`, 'success'];
+        if (result === 'lose') return [`You lost $${bet}`, 'error'];
+        if (result === 'push') return ['Push - your bet is returned', 'warning'];
+        if (result === 'blackjack') return [`Blackjack! You won $${Math.floor(bet * 1.5)}!`, 'success'];
+        return ['Round complete', 'info'];
+    }, []);
+
+    const getDefaultStatusMessage = useCallback((phase: string, bet: number, result: string | null): [string, MessageType] => {
+        switch (phase) {
+            case 'betting':
+                return [bet > 0 ? `Bet: $${bet} - Press Deal to start` : 'Place your bet to start a new hand', 'info'];
+            case 'dealing':
+                return ['Dealing cards...', 'info'];
+            case 'playerTurn':
+                return ['Your turn: Hit, Stand, or Double?', 'info'];
+            case 'dealerTurn':
+                return ['Dealer is playing...', 'info'];
+            case 'settlement':
+                return getSettlementMessage(result, bet);
+            default:
+                return ['Welcome to Royal Edge Casino', 'info'];
+        }
+    }, [getSettlementMessage]);
+
     useEffect(() => {
         if (gameStore.message) {
             setStatusMessage(gameStore.message);
-
-            // Set message type based on content
-            if (gameStore.message.includes('win') || gameStore.message.includes('blackjack')) {
-                setMessageType('success');
-            } else if (gameStore.message.includes('lose') || gameStore.message.includes('bust')) {
-                setMessageType('error');
-            } else if (gameStore.message.includes('push')) {
-                setMessageType('warning');
-            } else {
-                setMessageType('info');
-            }
+            setMessageType(getMessageType(gameStore.message));
         } else {
-            // Default messages based on game phase
-            switch (gameStore.gamePhase) {
-                case 'betting':
-                    setStatusMessage('Place your bet to start a new hand');
-                    setMessageType('info');
-                    break;
-                case 'dealing':
-                    setStatusMessage('Dealing cards...');
-                    setMessageType('info');
-                    break;
-                case 'playerTurn':
-                    setStatusMessage('Your turn: Hit, Stand, or Double?');
-                    setMessageType('info');
-                    break;
-                case 'dealerTurn':
-                    setStatusMessage('Dealer is playing...');
-                    setMessageType('info');
-                    break;
-                case 'settlement':
-                    if (gameStore.roundResult === 'win') {
-                        setStatusMessage('You won!');
-                        setMessageType('success');
-                    } else if (gameStore.roundResult === 'lose') {
-                        setStatusMessage('You lost');
-                        setMessageType('error');
-                    } else if (gameStore.roundResult === 'push') {
-                        setStatusMessage('Push - your bet is returned');
-                        setMessageType('warning');
-                    }
-                    break;
-                default:
-                    setStatusMessage('Welcome to Royal Edge Casino');
-                    setMessageType('info');
-            }
+            const [message, type] = getDefaultStatusMessage(
+                gameStore.gamePhase,
+                gameStore.bet,
+                gameStore.roundResult
+            );
+            setStatusMessage(message);
+            setMessageType(type);
         }
-    }, [gameStore.message, gameStore.gamePhase, gameStore.roundResult]);
+    }, [gameStore.message, gameStore.gamePhase, gameStore.roundResult, gameStore.bet, getMessageType, getDefaultStatusMessage]);
 
-    // Sound effect management
+    return { statusMessage, messageType };
+};
+
+const useSoundEffects = (soundEnabled: boolean, gameStore: ExtendedGameStore) => {
     useEffect(() => {
         if (soundEnabled) {
             ambientSounds.music.play().catch(e => console.error("Error playing ambient sound:", e));
@@ -339,17 +394,14 @@ const BlackjackPage = () => {
             ambientSounds.music.pause();
         }
 
-        // Always return a cleanup function
         return () => {
             ambientSounds.music.pause();
         };
     }, [soundEnabled]);
 
-    // Handle sound effects for game events
     useEffect(() => {
         if (!soundEnabled) return;
 
-        // Play appropriate sound based on game phase
         if (gameStore?.gamePhase === 'dealing') {
             ambientSounds.deal.play().catch(e => console.error("Error playing deal sound:", e));
         } else if (gameStore?.gamePhase === 'settlement' && gameStore?.roundResult === 'win') {
@@ -358,54 +410,66 @@ const BlackjackPage = () => {
             ambientSounds.chips.play().catch(e => console.error("Error playing chips sound:", e));
         }
 
-        // Return cleanup function
         return () => {
-            // Stop any playing sounds when dependencies change
             Object.values(ambientSounds).forEach(sound => {
-                if (sound !== ambientSounds.music) { // Don't stop background music
+                if (sound !== ambientSounds.music) {
                     sound.pause();
                     sound.currentTime = 0;
                 }
             });
         };
     }, [soundEnabled, gameStore?.gamePhase, gameStore?.roundResult, gameStore?.bet]);
+};
 
-    // Update player hand data when game state changes
+const usePlayerSpots = (gameStore: ExtendedGameStore) => {
+    const [playerSpots, setPlayerSpots] = useState<PlayerSpot[]>([
+        {
+            id: 1,
+            position: 'center',
+            hand: null,
+            chips: gameStore?.chips || 1500,
+            bet: 0,
+            isActive: false,
+            isCurrentPlayer: true,
+        }
+    ]);
+
     useEffect(() => {
-        // Get player hands from the game store
         const playerHand = gameStore.activePlayerHandId && gameStore.entities?.hands
             ? gameStore.entities.hands[gameStore.activePlayerHandId]
             : null;
 
-        // Update the players array
         setPlayerSpots(prevPlayers => {
             const newPlayers = [...prevPlayers];
-            // Update the center player with the actual hand data
             const centerPlayerIndex = newPlayers.findIndex(p => p.position === 'center');
 
             if (centerPlayerIndex !== -1 && centerPlayerIndex < newPlayers.length) {
+                // Define the valid result types
+                type ResultType = 'win' | 'lose' | 'push' | 'blackjack' | undefined;
+                // Safely determine the result type
+                let resultType: ResultType = undefined;
+                if (gameStore.roundResult) {
+                    if (['win', 'lose', 'push', 'blackjack'].includes(gameStore.roundResult)) {
+                        resultType = gameStore.roundResult as ResultType;
+                    }
+                }
+
                 newPlayers[centerPlayerIndex] = {
                     ...newPlayers[centerPlayerIndex],
-                    hand: playerHand as Record<string, unknown> | null, // Cast to compatible type
+                    // Convert playerHand to the expected type
+                    hand: playerHand ? (playerHand as unknown) as Record<string, unknown> : null,
                     chips: gameStore?.chips || 0,
                     bet: gameStore?.bet || 0,
                     isActive: gameStore.gamePhase === 'playerTurn',
-                    isCurrentPlayer: true, // Explicitly set to true to fix type error
-                    result: gameStore.roundResult === null ? undefined : gameStore.roundResult as "win" | "lose" | "push" | "blackjack",
-                    // Ensure id is always defined
+                    isCurrentPlayer: true,
+                    result: resultType,
                     id: newPlayers[centerPlayerIndex]?.id ?? 1,
-                    // Ensure position is always defined
                     position: newPlayers[centerPlayerIndex]?.position ?? 'center'
                 };
             }
 
             return newPlayers;
         });
-
-        // Always return a cleanup function to avoid the TypeScript error
-        return () => {
-            // No cleanup needed for this effect
-        };
     }, [
         gameStore?.entities?.hands,
         gameStore?.activePlayerHandId,
@@ -415,66 +479,26 @@ const BlackjackPage = () => {
         gameStore?.chips
     ]);
 
-    // Get dealer hand data
-    const dealerHand = gameStore.dealerHandId && gameStore.entities?.hands
-        ? gameStore.entities.hands[gameStore.dealerHandId]
-        : null;
+    return playerSpots;
+};
 
-    // Replace any function inside block that might be causing strict mode errors
-    const basicStrategyLogic = (action: string): string => {
-        // Basic strategy implementation would go here
+const useGameActions = (
+    gameStore: ExtendedGameStore,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    analytics: any,
+    enhancedSettings: ExtendedEnhancedSettingsStore,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    dealerHand: any,
+    soundEnabled: boolean
+) => {
+    const basicStrategyLogic = useCallback((action: string): string => {
         return action;
-    };
+    }, []);
 
-    // Game action handlers
-    const handlePlaceBet = useCallback((playerId: number, amount: number) => {
-        console.log('handlePlaceBet called with:', { playerId, amount, phase: gameStore.gamePhase });
-
-        // Place bet in the game store
-        gameStore.placeBet(amount);
-        console.log('Bet placed in gameStore, new chips:', gameStore.chips);
-
-        // Record bet in analytics store
-        analytics.recordBet({
-            amount,
-            recommendedAmount: null,
-            followedRecommendation: false,
-            effectiveCount: gameStore.trueCount,
-            deckPenetration: gameStore.dealtCards.length / (gameStore.dealtCards.length + gameStore.shoe.length),
-            reason: null
-        });
-
-        // Play chip sound
-        if (soundEnabled) {
-            ambientSounds.chips.play().catch(e => console.error("Error playing chips sound:", e));
-        }
-    }, [soundEnabled, analytics, gameStore]);
-
-    const handleClearBet = useCallback(() => {
-        gameStore.clearBet();
-    }, [gameStore]);
-
-    const handleDealCards = useCallback(() => {
-        // Deal cards
-        gameStore.dealCards();
-
-        // Play dealing sound
-        if (soundEnabled) {
-            ambientSounds.deal.play().catch(e => console.error("Error playing deal sound:", e));
-        }
-    }, [soundEnabled, gameStore]);
-
-    const handlePlayerAction = useCallback((action: 'hit' | 'stand' | 'double' | 'split' | 'surrender') => {
-        // Play button click sound
-        if (soundEnabled) {
-            ambientSounds.buttonClick.play().catch(e => console.error("Error playing button sound:", e));
-        }
-
-        // Record decision before taking action
+    const recordPlayerDecision = useCallback((action: PlayerAction) => {
         if (gameStore.activePlayerHandId && dealerHand) {
             const playerHand = gameStore.entities?.hands?.[gameStore.activePlayerHandId];
 
-            // Extract nested ternary into simpler conditions
             let dealerUpCard = null;
             if (dealerHand.cards && dealerHand.cards.length > 0 && dealerHand.cards[0]) {
                 const firstCard = dealerHand.cards[0];
@@ -483,13 +507,15 @@ const BlackjackPage = () => {
                 }
             }
 
-            // Get recommended action based on basic strategy
             const recommendedAction = enhancedSettings.showBasicStrategy
-                ? basicStrategyLogic(action) // Use the function defined outside block scope
-                : action; // Use the actual player action when not following basic strategy
+                ? basicStrategyLogic(action)
+                : action;
+
+            // Create a variable that is guaranteed to be a HandEntity or an empty object with HandEntity shape
+            const safePlayerHand = playerHand || {};
 
             analytics.recordDecision({
-                playerHand: playerHand || {} as HandEntity, // Use HandEntity type instead of any
+                playerHand: safePlayerHand,
                 dealerUpCard,
                 decision: action,
                 recommendedDecision: recommendedAction,
@@ -497,11 +523,13 @@ const BlackjackPage = () => {
                 betAmount: gameStore?.bet || 0,
                 finalChips: gameStore?.chips || 0,
                 effectiveCount: gameStore.trueCount,
-                deckPenetration: gameStore.dealtCards.length / (gameStore.dealtCards.length + gameStore.shoe.length)
+                deckPenetration: gameStore.dealtCards && gameStore.shoe ?
+                    gameStore.dealtCards.length / (gameStore.dealtCards.length + gameStore.shoe.length) : 0
             });
         }
+    }, [gameStore, dealerHand, enhancedSettings.showBasicStrategy, analytics, basicStrategyLogic]);
 
-        // Execute the action based on the type
+    const executeGameAction = useCallback((action: PlayerAction) => {
         switch (action) {
             case 'hit':
                 gameStore.hit();
@@ -519,47 +547,214 @@ const BlackjackPage = () => {
                 gameStore.surrender();
                 break;
         }
+    }, [gameStore]);
 
-        // If dealer turn phase is reached, play dealer automatically
+    const handleBetAction = useCallback((playerId: number | string, amount: number) => {
+        try {
+            if (gameStore.gamePhase !== 'betting') {
+                console.warn(`Cannot place bet in current game phase: ${gameStore.gamePhase}`);
+                toast.error('Cannot place bet at this time', {
+                    description: 'Please wait for the current action to complete',
+                });
+                return;
+            }
+
+            if (amount <= 0) {
+                console.warn(`Invalid bet amount: ${amount}`);
+                return;
+            }
+
+            if (amount > (gameStore?.chips || 0)) {
+                console.warn(`Insufficient chips: ${gameStore?.chips}`);
+                toast.error('Insufficient funds', {
+                    description: 'You don\'t have enough chips for this bet',
+                });
+                return;
+            }
+
+            console.log('Placing bet:', { playerId, amount, currentPhase: gameStore.gamePhase, currentChips: gameStore.chips });
+
+            gameStore.placeBet(amount);
+
+            analytics.recordBet({
+                amount,
+                recommendedAmount: null,
+                followedRecommendation: false,
+                effectiveCount: gameStore.trueCount,
+                deckPenetration: gameStore.dealtCards && gameStore.shoe ?
+                    gameStore.dealtCards.length / (gameStore.dealtCards.length + gameStore.shoe.length) : 0,
+                reason: null
+            });
+
+            if (soundEnabled) {
+                ambientSounds.chips.pause();
+                ambientSounds.chips.currentTime = 0;
+                ambientSounds.chips.play().catch(e => console.error("Error playing chips sound:", e));
+            }
+
+            toast.success(`Bet placed: $${amount}`, {
+                duration: 2000,
+            });
+        } catch (error) {
+            console.error('Error placing bet:', error);
+            toast.error('Error placing bet', {
+                description: 'Please try again',
+            });
+        }
+    }, [soundEnabled, analytics, gameStore]);
+
+    const handleClearBet = useCallback(() => {
+        try {
+            if (!gameStore.bet || gameStore.bet <= 0) {
+                console.log('No bet to clear');
+                return;
+            }
+
+            if (gameStore.gamePhase !== 'betting') {
+                console.warn(`Cannot clear bet in current game phase: ${gameStore.gamePhase}`);
+                return;
+            }
+
+            console.log('Clearing current bet:', gameStore.bet);
+            gameStore.clearBet();
+            console.log('Bet cleared, chips restored to:', gameStore.chips);
+        } catch (error) {
+            console.error('Error clearing bet:', error);
+        }
+    }, [gameStore]);
+
+    const handleDealCards = useCallback(() => {
+        try {
+            if (gameStore.gamePhase !== 'betting') {
+                console.warn(`Cannot deal cards in current game phase: ${gameStore.gamePhase}`);
+                toast.error('Cannot deal cards at this time');
+                return;
+            }
+
+            if (!gameStore.bet || gameStore.bet <= 0) {
+                console.warn('Cannot deal cards without a bet');
+                toast.error('Please place a bet first');
+                return;
+            }
+
+            console.log('Dealing cards...', {
+                currentPhase: gameStore.gamePhase,
+                currentBet: gameStore.bet,
+                currentChips: gameStore.chips
+            });
+
+            gameStore.dealCards();
+
+            if (soundEnabled) {
+                ambientSounds.deal.pause();
+                ambientSounds.deal.currentTime = 0;
+                ambientSounds.deal.play().catch(e => console.error("Error playing deal sound:", e));
+            }
+        } catch (error) {
+            console.error('Error dealing cards:', error);
+            toast.error('Error dealing cards', {
+                description: 'Please try again',
+            });
+        }
+    }, [soundEnabled, gameStore]);
+
+    const handlePlayerAction = useCallback((action: string) => {
+        if (soundEnabled) {
+            ambientSounds.buttonClick.play().catch(e => console.error("Error playing button sound:", e));
+        }
+
+        // Ensure action is a valid PlayerAction before proceeding
+        if (['hit', 'stand', 'double', 'split', 'surrender'].includes(action)) {
+            const validAction = action as PlayerAction;
+            recordPlayerDecision(validAction);
+            executeGameAction(validAction);
+        } else {
+            console.error(`Invalid action: ${action}`);
+        }
+
         if (gameStore.gamePhase === 'dealerTurn') {
             setTimeout(() => {
                 gameStore.playDealer();
-                // Move to settlement after dealer plays
-                setTimeout(() => {
-                    gameStore.endRound();
-                }, 1500);
             }, 1000);
         }
-    }, [dealerHand, soundEnabled, enhancedSettings.showBasicStrategy, analytics, gameStore]);
+    }, [soundEnabled, gameStore, recordPlayerDecision, executeGameAction]);
 
-    // Handle insurance logic is implemented elsewhere or will be added later
-    // const handleInsurance = useCallback((takeInsurance: boolean) => {
-    //     if (takeInsurance) {
-    //         gameStore.takeInsurance();
-    //     } else {
-    //         gameStore.declineInsurance();
-    //     }
-    // }, [gameStore]);
+    const handleTakeInsurance = useCallback(() => {
+        gameStore.takeInsurance();
+    }, [gameStore]);
 
-    const handleBetConfirm = useCallback((amount: number) => {
-        console.log('handleBetConfirm called with:', { amount, phase: gameStore.gamePhase });
+    const handleDeclineInsurance = useCallback(() => {
+        gameStore.declineInsurance();
+    }, [gameStore]);
 
-        // Place the bet
-        gameStore.placeBet(amount);
-        console.log('Bet confirmed in gameStore, new bet amount:', gameStore.bet);
+    return {
+        handleBetAction,
+        handleClearBet,
+        handleDealCards,
+        handlePlayerAction,
+        handleTakeInsurance,
+        handleDeclineInsurance
+    };
+};
 
-        // Record bet in analytics
-        analytics.recordBet({
-            amount,
-            recommendedAmount: null,
-            followedRecommendation: false,
-            effectiveCount: gameStore.trueCount,
-            deckPenetration: gameStore.dealtCards.length / (gameStore.dealtCards.length + gameStore.shoe.length),
-            reason: null
-        });
-    }, [analytics, gameStore]);
+const BlackjackPage = () => {
+    // Use type assertions with explicit type declarations
+    const gameStore = useGameStore() as unknown as ExtendedGameStore;
+    const enhancedSettings = useEnhancedSettingsStore() as unknown as ExtendedEnhancedSettingsStore;
+    const sideBetsStore = useSideBetsStore() as unknown as ExtendedSideBetsStore;
+    const analytics = useAnalyticsStore();
 
-    // Handle game control actions
+    // Local state
+    const [isLoading, setIsLoading] = useState(true);
+    const [soundEnabled, setSoundEnabled] = useState(false);
+    const [activeTab, setActiveTab] = useState('game');
+    const [showRulesDialog, setShowRulesDialog] = useState(false);
+    const [showStrategyDialog, setShowStrategyDialog] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
+    const [showSideBets, setShowSideBets] = useState(false);
+    const [showMobileMenu, setShowMobileMenu] = useState(false);
+    const [isIntroShown, setIsIntroShown] = useState(false);
+    const [isGamePlaying, setIsGamePlaying] = useState(false);
+    const [tutorialMode, setTutorialMode] = useState(false);
+    const [welcomeShown, setWelcomeShown] = useState(false);
+    const [showInsuranceDialog, setShowInsuranceDialog] = useState(false);
+
+    // Custom hooks
+    const _isMounted = useGameInitialization(
+        gameStore,
+        analytics,
+        welcomeShown,
+        setWelcomeShown,
+        setIsIntroShown,
+        setIsLoading
+    );
+
+    const { statusMessage, messageType } = useGameMessages(gameStore);
+
+    useSoundEffects(soundEnabled, gameStore);
+
+    const _playerSpots = usePlayerSpots(gameStore);
+
+    const dealerHand = gameStore.dealerHandId && gameStore.entities?.hands
+        ? gameStore.entities.hands[gameStore.dealerHandId]
+        : null;
+
+    const {
+        handleBetAction,
+        handleClearBet,
+        handleDealCards,
+        handlePlayerAction,
+        handleTakeInsurance,
+        handleDeclineInsurance
+    } = useGameActions(
+        gameStore,
+        analytics,
+        enhancedSettings,
+        dealerHand,
+        soundEnabled
+    );
+
+    // Game control actions
     const handleStartStop = useCallback(() => {
         setIsGamePlaying(prev => !prev);
     }, []);
@@ -576,23 +771,22 @@ const BlackjackPage = () => {
         setTutorialMode(prev => !prev);
     }, []);
 
-    // Table and UI variants based on settings
+    // Table color from settings
     const tableColor = enhancedSettings.tableColor || '#1a5f7a';
 
     // Start game loop if completed or in settlement
     useEffect(() => {
         if (gameStore.gamePhase === 'completed' || gameStore.gamePhase === 'settlement') {
             const timer = setTimeout(() => {
-                // Reset for next round
                 gameStore.resetRound();
             }, 3000);
             return () => clearTimeout(timer);
         }
-        return () => { }; // Return empty cleanup function when condition is false
+        return () => { };
     }, [gameStore.gamePhase, gameStore]);
 
     // Game phase conversion for BlackjackTable component
-    const convertGamePhase = (phase: string): 'betting' | 'dealing' | 'player-turn' | 'dealer-turn' | 'payout' | 'game-over' => {
+    const convertGamePhase = (phase: string): GamePhaseType => {
         switch (phase) {
             case 'betting': return 'betting';
             case 'dealing': return 'dealing';
@@ -603,6 +797,11 @@ const BlackjackPage = () => {
             default: return 'betting';
         }
     };
+
+    // Monitor the game store's showInsurance state
+    useEffect(() => {
+        setShowInsuranceDialog(gameStore.showInsurance);
+    }, [gameStore.showInsurance]);
 
     // Loading screen
     if (isLoading) {
@@ -629,9 +828,9 @@ const BlackjackPage = () => {
                     transition={{ delay: 0.5, duration: 1 }}
                     className="flex items-center space-x-2"
                 >
-                    <div className="w-4 h-4 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: '0s' }} />
-                    <div className="w-4 h-4 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: '0.2s' }} />
-                    <div className="w-4 h-4 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: '0.4s' }} />
+                    <div className="w-4 h-4 rounded-full bg-amber-500 animate-bounce animation-delay-0" />
+                    <div className="w-4 h-4 rounded-full bg-amber-500 animate-bounce animation-delay-200" />
+                    <div className="w-4 h-4 rounded-full bg-amber-500 animate-bounce animation-delay-400" />
                 </motion.div>
             </div>
         );
@@ -641,12 +840,8 @@ const BlackjackPage = () => {
         <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-900 to-black">
             {/* Ambient lighting effects */}
             <div
-                className="absolute inset-0 pointer-events-none bg-blend-overlay"
-                style={{
-                    backgroundImage: `radial-gradient(circle at 50% 20%, ${tableColor}40 0%, transparent 60%)`,
-                    opacity: 0.6,
-                    mixBlendMode: 'color-dodge'
-                }}
+                className="absolute inset-0 pointer-events-none bg-blend-overlay opacity-60 mix-blend-color-dodge table-ambient-lighting"
+                data-table-color={`${tableColor}40`}
             />
 
             <Toaster position="top-center" expand={false} richColors />
@@ -680,7 +875,7 @@ const BlackjackPage = () => {
             </AnimatePresence>
 
             {/* Main header */}
-            <header className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between p-4 bg-gradient-to-b from-black to-transparent">
+            <header className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between p-4 bg-gradient-to-b from-black via-black/80 to-transparent backdrop-blur-sm">
                 <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -847,14 +1042,12 @@ const BlackjackPage = () => {
             </AnimatePresence>
 
             {/* Main game content */}
-            <main className="min-h-screen px-4 pt-20 pb-24 md:px-8">
-                {/* Debug info - can be styled better or moved to appropriate place */}
-                {playerSpots.length > 0 && (
-                    <div className="hidden">
-                        {/* We're using playerSpots for internal state tracking */}
-                        Player spots: {playerSpots.length}
-                    </div>
-                )}
+            <main className="relative min-h-screen px-4 overflow-x-hidden pt-36 pb-28 md:px-8">
+                {/* Status message display with extracted component */}
+                <div className="absolute z-40 w-full max-w-md transform -translate-x-1/2 top-4 left-1/2">
+                    <StatusMessage message={statusMessage} type={messageType} />
+                </div>
+
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="mx-auto max-w-7xl">
                     <TabsList className="mx-auto mb-4 border bg-black/50 border-slate-700 backdrop-blur-sm">
                         <TabsTrigger value="game">Main Game</TabsTrigger>
@@ -871,66 +1064,35 @@ const BlackjackPage = () => {
                                 transition={{ delay: 0.2, duration: 0.8 }}
                                 className="lg:col-span-3 h-[60vh] md:h-[70vh] relative"
                             >
-                                {/* Status message display */}
-                                <div className="absolute z-10 w-full max-w-md transform -translate-x-1/2 top-2 left-1/2">
-                                    <div
-                                        className={cn(
-                                            "rounded-lg shadow-lg backdrop-blur-sm",
-                                            "flex items-center justify-center",
-                                            "text-white font-medium px-4 py-2",
-                                            {
-                                                'bg-blue-500/70': messageType === 'info',
-                                                'bg-green-500/70': messageType === 'success',
-                                                'bg-amber-500/70': messageType === 'warning',
-                                                'bg-red-500/70': messageType === 'error'
-                                            }
-                                        )}
-                                        role="alert"
-                                        aria-live="assertive"
-                                    >
-                                        {/* Message icon */}
-                                        <span className="mr-2">
-                                            {messageType === 'info' && (
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                            )}
-                                            {messageType === 'success' && (
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                            )}
-                                            {messageType === 'warning' && (
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                                </svg>
-                                            )}
-                                            {messageType === 'error' && (
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                            )}
-                                        </span>
-                                        <span>{statusMessage}</span>
-                                    </div>
-                                </div>
-
                                 <BlackjackTable
                                     dealer={{
                                         cards: dealerHand?.cards?.map((cardId) => {
-                                            // Handle both string IDs and card objects
-                                            const cardKey = getCardKey(cardId);
+                                            // Get the card data from the normalized state
+                                            if (typeof cardId === 'string' && gameStore.entities?.cards) {
+                                                const cardData = gameStore.entities.cards[cardId];
+                                                // Create variable for suit with proper narrowing
+                                                const suitValue: Suit = (cardData?.suit || 'hearts') as Suit;
+                                                // Create variable for rank with proper narrowing
+                                                const rankValue: Rank = (cardData?.rank || 'A') as Rank;
+                                                return {
+                                                    id: cardId,
+                                                    suit: suitValue,
+                                                    rank: rankValue
+                                                };
+                                            }
 
+                                            // Fallback for missing card
                                             return {
-                                                id: String(cardKey),
-                                                suit: (gameStore.entities?.cards?.[cardKey]?.suit ?? 'hearts') as Suit,
-                                                rank: (gameStore.entities?.cards?.[cardKey]?.rank ?? 'A') as Rank
+                                                id: formatCardId(cardId),
+                                                suit: 'hearts' as Suit,
+                                                rank: 'A' as Rank
                                             };
                                         }) || [],
                                         isActive: gameStore.gamePhase === 'dealerTurn',
                                         result: (() => {
-                                            if (gameStore.roundResult === 'win') return 'lose';
-                                            if (gameStore.roundResult === 'lose') return 'win';
+                                            // Determine dealer result based on game outcome
+                                            if (gameStore.roundResult === 'win' || gameStore.roundResult === 'blackjack') return 'lose';
+                                            if (gameStore.roundResult === 'lose' || gameStore.roundResult === 'bust') return 'win';
                                             if (gameStore.roundResult === 'push') return 'push';
                                             return undefined;
                                         })()
@@ -941,33 +1103,39 @@ const BlackjackPage = () => {
                                         balance: gameStore?.chips ?? 0,
                                         hands: [{
                                             id: '1-hand',
-                                            cards: gameStore.activePlayerHandId && gameStore.entities?.hands ?
+                                            cards: gameStore.activePlayerHandId && gameStore.entities?.hands && gameStore.entities.cards ?
                                                 gameStore.entities.hands[gameStore.activePlayerHandId]?.cards?.map((cardId) => {
-                                                    // Handle both string IDs and card objects
-                                                    const cardKey = getCardKey(cardId);
+                                                    // Get the card data from the normalized state
+                                                    if (typeof cardId === 'string') {
+                                                        const cardData = gameStore.entities?.cards[cardId];
+                                                        return {
+                                                            id: cardId,
+                                                            suit: (cardData?.suit || 'hearts') as Suit,
+                                                            rank: (cardData?.rank || 'A') as Rank
+                                                        };
+                                                    }
 
+                                                    // Fallback for missing card
                                                     return {
-                                                        id: String(cardKey),
-                                                        suit: (gameStore.entities?.cards?.[cardKey]?.suit ?? 'hearts') as Suit,
-                                                        rank: (gameStore.entities?.cards?.[cardKey]?.rank ?? 'A') as Rank
+                                                        id: formatCardId(cardId),
+                                                        suit: 'hearts' as Suit,
+                                                        rank: 'A' as Rank
                                                     };
                                                 }) || [] : [],
                                             bet: gameStore?.bet || 0,
                                             betChips: [{
-                                                value: ((gameStore?.bet || 0) > 0 ?
-                                                    // Convert to a valid ChipValue by finding the closest valid value
-                                                    ([1, 5, 10, 25, 50, 100, 500, 1000] as ChipValue[])
-                                                        .find(v => v >= (gameStore?.bet || 0)) ?? 1000 as ChipValue
-                                                    : 1 as ChipValue),
+                                                value: ((gameStore?.bet || 0) > 0
+                                                    ? (VALID_CHIP_VALUES.find(v => v >= (gameStore?.bet || 0)) || 1000)
+                                                    : 1) as ChipValue,
                                                 count: 1
                                             }],
                                             isActive: gameStore.gamePhase === 'playerTurn',
-                                            result: gameStore.roundResult === null ? undefined : gameStore.roundResult as "win" | "lose" | "push" | "blackjack"
+                                            result: gameStore.roundResult as "win" | "lose" | "push" | "blackjack" | undefined
                                         }]
                                     }]}
                                     currentPlayerId="1"
                                     activeHandId="1-hand"
-                                    gamePhase={convertGamePhase(gameStore.gamePhase) as GamePhaseType}
+                                    gamePhase={convertGamePhase(gameStore.gamePhase)}
                                     minBet={enhancedSettings.gameRules?.minBet || 5}
                                     maxBet={enhancedSettings.gameRules?.maxBet || 500}
                                     availableActions={{
@@ -980,11 +1148,11 @@ const BlackjackPage = () => {
                                         deal: gameStore.gamePhase === 'betting' && (gameStore?.bet || 0) > 0
                                     }}
                                     recommendedAction={enhancedSettings.showBasicStrategy ? 'hit' : undefined}
-                                    message={gameStore.message}
+                                    message={gameStore.message || ''}
                                     darkMode={true}
-                                    onPlaceBet={(playerId, bet) => handlePlaceBet(parseInt(playerId), bet)}
-                                    onClearBet={() => handleClearBet()}
-                                    onAction={(action) => handlePlayerAction(action as 'hit' | 'stand' | 'double' | 'split' | 'surrender')}
+                                    onPlaceBet={(playerId, bet) => handleBetAction(playerId, bet)}
+                                    onClearBet={handleClearBet}
+                                    onAction={(action) => handlePlayerAction(action as PlayerAction)}
                                     onDealCards={handleDealCards}
                                 />
 
@@ -996,7 +1164,7 @@ const BlackjackPage = () => {
                                     className="w-full py-4 mt-4"
                                 >
                                     <GameControls
-                                        gamePhase={convertGamePhase(gameStore.gamePhase) as GamePhaseType}
+                                        gamePhase={convertGamePhase(gameStore.gamePhase)}
                                         isPlaying={isGamePlaying}
                                         isMuted={!soundEnabled}
                                         isTutorialMode={tutorialMode}
@@ -1017,7 +1185,7 @@ const BlackjackPage = () => {
 
                                 {/* Probability display when enabled */}
                                 {enhancedSettings.showProbabilities && gameStore.activePlayerHandId && (
-                                    <div className="absolute w-64 bottom-4 left-4">
+                                    <div className="absolute z-20 w-64 bottom-4 left-4">
                                         <Card className="p-3 border bg-black/40 backdrop-blur-sm border-slate-700">
                                             <div className="flex items-center justify-between mb-2">
                                                 <h4 className="text-sm font-medium">Win Probability</h4>
@@ -1029,7 +1197,7 @@ const BlackjackPage = () => {
                                                     <span className="text-xs font-medium text-green-400">65%</span>
                                                 </div>
                                                 <div className="w-full h-1.5 rounded-full bg-slate-700">
-                                                    <div className="h-1.5 rounded-full bg-green-500" style={{ width: '65%' }}></div>
+                                                    <div className="h-1.5 rounded-full bg-green-500 w-65"></div>
                                                 </div>
 
                                                 <div className="flex items-center justify-between">
@@ -1037,7 +1205,7 @@ const BlackjackPage = () => {
                                                     <span className="text-xs font-medium text-red-400">28%</span>
                                                 </div>
                                                 <div className="w-full h-1.5 rounded-full bg-slate-700">
-                                                    <div className="h-1.5 rounded-full bg-red-500" style={{ width: '28%' }}></div>
+                                                    <div className="h-1.5 rounded-full bg-red-500 w-28"></div>
                                                 </div>
 
                                                 <div className="flex items-center justify-between">
@@ -1045,7 +1213,7 @@ const BlackjackPage = () => {
                                                     <span className="text-xs font-medium text-gray-400">7%</span>
                                                 </div>
                                                 <div className="w-full h-1.5 rounded-full bg-slate-700">
-                                                    <div className="h-1.5 rounded-full bg-gray-500" style={{ width: '7%' }}></div>
+                                                    <div className="h-1.5 rounded-full bg-gray-500 w-7"></div>
                                                 </div>
                                             </div>
                                         </Card>
@@ -1188,21 +1356,21 @@ const BlackjackPage = () => {
                             </div>
                         </div>
 
-                        {/* Betting controls - only shown in betting phase */}
+                        {/* Betting controls - fixed position at bottom of screen with proper z-index */}
                         {(gameStore.gamePhase === 'betting' || gameStore.gamePhase === 'waiting' || gameStore.gamePhase === 'initial') && (
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.3, duration: 0.8 }}
-                                className="fixed bottom-0 left-0 right-0 z-30 p-4 bg-gradient-to-t from-black to-transparent"
+                                className="fixed bottom-0 left-0 right-0 z-40 p-4 bg-gradient-to-t from-black to-transparent"
                             >
-                                <div className="max-w-lg mx-auto">
+                                <div className="max-w-md mx-auto">
                                     <BettingControls
                                         balance={gameStore?.chips ?? 0}
                                         maxBet={enhancedSettings.gameRules?.maxBet || 500}
                                         minBet={enhancedSettings.gameRules?.minBet || 5}
                                         currentBet={gameStore?.bet || 0}
-                                        onPlaceBet={handleBetConfirm}
+                                        onPlaceBet={(amount) => handleBetAction('1', amount)}
                                         onClearBet={handleClearBet}
                                         disabled={gameStore.gamePhase !== 'betting' && gameStore.gamePhase !== 'waiting' && gameStore.gamePhase !== 'initial'}
                                         className="p-4 border rounded-lg bg-black/70 backdrop-blur-sm border-slate-700"
@@ -1350,7 +1518,7 @@ const BlackjackPage = () => {
                                         <span className="text-sm text-green-400">Good</span>
                                     </div>
                                     <div className="w-full h-2 rounded-full bg-slate-700">
-                                        <div className="h-2 bg-green-500 rounded-full" style={{ width: '65%' }}></div>
+                                        <div className="h-2 bg-green-500 rounded-full w-65"></div>
                                     </div>
                                     <p className="mt-1 text-xs text-gray-400">
                                         Your betting pattern shows good correlation with the count.
@@ -1376,7 +1544,7 @@ const BlackjackPage = () => {
                                         <span className="text-sm text-amber-400">Moderate</span>
                                     </div>
                                     <div className="w-full h-2 rounded-full bg-slate-700">
-                                        <div className="h-2 rounded-full bg-amber-500" style={{ width: '55%' }}></div>
+                                        <div className="h-2 rounded-full bg-amber-500 w-55"></div>
                                     </div>
 
                                     <div className="flex items-center justify-between mt-3">
@@ -1384,7 +1552,7 @@ const BlackjackPage = () => {
                                         <span className="text-sm text-red-400">Low</span>
                                     </div>
                                     <div className="w-full h-2 rounded-full bg-slate-700">
-                                        <div className="h-2 bg-red-500 rounded-full" style={{ width: '35%' }}></div>
+                                        <div className="h-2 bg-red-500 rounded-full w-35"></div>
                                     </div>
 
                                     <div className="mt-4">
@@ -1471,7 +1639,7 @@ const BlackjackPage = () => {
                                 };
                             }) || [] : []}
                         dealerUpcard={dealerHand?.cards && dealerHand.cards.length > 0 ? {
-                            id: getCardKey(dealerHand.cards[0]),
+                            id: formatCardId(dealerHand.cards[0]),
                             suit: (dealerHand.cards[0] && typeof dealerHand.cards[0] === 'string'
                                 ? (gameStore.entities?.cards?.[dealerHand.cards[0]]?.suit ?? 'hearts')
                                 : 'hearts') as Suit,
@@ -1689,7 +1857,7 @@ const BlackjackPage = () => {
                             <div className="space-y-2">
                                 <h4 className="text-sm font-medium">Music Volume</h4>
                                 <div className="w-full h-2 rounded-full bg-slate-700">
-                                    <div className="h-2 bg-blue-500 rounded-full" style={{ width: '30%' }}></div>
+                                    <div className="h-2 bg-blue-500 rounded-full w-30"></div>
                                 </div>
                             </div>
                         </TabsContent>
@@ -1758,11 +1926,41 @@ const BlackjackPage = () => {
                     />
                 </DialogContent>
             </Dialog>
+
+            {/* Insurance dialog */}
+            <Dialog open={showInsuranceDialog} onOpenChange={setShowInsuranceDialog}>
+                <DialogContent className="max-w-md">
+                    <DialogTitle>Insurance Offered</DialogTitle>
+                    <div className="py-4">
+                        <p className="mb-4">Dealer is showing an Ace. Would you like to take insurance?</p>
+                        <p className="mb-4 text-sm text-slate-400">Insurance costs half your original bet and pays 2:1 if the dealer has blackjack.</p>
+
+                        <div className="flex justify-center mt-6 space-x-4">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    handleDeclineInsurance();
+                                    setShowInsuranceDialog(false);
+                                }}
+                            >
+                                No Thanks
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    handleTakeInsurance();
+                                    setShowInsuranceDialog(false);
+                                }}
+                            >
+                                Take Insurance
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
 
 export default function BlackjackPageWrapper() {
-    // This wrapper component can later be expanded to properly separate concerns
     return <BlackjackPage />;
 }

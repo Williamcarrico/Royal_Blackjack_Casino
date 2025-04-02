@@ -1,3 +1,11 @@
+/**
+ * PlayerPosition Component
+ *
+ * Renders a player's position on the blackjack table, including their hands,
+ * betting circles, and player information.
+ *
+ * @component
+ */
 'use client';
 
 import React from 'react';
@@ -18,6 +26,10 @@ export interface PlayerPositionProps {
     enableChips?: boolean;
 }
 
+/**
+ * PlayerPosition displays a player's area on the blackjack table
+ * It includes hands, betting circles, and player info such as name and balance
+ */
 const PlayerPosition = ({
     player,
     isCurrentPlayer = false,
@@ -27,7 +39,12 @@ const PlayerPosition = ({
     onBetChange,
     enableChips = true,
 }: PlayerPositionProps) => {
-    // Map bet amount to chip representations
+    /**
+     * Maps the bet amount to chip representations of different denominations
+     *
+     * @param {number} bet - The total bet amount to convert to chips
+     * @returns {Array<{value: ChipValue; count: number}>} Array of chip values and counts
+     */
     const mapBetToChips = (bet: number): Array<{ value: ChipValue; count: number }> => {
         if (bet === 0) return [];
 
@@ -48,7 +65,9 @@ const PlayerPosition = ({
         return chips;
     };
 
-    // Handle betting circle click for bet removal
+    /**
+     * Handles bet removal when betting circle is clicked
+     */
     const handleBetRemove = () => {
         onBetChange?.(0);
     };
@@ -67,16 +86,17 @@ const PlayerPosition = ({
     return (
         <motion.div
             className={cn(
-                'flex flex-col items-center gap-1',
-                'p-2 rounded-lg',
+                'flex flex-col items-center gap-2',
+                'p-3 rounded-lg',
                 playerHighlight,
-                isCurrentPlayer ? 'bg-black/20' : 'bg-black/10',
+                isCurrentPlayer ? 'bg-black/30' : 'bg-black/15',
+                isCurrentPlayer && 'scale-105',
                 className
             )}
-            animate={isCurrentPlayer ? { scale: 1.03 } : { scale: 1 }}
+            animate={isCurrentPlayer ? { scale: 1.05 } : { scale: 1 }}
             transition={{ duration: 0.3 }}
         >
-            {/* Player's hands */}
+            {/* Player's hands with proper spacing */}
             <div className="flex flex-wrap justify-center gap-4">
                 {(player.hands || []).map((hand) => {
                     // Check if this hand is active
@@ -89,7 +109,7 @@ const PlayerPosition = ({
 
                     return (
                         <div key={hand.id} className="relative">
-                            {/* Betting circle */}
+                            {/* Betting circle with corrected positioning */}
                             <div className="mb-3">
                                 <BettingCircle
                                     betAmount={hand.bet}
@@ -103,25 +123,28 @@ const PlayerPosition = ({
                                     onBetRemoved={handleBetRemove}
                                     showPayoutAnimation={showPayoutAnimation}
                                     payoutMultiplier={hand.result === 'blackjack' ? 1.5 : 1}
+                                    className="z-30"
                                 />
                             </div>
 
-                            {/* Hand display */}
-                            <Hand
-                                cards={hand.cards}
-                                handId={hand.id}
-                                isActive={isActiveHand}
-                                isWinner={isWinner}
-                                isLoser={isLoser}
-                                isPush={isPush}
-                                showValue={true}
-                                animate={gamePhase === 'dealing'}
-                                compact={player.hands && player.hands.length > 1}
-                            />
+                            {/* Hand display with improved spacing */}
+                            <div className="mt-1 z-20">
+                                <Hand
+                                    cards={hand.cards}
+                                    handId={hand.id}
+                                    isActive={isActiveHand}
+                                    isWinner={isWinner}
+                                    isLoser={isLoser}
+                                    isPush={isPush}
+                                    showValue={true}
+                                    animate={gamePhase === 'dealing'}
+                                    compact={player.hands && player.hands.length > 1}
+                                />
+                            </div>
 
-                            {/* Insurance indicator */}
+                            {/* Insurance indicator with proper z-index */}
                             {hand.insurance && hand.insurance > 0 && (
-                                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-0.5 rounded-full">
+                                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-0.5 rounded-full z-40">
                                     Insurance: ${hand.insurance}
                                 </div>
                             )}
@@ -130,11 +153,11 @@ const PlayerPosition = ({
                 })}
             </div>
 
-            {/* Player info */}
-            <div className="mt-2 text-center">
-                <div className="font-medium text-white">{player.name}</div>
-                <div className="text-sm text-white/80">
-                    ${(player.balance ?? 0).toLocaleString()}
+            {/* Player info - enhanced with background for better visibility */}
+            <div className="px-3 py-1 mt-3 text-center rounded-md bg-black/40 z-10">
+                <div className="font-medium text-white">{player.name || 'Player'}</div>
+                <div className="text-sm text-amber-300">
+                    ${(typeof player.balance === 'number' ? player.balance : 0).toLocaleString()}
                 </div>
             </div>
         </motion.div>

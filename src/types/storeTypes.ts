@@ -31,10 +31,13 @@ export interface GameStore {
     error: string | null;
     lastAction: string | null;
     userId: string | null;
+    chips: number; // Player's current chip balance
+    bet: number; // Current bet amount
 
     // User management
     setUserId: (userId: string | null) => void;
     loadUserChips: () => Promise<void>;
+    updateChips: (amount: number) => void; // Method to update player's chip balance
 
     // Game initialization
     initializeGame: (options?: GameOptions) => void;

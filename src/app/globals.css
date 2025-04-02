@@ -510,6 +510,29 @@
   .rounded-lg-clip {
     clip-path: inset(0 0 0 0 round 8px);
   }
+
+  /* Mix blend mode utilities */
+  .mix-blend-color-dodge {
+    mix-blend-mode: color-dodge;
+  }
+
+  /* Opacity utilities */
+  .opacity-60 {
+    opacity: 0.6;
+  }
+
+  /* Table lighting effects */
+  .table-ambient-lighting {
+    background-image: radial-gradient(
+      circle at 50% 20%,
+      var(--table-glow-color) 0%,
+      transparent 60%
+    );
+  }
+
+  [data-table-color] {
+    --table-glow-color: attr(data-table-color);
+  }
 }
 
 /*
@@ -1545,4 +1568,58 @@
 
 .vegas-lights {
   animation: vegas-lights 2s infinite ease-in-out;
+}
+
+/* Animation delay utility classes */
+.animation-delay-0 {
+  animation-delay: 0s;
+}
+
+.animation-delay-200 {
+  animation-delay: 0.2s;
+}
+
+.animation-delay-400 {
+  animation-delay: 0.4s;
+}
+
+/* Width utility classes for progress bars */
+.w-7 {
+  width: 7%;
+}
+
+.w-28 {
+  width: 28%;
+}
+
+.w-30 {
+  width: 30%;
+}
+
+.w-35 {
+  width: 35%;
+}
+
+.w-55 {
+  width: 55%;
+}
+
+.w-65 {
+  width: 65%;
+}
+
+/* Ambient lighting effect for tutorial page */
+.ambient-lighting {
+  background-image: radial-gradient(
+      circle at 50% 20%,
+      rgba(236, 72, 153, 0.15),
+      transparent 70%
+    ),
+    radial-gradient(
+      circle at 80% 50%,
+      rgba(59, 130, 246, 0.15),
+      transparent 50%
+    );
+  opacity: 0.7;
+  mix-blend-mode: color-dodge;
 }

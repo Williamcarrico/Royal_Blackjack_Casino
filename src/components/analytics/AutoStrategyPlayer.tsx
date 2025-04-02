@@ -312,7 +312,7 @@ const AutoStrategyPlayer: React.FC<AutoStrategyPlayerProps> = ({ className = '' 
         setReasoning(reason);
 
         // Auto-play if enabled
-        if (autoPlayEnabled && autoPlayBasicStrategy && action && gameStore.entities && gameStore.entities.hands) {
+        if (autoPlayEnabled && autoPlayBasicStrategy && action && gameStore.entities?.hands) {
             const timeout = setTimeout(() => {
                 switch (action) {
                     case 'hit':
@@ -419,8 +419,7 @@ const AutoStrategyPlayer: React.FC<AutoStrategyPlayerProps> = ({ className = '' 
 
                                     return (
                                         <div
-                                            className={`h-full ${confidenceColor}`}
-                                            style={{ width: `${confidence * 100}%` }}
+                                            className={`h-full ${confidenceColor} w-[${confidence * 100}%]`}
                                         />
                                     );
                                 })()}

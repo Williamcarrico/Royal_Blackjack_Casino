@@ -241,13 +241,7 @@ const TutorialPage = () => {
         <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-900 via-slate-800 to-black">
             {/* Ambient lighting and effects */}
             <div
-                className="absolute inset-0 pointer-events-none bg-blend-overlay"
-                style={{
-                    backgroundImage: `radial-gradient(circle at 50% 20%, rgba(236, 72, 153, 0.15), transparent 70%),
-                            radial-gradient(circle at 80% 50%, rgba(59, 130, 246, 0.15), transparent 50%)`,
-                    opacity: 0.7,
-                    mixBlendMode: 'color-dodge'
-                }}
+                className="absolute inset-0 pointer-events-none bg-blend-overlay ambient-lighting"
             />
 
             <Particles />

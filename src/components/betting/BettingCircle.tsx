@@ -1,9 +1,27 @@
+/**
+ * BettingCircle Component
+ *
+ * Renders a circular betting area where chips can be placed. The component visualizes
+ * bet amounts, handles bet removal, and displays win/loss animations.
+ *
+ * @component
+ */
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import Chip, { ChipValue } from './Chip';
+
+/**
+ * Generates position classes for stacked chips with proper layering
+ *
+ * @param {number} index - The index of the chip in the stack
+ * @returns {string} CSS classes for positioning the chip
+ */
+const getChipPositionClasses = (index: number) => {
+    return `absolute -translate-y-[${index * 2}px] z-[${10 + index}]`;
+};
 
 export interface BetInfo {
     amount: number;
@@ -33,6 +51,11 @@ export interface BettingCircleProps {
     showPayoutAnimation?: boolean;
 }
 
+/**
+ * BettingCircle component displays a circular area where players place bets
+ * It supports various states including active, winner, loser, push
+ * and animations for chip placement and win/loss outcomes
+ */
 const BettingCircle = ({
     betAmount = 0,
     placedChips = [],
@@ -77,8 +100,16 @@ const BettingCircle = ({
         return 'ring-1 ring-white/30 bg-black/20';
     })();
 
-    // Handle clicks on the betting circle
-    const handleClick = () => {
+    /**
+     * Handles clicks on the betting circle with propagation prevention
+     * Triggers bet removal when clicked if allowed
+     *
+     * @param {React.MouseEvent} e - The click event
+     */
+    const handleClick = (e: React.MouseEvent) => {
+        // Prevent event propagation to parent elements
+        e.stopPropagation();
+
         if (disabled) return;
 
         if (betAmount > 0 && allowRemoval) {
@@ -86,24 +117,33 @@ const BettingCircle = ({
         }
     };
 
-    // Handle keyboard interaction for accessibility
+    /**
+     * Handles keyboard interactions for accessibility
+     * Allows Enter or Space to remove bet if allowed
+     *
+     * @param {React.KeyboardEvent} e - The keyboard event
+     */
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (disabled) return;
+
+        // Prevent default browser behavior for these keys
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            handleClick();
+            e.stopPropagation();
+            handleClick(e as unknown as React.MouseEvent);
         }
     };
 
     return (
-        <div className={cn('relative flex flex-col items-center z-20', className)}>
-            {/* Betting circle */}
+        <div className={cn('relative flex flex-col items-center z-30', className)}>
+            {/* Betting circle with improved responsive sizing */}
             <motion.div
                 className={cn(
-                    'relative w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center',
+                    'relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full flex items-center justify-center',
                     'transition-all duration-200',
                     circleStyle,
                     !disabled && betAmount > 0 && allowRemoval && 'cursor-pointer',
+                    active && 'ring-4 ring-primary shadow-lg shadow-primary/20',
                     disabled && 'opacity-50'
                 )}
                 whileHover={!disabled && betAmount > 0 && allowRemoval ? { scale: 1.05 } : undefined}
@@ -130,12 +170,7 @@ const BettingCircle = ({
                         {placedChips.map((chipInfo, index) => (
                             <div
                                 key={`${chipInfo.value}-${index}`}
-                                className="absolute"
-                                style={{
-                                    // Stack chips with a slight offset
-                                    transform: `translateY(${-(index * 2)}px)`,
-                                    zIndex: 10 + index,
-                                }}
+                                className={getChipPositionClasses(index)}
                             >
                                 <Chip
                                     value={chipInfo.value}
@@ -193,9 +228,9 @@ const BettingCircle = ({
                 </AnimatePresence>
             </motion.div>
 
-            {/* Bet amount display */}
+            {/* Bet amount display with responsive sizing */}
             {betAmount > 0 && (
-                <div className="mt-2 text-sm font-medium text-white py-1 px-2 rounded bg-black/40">
+                <div className="px-2 py-1 mt-2 text-xs sm:text-sm font-medium text-white rounded bg-black/40">
                     ${betAmount.toLocaleString()}
                 </div>
             )}
