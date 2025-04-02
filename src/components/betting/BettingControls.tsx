@@ -28,6 +28,7 @@ export interface BettingControlsProps {
     onClearBet?: () => void;
     onMaxBet?: () => void;
     onDoubleBet?: () => void;
+    onDealCards?: () => void;
     disabled?: boolean;
     autoConfirm?: boolean;
     confirmEnabled?: boolean;
@@ -52,6 +53,7 @@ const BettingControls: React.FC<BettingControlsProps> = ({
     onClearBet,
     onMaxBet,
     onDoubleBet,
+    onDealCards,
     disabled = false,
     autoConfirm = false,
     confirmEnabled = true,
@@ -123,13 +125,15 @@ const BettingControls: React.FC<BettingControlsProps> = ({
             }
         } else {
             // Set an appropriate error message based on the constraint violation
+            let errorMsg = `Cannot select $${value} chip`;
+
             if (value > balance) {
-                setErrorMessage(`Not enough balance for a $${value} chip`);
+                errorMsg = `Not enough balance for a $${value} chip`;
             } else if (currentBet + value > maxBet) {
-                setErrorMessage(`Adding $${value} would exceed max bet of $${maxBet}`);
-            } else {
-                setErrorMessage(`Cannot select $${value} chip`);
+                errorMsg = `Adding $${value} would exceed max bet of $${maxBet}`;
             }
+
+            setErrorMessage(errorMsg);
         }
     }, [disabled, canSelectChip, autoConfirm, balance, currentBet, maxBet]);
 
@@ -244,20 +248,18 @@ const BettingControls: React.FC<BettingControlsProps> = ({
                 'flex flex-wrap gap-2',
                 vertical ? 'justify-center' : 'justify-start'
             )}>
-                {availableChips
-                    .sort((a: ChipValue, b: ChipValue) => a - b)
-                    .map((value: ChipValue) => (
-                        <Chip
-                            key={`chip-${value}`}
-                            value={value}
-                            size={compact ? 'sm' : 'md'}
-                            selected={selectedChip === value}
-                            disabled={!canSelectChip(value) || disabled}
-                            onClick={() => handleChipSelect(value)}
-                            className="cursor-pointer transition-transform hover:scale-110"
-                            aria-label={`$${value} chip${!canSelectChip(value) ? ' (not available)' : ''}`}
-                        />
-                    ))}
+                {availableChips.toSorted((a: ChipValue, b: ChipValue) => a - b).map((value: ChipValue) => (
+                    <Chip
+                        key={`chip-${value}`}
+                        value={value}
+                        size={compact ? 'sm' : 'md'}
+                        selected={selectedChip === value}
+                        disabled={!canSelectChip(value) || disabled}
+                        onClick={() => handleChipSelect(value)}
+                        className="transition-transform cursor-pointer hover:scale-110"
+                        aria-label={`$${value} chip${!canSelectChip(value) ? ' (not available)' : ''}`}
+                    />
+                ))}
             </div>
 
             {/* Betting actions */}
@@ -318,6 +320,25 @@ const BettingControls: React.FC<BettingControlsProps> = ({
                     Max
                 </button>
 
+                {/* Deal button - show when there's a bet and onDealCards is available */}
+                {currentBet >= minBet && onDealCards && (
+                    <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={onDealCards}
+                        className={cn(
+                            'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                            'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary',
+                            disabled
+                                ? 'bg-gray-600 cursor-not-allowed opacity-50'
+                                : 'bg-green-600 hover:bg-green-500'
+                        )}
+                        aria-label="Deal cards"
+                    >
+                        Deal
+                    </button>
+                )}
+
                 {/* Bet confirmation button (if enabled and not auto-confirm) */}
                 {confirmEnabled && !autoConfirm && selectedChip !== null && (
                     <button
@@ -337,7 +358,7 @@ const BettingControls: React.FC<BettingControlsProps> = ({
             </div>
 
             {/* Current bet display */}
-            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-3 py-1 bg-black/70 text-white rounded-full text-sm">
+            <div className="absolute top-0 px-3 py-1 text-sm text-white transform -translate-x-1/2 -translate-y-1/2 rounded-full left-1/2 bg-black/70">
                 Bet: ${currentBet.toLocaleString()} | Balance: ${balance.toLocaleString()}
             </div>
 
@@ -348,7 +369,7 @@ const BettingControls: React.FC<BettingControlsProps> = ({
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full mt-1 px-3 py-1 bg-red-600 text-white rounded-md text-sm"
+                        className="absolute bottom-0 px-3 py-1 mt-1 text-sm text-white transform -translate-x-1/2 translate-y-full bg-red-600 rounded-md left-1/2"
                     >
                         {errorMessage}
                     </motion.div>

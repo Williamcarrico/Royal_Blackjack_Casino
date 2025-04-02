@@ -419,7 +419,8 @@ const AutoStrategyPlayer: React.FC<AutoStrategyPlayerProps> = ({ className = '' 
 
                                     return (
                                         <div
-                                            className={`h-full ${confidenceColor} w-[${confidence * 100}%]`}
+                                            className={`h-full ${confidenceColor}`}
+                                            style={{ width: `${confidence * 100}%` }}
                                         />
                                     );
                                 })()}

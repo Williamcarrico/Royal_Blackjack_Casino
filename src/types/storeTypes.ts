@@ -33,6 +33,7 @@ export interface GameStore {
     userId: string | null;
     chips: number; // Player's current chip balance
     bet: number; // Current bet amount
+    isInitialized?: boolean;
 
     // User management
     setUserId: (userId: string | null) => void;

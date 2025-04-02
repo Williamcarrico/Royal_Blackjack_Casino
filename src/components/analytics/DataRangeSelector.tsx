@@ -101,11 +101,10 @@ export const DateRangeSelector = ({ onRangeChange, className = '' }: DateRangeSe
         if (direction === 'prev') {
             end.setDate(end.getDate() - days);
             start.setDate(start.getDate() - days * 2);
+        } else if (new Date().getTime() - end.getTime() < 1000 * 60 * 60 * 24) {
+            // Already at latest date
+            return;
         } else {
-            if (new Date().getTime() - end.getTime() < 1000 * 60 * 60 * 24) {
-                // Already at latest date
-                return;
-            }
             start.setDate(start.getDate() + days);
             end.setDate(end.getDate() + days);
         }

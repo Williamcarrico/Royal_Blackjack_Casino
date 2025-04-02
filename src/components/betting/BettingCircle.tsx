@@ -14,13 +14,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Chip, { ChipValue } from './Chip';
 
 /**
- * Generates position classes for stacked chips with proper layering
+ * Generates position styles for stacked chips with proper layering
  *
  * @param {number} index - The index of the chip in the stack
- * @returns {string} CSS classes for positioning the chip
+ * @returns {object} Style object for positioning the chip
  */
-const getChipPositionClasses = (index: number) => {
-    return `absolute -translate-y-[${index * 2}px] z-[${10 + index}]`;
+const getChipPositionStyles = (index: number) => {
+    return {
+        position: 'absolute',
+        transform: `translateY(-${index * 2}px)`,
+        zIndex: 10 + index
+    };
 };
 
 export interface BetInfo {
@@ -170,7 +174,7 @@ const BettingCircle = ({
                         {placedChips.map((chipInfo, index) => (
                             <div
                                 key={`${chipInfo.value}-${index}`}
-                                className={getChipPositionClasses(index)}
+                                style={getChipPositionStyles(index)}
                             >
                                 <Chip
                                     value={chipInfo.value}

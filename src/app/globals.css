@@ -1588,6 +1588,10 @@
   width: 7%;
 }
 
+.w-25 {
+  width: 25%;
+}
+
 .w-28 {
   width: 28%;
 }
@@ -1600,12 +1604,37 @@
   width: 35%;
 }
 
+.w-50 {
+  width: 50%;
+}
+
 .w-55 {
   width: 55%;
 }
 
 .w-65 {
   width: 65%;
+}
+
+.w-75 {
+  width: 75%;
+}
+
+.w-80 {
+  width: 80%;
+}
+
+.w-90 {
+  width: 90%;
+}
+
+.w-100 {
+  width: 100%;
+}
+
+/* Use CSS custom property for dynamic width */
+.progress-bar-dynamic {
+  width: var(--progress-width);
 }
 
 /* Ambient lighting effect for tutorial page */
