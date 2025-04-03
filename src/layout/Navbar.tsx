@@ -109,7 +109,7 @@ const navLinks: NavLink[] = [
 			},
 			{
 				href: '/analytics',
-				label: 'Analytics (Coming Soon)',
+				label: 'Analytics',
 				icon: <GiDatabase className="text-amber-400" size={18} />,
 			},
 			{
