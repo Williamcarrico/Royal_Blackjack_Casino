@@ -241,6 +241,16 @@ const Chip = ({
     const rotateX = useTransform(y, [-100, 100], [10, -10]);
     const rotateY = useTransform(x, [-100, 100], [-10, 10]);
 
+    // Update data attributes for CSS to use
+    useEffect(() => {
+        if (chipRef.current) {
+            chipRef.current.style.setProperty('--motion-x', `${x.get()}px`);
+            chipRef.current.style.setProperty('--motion-y', `${y.get()}px`);
+            chipRef.current.style.setProperty('--motion-rotate-x', `${rotateX.get()}deg`);
+            chipRef.current.style.setProperty('--motion-rotate-y', `${rotateY.get()}deg`);
+        }
+    }, [x, y, rotateX, rotateY]);
+
     // Get the chip colors based on the value
     const colors = CHIP_COLORS[value] || CHIP_COLORS[1];
 
@@ -382,13 +392,13 @@ const Chip = ({
 
     return (
         <div
-            className={cn('relative', stacked && 'stack-container', className)}
-            style={style}
+            className={cn('relative chip-container', stacked && 'stack-container', className)}
             ref={chipRef}
             data-stacked={stacked}
             data-count={count}
             data-stacking-offset={stackingOffset}
             data-render-limit={renderLimit}
+            data-chip-value={value}
         >
             {/* Render multiple chips for stacks with optimized rendering */}
             {stacked && count > 1 && (
@@ -415,7 +425,7 @@ const Chip = ({
                 type="button"
                 className={cn(
                     'flex items-center justify-center rounded-full shadow-lg border-2',
-                    'select-none',
+                    'select-none main-chip-element',
                     colors.bg,
                     colors.border,
                     colors.text,
@@ -423,7 +433,8 @@ const Chip = ({
                     sizeClasses[size],
                     isInteractive && 'cursor-pointer',
                     disabled && 'opacity-50',
-                    isDragging && 'z-50',
+                    isDragging && 'z-50 chip-dragging',
+                    draggable && !disabled && 'chip-draggable',
                     'main-chip'
                 )}
                 initial={initialAnimationValue}
@@ -444,12 +455,6 @@ const Chip = ({
                 aria-label={`${value} chip` + (count > 1 ? `, ${count} chips` : '')}
                 data-dragging={isDragging ? "true" : "false"}
                 data-draggable={draggable ? "true" : "false"}
-                style={{
-                    x,
-                    y,
-                    rotateX: draggable ? rotateX : 0,
-                    rotateY: draggable ? rotateY : 0,
-                }}
             >
                 {/* Inner ring */}
                 <div className={cn(

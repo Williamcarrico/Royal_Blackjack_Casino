@@ -5,25 +5,25 @@ import { Slot } from '@radix-ui/react-slot'
 import { VariantProps, cva } from 'class-variance-authority'
 import { PanelLeftIcon } from 'lucide-react'
 
-import { useIsMobile } from '@/hooks/useIsMobile'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils/utils'
-import { Button } from '@/components/ui/layout/button'
-import { Input } from '@/components/ui/forms/input'
-import { Separator } from '@/components/ui/layout/separator'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
 import {
 	Sheet,
 	SheetContent,
 	SheetDescription,
 	SheetHeader,
 	SheetTitle,
-} from '@/components/ui/layout/sheet'
-import { Skeleton } from '@/components/ui/layout/skeleton'
+} from '@/components/ui/sheet'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
-} from '@/components/ui/layout/tooltip'
+} from '@/components/ui/tooltip'
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state'
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -586,7 +586,7 @@ function SidebarMenuSkeleton({
 			{...props}
 		>
 			{showIcon && <Skeleton className="rounded-md size-4" data-sidebar="menu-skeleton-icon" />}
-			<Skeleton className="h-4 flex-1" style={{ width }} data-sidebar="menu-skeleton-text" />
+			<Skeleton className="flex-1 h-4" style={{ width }} data-sidebar="menu-skeleton-text" />
 		</div>
 	)
 }

@@ -608,24 +608,28 @@ export default function ResponsibleGamingPage() {
 						<motion.div
 							className="absolute w-2 h-2 rounded-full bg-primary/30"
 							variants={floatVariants}
-							style={{ top: '20%', left: '10%' }}
+							data-pos-top="20%"
+							data-pos-left="10%"
 						/>
 						<motion.div
 							className="absolute w-3 h-3 rounded-full bg-amber-500/30"
 							variants={floatVariants}
-							style={{ top: '30%', right: '15%' }}
+							data-pos-top="30%"
+							data-pos-right="15%"
 							custom={1}
 						/>
 						<motion.div
 							className="absolute w-2 h-2 rounded-full bg-emerald-500/30"
 							variants={floatVariants}
-							style={{ bottom: '25%', left: '20%' }}
+							data-pos-bottom="25%"
+							data-pos-left="20%"
 							custom={2}
 						/>
 						<motion.div
 							className="absolute w-1.5 h-1.5 rounded-full bg-sky-500/30"
 							variants={floatVariants}
-							style={{ bottom: '40%', right: '25%' }}
+							data-pos-bottom="40%"
+							data-pos-right="25%"
 							custom={3}
 						/>
 					</>
@@ -636,7 +640,7 @@ export default function ResponsibleGamingPage() {
 			<section ref={heroRef} className="relative pb-20 overflow-hidden pt-28">
 				<motion.div
 					className="absolute inset-0 z-0 bg-gradient-to-b from-primary/20 via-primary/10 to-background/80"
-					style={{ opacity: backgroundOpacity }}
+					data-opacity={backgroundOpacity}
 				/>
 				<div className="absolute inset-0 bg-[url('/images/pattern-casino.svg')] opacity-[0.04] z-0" />
 
@@ -650,7 +654,7 @@ export default function ResponsibleGamingPage() {
 					<motion.div
 						variants={cardVariants}
 						className="max-w-3xl mx-auto text-center"
-						style={{ scale: sectionScale }}
+						data-scale={sectionScale}
 					>
 						<motion.div
 							className="flex items-center justify-center mb-12"
@@ -663,7 +667,7 @@ export default function ResponsibleGamingPage() {
 								<motion.div
 									className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-500/20 to-transparent"
 									variants={shimmerVariants}
-									style={{ backgroundSize: "200% 100%" }}
+									data-bg-size="200% 100%"
 								/>
 								<Sparkles className="w-4 h-4 mr-1.5" />
 								ROYAL BLACKJACK PRESTIGE
@@ -1004,7 +1008,7 @@ export default function ResponsibleGamingPage() {
 												<div className="w-full h-3 overflow-hidden rounded-full bg-muted">
 													<div
 														className={`h-full rounded-full ${getRiskColorClass(userProfile.riskScore)}`}
-														style={{ width: `${userProfile.riskScore}%` }}
+														data-width={`${userProfile.riskScore}%`}
 													/>
 												</div>
 												<span className="text-sm font-medium whitespace-nowrap">
@@ -1023,7 +1027,7 @@ export default function ResponsibleGamingPage() {
 														<div className="w-full h-1.5 rounded-full bg-muted/50">
 															<div
 																className={`h-full rounded-full ${getMetricColorClass(value)}`}
-																style={{ width: `${value}%` }}
+																data-width={`${value}%`}
 															/>
 														</div>
 													</div>

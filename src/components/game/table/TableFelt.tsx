@@ -237,6 +237,20 @@ const TableFelt = ({
         );
     };
 
+    // Use CSS custom properties for dynamic styling
+    const feltClass = React.useMemo(() => {
+        const classes = [
+            "absolute z-10 overflow-hidden",
+            getInnerBorderRadius()
+        ];
+
+        // Add background color if needed
+        // Background is applied via inline styles instead of Tailwind classes
+        // to avoid CSS parsing errors with dynamic values
+
+        return classes;
+    }, [getInnerBorderRadius, useImagePattern, pattern]);
+
     return (
         <div
             className={cn(
@@ -263,60 +277,58 @@ const TableFelt = ({
             {/* Table Felt (Inner Area) */}
             <div
                 className={cn(
-                    "absolute z-10 overflow-hidden",
-                    getInnerBorderRadius()
+                    ...feltClass,
+                    "table-felt",
+                    (!useImagePattern && pattern === 'none') && "felt-bg-color"
                 )}
-                style={{
-                    top: borderWidth,
-                    left: borderWidth,
-                    right: borderWidth,
-                    bottom: borderWidth,
-                    backgroundColor: !useImagePattern && pattern === 'none' ? getBgColor() : undefined
-                }}
+                style={!useImagePattern && pattern === 'none' ? { "--felt-bg-color": getBgColor() } as React.CSSProperties : {}}
+                data-border-width={borderWidth}
             >
-                {renderFelt()}
+                <div className="table-felt-inner">
+                    {renderFelt()}
 
-                {/* Table grid lines */}
-                {variant === 'default' && (
-                    <div className="absolute top-0 left-0 w-full h-full">
-                        <svg width="100%" height="100%" className="absolute inset-0">
-                            {/* Center line */}
-                            <line
-                                x1="50%"
-                                y1="0"
-                                x2="50%"
-                                y2="100%"
-                                stroke={darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)'}
-                                strokeWidth="1"
-                                strokeDasharray="5,5"
-                            />
+                    {/* Table grid lines */}
+                    {variant === 'default' && (
+                        <div className="absolute top-0 left-0 w-full h-full">
+                            <svg width="100%" height="100%" className="absolute inset-0">
+                                {/* Center line */}
+                                <line
+                                    x1="50%"
+                                    y1="0"
+                                    x2="50%"
+                                    y2="100%"
+                                    stroke={darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)'}
+                                    strokeWidth="1"
+                                    strokeDasharray="5,5"
+                                />
 
-                            {/* Horizontal divider */}
-                            <line
-                                x1="0"
-                                y1="50%"
-                                x2="100%"
-                                y2="50%"
-                                stroke={darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)'}
-                                strokeWidth="1"
-                                strokeDasharray="5,5"
-                            />
-                        </svg>
-                    </div>
-                )}
-
-                {/* Blackjack table markings */}
-                {renderBlackjackMarkings()}
-
-                {/* Table spot markings */}
-                {showLogo && variant === 'default' && (
-                    <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-                        {/* Logo or table marking in center */}
-                        <div className="absolute font-serif text-4xl font-bold transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 text-white/10">
-                            ROYAL 21
+                                {/* Horizontal divider */}
+                                <line
+                                    x1="0"
+                                    y1="50%"
+                                    x2="100%"
+                                    y2="50%"
+                                    stroke={darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)'}
+                                    strokeWidth="1"
+                                    strokeDasharray="5,5"
+                                />
+                            </svg>
                         </div>
-                    </div>
-                )}
+                    )}
+
+                    {/* Blackjack table markings */}
+                    {renderBlackjackMarkings()}
+
+                    {/* Table spot markings */}
+                    {showLogo && variant === 'default' && (
+                        <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                            {/* Logo or table marking in center */}
+                            <div className="absolute font-serif text-4xl font-bold transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 text-white/10">
+                                ROYAL 21
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Container for children */}

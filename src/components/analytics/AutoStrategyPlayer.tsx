@@ -410,7 +410,10 @@ const AutoStrategyPlayer: React.FC<AutoStrategyPlayerProps> = ({ className = '' 
                                 <span className="text-xs text-gray-400">Confidence:</span>
                                 <span className="text-xs text-gray-400">{Math.round(confidence * 100)}%</span>
                             </div>
-                            <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden" style={{ '--confidence-width': `${confidence * 100}%` } as React.CSSProperties}>
+                            <div
+                                className="h-1.5 bg-gray-700 rounded-full overflow-hidden"
+                                data-confidence={`${confidence * 100}%`}
+                            >
                                 {(() => {
                                     let confidenceColor = 'bg-red-500';
                                     if (confidence > 0.85) confidenceColor = 'bg-green-500';

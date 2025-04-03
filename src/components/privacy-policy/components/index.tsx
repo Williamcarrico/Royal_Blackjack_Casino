@@ -19,8 +19,8 @@ export function ThemeSwitcher() {
 			<button
 				onClick={() => setTheme('light')}
 				className={`p-2 rounded-full ${theme === 'light'
-						? 'bg-blue-500 text-white'
-						: 'text-gray-400 hover:text-gray-100 hover:bg-gray-700/50'
+					? 'bg-blue-500 text-white'
+					: 'text-gray-400 hover:text-gray-100 hover:bg-gray-700/50'
 					}`}
 				aria-label="Light theme"
 			>
@@ -29,8 +29,8 @@ export function ThemeSwitcher() {
 			<button
 				onClick={() => setTheme('dark')}
 				className={`p-2 rounded-full ${theme === 'dark'
-						? 'bg-blue-500 text-white'
-						: 'text-gray-400 hover:text-gray-100 hover:bg-gray-700/50'
+					? 'bg-blue-500 text-white'
+					: 'text-gray-400 hover:text-gray-100 hover:bg-gray-700/50'
 					}`}
 				aria-label="Dark theme"
 			>
@@ -44,12 +44,12 @@ export function ThemeSwitcher() {
 export function ProgressBar() {
 	const { progress } = useNavigation()
 
+	// Create a unique class name based on the progress value
+	const progressClass = `progress-width-${Math.round(progress)}`
+
 	return (
 		<div className="fixed top-0 left-0 right-0 z-50 h-1">
-			<div
-				className="progress-bar"
-				style={{ '--progress-width': `${progress}%` } as React.CSSProperties}
-			/>
+			<div className={`progress-bar ${progressClass}`} />
 		</div>
 	)
 }
@@ -74,8 +74,8 @@ export function TableOfContents() {
 					key={section.id}
 					onClick={() => scrollToSection(section.id)}
 					className={`flex items-center gap-2 w-full text-left p-2 rounded-lg transition-all duration-200 ${activeSection === section.id
-							? 'bg-blue-500/10 text-blue-400 font-medium'
-							: 'hover:bg-gray-800/50 text-gray-400 hover:text-gray-200'
+						? 'bg-blue-500/10 text-blue-400 font-medium'
+						: 'hover:bg-gray-800/50 text-gray-400 hover:text-gray-200'
 						}`}
 				>
 					<div
@@ -160,10 +160,9 @@ export function ActionButtons({ metadata }: { readonly metadata: PolicyMetadata 
 
 			<PDFDownloadButton
 				document={<PrivacyPolicyDocument metadata={metadata} />}
-				filename="House_Edge_Blackjack_Privacy_Policy.pdf"
-			>
-				Download PDF
-			</PDFDownloadButton>
+				filename="House_Edge_Blackjack_Privacy_Policy"
+				buttonText="Download PDF"
+			/>
 		</div>
 	)
 }
