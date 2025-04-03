@@ -6,16 +6,15 @@
 @reference "tailwindcss";
 
 /**
- * Royal Edge Casino - Global Styles
+ * Royal Blackjack Casino - Global Styles
  *
- * A modern, accessible design system using OKLCH color space
+ * A luxurious, high-end casino design system using OKLCH color space
  * for better color perception and accessibility.
  *
  * IMPORTANT NOTE:
  * Tailwind CSS v4 compatibility:
- * - We use explicit rgba() functions instead of opacity modifiers (like bg-white/10)
+ * - We use explicit rgba() functions instead of opacity modifiers
  * - RGB variables are defined for each color that needs opacity variants
- * - This ensures proper rendering across all browsers and compatibility with Tailwind v4
  */
 
 /*
@@ -25,23 +24,39 @@
  */
 @layer base {
   :root {
-    /* Core color palette - Light Mode */
+    /* Core color palette - Light Mode (Elegant Vegas Casino Theme) */
     --background: oklch(1 0 0);
     --foreground: oklch(0.129 0.042 264.695);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.129 0.042 264.695);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.129 0.042 264.695);
+
+    /* Primary: Deep Navy (for UI elements and active states) */
     --primary: oklch(0.208 0.042 265.755);
     --primary-foreground: oklch(0.984 0.003 247.858);
-    --secondary: oklch(0.968 0.007 247.896);
-    --secondary-foreground: oklch(0.208 0.042 265.755);
+
+    /* Secondary: Soft Gold (for highlights and secondary actions) */
+    --secondary: oklch(0.85 0.1 85);
+    --secondary-foreground: oklch(0.2 0.042 265.755);
+
+    /* Accent: Royal Purple (for special elements and accents) */
+    --accent: oklch(0.55 0.2 300);
+    --accent-foreground: oklch(0.984 0.003 247.858);
+
+    /* Casino Green (for table and gambling elements) */
+    --casino-green: oklch(0.55 0.15 145);
+    --casino-green-foreground: oklch(0.984 0.003 247.858);
+
+    /* Gold/Premium accent (for VIP elements) */
+    --gold: oklch(0.85 0.15 85);
+    --gold-foreground: oklch(0.15 0.042 264.695);
+
+    /* Supporting colors */
     --muted: oklch(0.968 0.007 247.896);
     --muted-foreground: oklch(0.554 0.046 257.417);
-    --accent: oklch(0.968 0.007 247.896);
-    --accent-foreground: oklch(0.208 0.042 265.755);
     --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.95 0.005 247.858);
     --border: oklch(0.929 0.013 255.508);
     --input: oklch(0.929 0.013 255.508);
     --ring: oklch(0.704 0.04 256.788);
@@ -51,13 +66,16 @@
     --muted-rgb: 241, 241, 243;
     --muted-foreground-rgb: 110, 118, 145;
     --primary-rgb: 30, 35, 78;
+    --gold-rgb: 212, 175, 55;
+    --casino-green-rgb: 40, 130, 80;
+    --accent-rgb: 128, 70, 170;
 
-    /* Data visualization colors */
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
+    /* Data visualization colors - Casino theme */
+    --chart-1: oklch(0.65 0.22 85); /* Gold */
+    --chart-2: oklch(0.55 0.15 145); /* Green */
+    --chart-3: oklch(0.55 0.2 300); /* Purple */
+    --chart-4: oklch(0.65 0.25 27); /* Red */
+    --chart-5: oklch(0.6 0.18 230); /* Blue */
 
     /* Border radius system */
     --radius: 0.625rem;
@@ -70,13 +88,13 @@
     --radius-full: 9999px;
 
     /* Sidebar specific tokens */
-    --sidebar: oklch(0.984 0.003 247.858);
-    --sidebar-foreground: oklch(0.129 0.042 264.695);
-    --sidebar-primary: oklch(0.208 0.042 265.755);
-    --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-    --sidebar-accent: oklch(0.968 0.007 247.896);
-    --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-    --sidebar-border: oklch(0.929 0.013 255.508);
+    --sidebar: oklch(0.18 0.03 264.695);
+    --sidebar-foreground: oklch(0.984 0.003 247.858);
+    --sidebar-primary: oklch(0.85 0.15 85); /* Gold */
+    --sidebar-primary-foreground: oklch(0.129 0.042 264.695);
+    --sidebar-accent: oklch(0.55 0.2 300); /* Purple */
+    --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
+    --sidebar-border: oklch(0.25 0.02 264.695);
     --sidebar-ring: oklch(0.704 0.04 256.788);
 
     /* Animation durations */
@@ -105,7 +123,7 @@
     --space-8: clamp(2.5rem, 2rem + 2.5vw, 4rem);
     --space-10: clamp(4rem, 3rem + 5vw, 8rem);
 
-    /* Box shadows */
+    /* Box shadows - Enhanced for elegance */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1),
@@ -114,33 +132,53 @@
       0 4px 6px -4px rgb(0 0 0 / 0.1);
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1),
       0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-gold: 0 10px 25px -5px rgba(var(--gold-rgb), 0.15),
+      0 5px 10px -6px rgba(var(--gold-rgb), 0.1);
 
     /* Theme transition - make all color changes smooth */
     transition: color-scheme 0.3s ease;
 
+    /* Font stacks */
     --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
       Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
     --font-serif: "Playfair Display", Georgia, serif;
+    --font-display: "Cinzel Decorative", "Times New Roman", serif;
   }
 
   .dark {
-    /* Core color palette - Dark Mode */
+    /* Core color palette - Dark Mode (Elegant Vegas Night Theme) */
     --background: oklch(0.129 0.042 264.695);
     --foreground: oklch(0.984 0.003 247.858);
-    --card: oklch(0.129 0.042 264.695);
+    --card: oklch(0.15 0.042 264.695);
     --card-foreground: oklch(0.984 0.003 247.858);
-    --popover: oklch(0.129 0.042 264.695);
+    --popover: oklch(0.15 0.042 264.695);
     --popover-foreground: oklch(0.984 0.003 247.858);
-    --primary: oklch(0.984 0.003 247.858);
-    --primary-foreground: oklch(0.208 0.042 265.755);
+
+    /* Primary: Light Gold in dark mode (for UI elements and active states) */
+    --primary: oklch(0.85 0.1 85);
+    --primary-foreground: oklch(0.15 0.042 264.695);
+
+    /* Secondary: Deep Navy (for highlights and secondary actions) */
     --secondary: oklch(0.279 0.041 260.031);
-    --secondary-foreground: oklch(0.984 0.003 247.858);
+    --secondary-foreground: oklch(0.85 0.1 85);
+
+    /* Accent: Purple (for special elements and accents) */
+    --accent: oklch(0.55 0.2 300);
+    --accent-foreground: oklch(0.984 0.003 247.858);
+
+    /* Casino Green (for table and gambling elements) - darker for dark mode */
+    --casino-green: oklch(0.4 0.15 145);
+    --casino-green-foreground: oklch(0.984 0.003 247.858);
+
+    /* Gold/Premium accent (for VIP elements) - richer in dark mode */
+    --gold: oklch(0.75 0.15 85);
+    --gold-foreground: oklch(0.15 0.042 264.695);
+
+    /* Supporting colors */
     --muted: oklch(0.279 0.041 260.031);
     --muted-foreground: oklch(0.704 0.04 256.788);
-    --accent: oklch(0.279 0.041 260.031);
-    --accent-foreground: oklch(0.984 0.003 247.858);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
+    --destructive: oklch(0.65 0.24 27.325);
+    --destructive-foreground: oklch(0.984 0.003 247.858);
     --border: oklch(0.279 0.041 260.031);
     --input: oklch(0.279 0.041 260.031);
     --ring: oklch(0.446 0.043 257.281);
@@ -149,21 +187,24 @@
     --ring-rgb: 128, 138, 170;
     --muted-rgb: 45, 47, 55;
     --muted-foreground-rgb: 128, 138, 170;
-    --primary-rgb: 240, 245, 255;
+    --primary-rgb: 212, 175, 55;
+    --gold-rgb: 212, 175, 55;
+    --casino-green-rgb: 30, 100, 60;
+    --accent-rgb: 128, 70, 170;
 
-    /* Data visualization colors - Dark mode */
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
+    /* Data visualization colors - Casino night theme */
+    --chart-1: oklch(0.75 0.15 85); /* Gold */
+    --chart-2: oklch(0.4 0.15 145); /* Green */
+    --chart-3: oklch(0.55 0.2 300); /* Purple */
+    --chart-4: oklch(0.65 0.25 27); /* Red */
+    --chart-5: oklch(0.6 0.18 230); /* Blue */
 
     /* Sidebar specific tokens - Dark mode */
-    --sidebar: oklch(0.208 0.042 265.755);
+    --sidebar: oklch(0.12 0.03 264.695);
     --sidebar-foreground: oklch(0.984 0.003 247.858);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-    --sidebar-accent: oklch(0.279 0.041 260.031);
+    --sidebar-primary: oklch(0.75 0.15 85); /* Gold */
+    --sidebar-primary-foreground: oklch(0.129 0.042 264.695);
+    --sidebar-accent: oklch(0.55 0.2 300); /* Purple */
     --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
     --sidebar-border: oklch(0.279 0.041 260.031);
     --sidebar-ring: oklch(0.446 0.043 257.281);
@@ -177,6 +218,8 @@
       0 4px 6px -4px rgb(0 0 0 / 0.4);
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4),
       0 8px 10px -6px rgb(0 0 0 / 0.4);
+    --shadow-gold: 0 10px 25px -5px rgba(var(--gold-rgb), 0.3),
+      0 5px 10px -6px rgba(var(--gold-rgb), 0.2);
   }
 
   /* Base styles for elements */
@@ -222,8 +265,8 @@
 
   /* Improve scrollbar appearance */
   ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
   }
 
   ::-webkit-scrollbar-track {
@@ -232,12 +275,12 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: rgba(var(--muted-foreground-rgb), 0.5);
+    background-color: rgba(var(--gold-rgb), 0.3);
     border-radius: 100vh;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(var(--muted-foreground-rgb), 0.7);
+    background-color: rgba(var(--gold-rgb), 0.5);
   }
 
   /* Improve image rendering */
@@ -253,7 +296,7 @@
  * ==========================================================================
  */
 @layer utilities {
-  /* 3D Transforms */
+  /* 3D Transform utilities for card and chip effects */
   .preserve-3d {
     transform-style: preserve-3d;
   }
@@ -270,7 +313,20 @@
     perspective: 1000px;
   }
 
-  /* Z-index utilities */
+  .perspective-2000 {
+    perspective: 2000px;
+  }
+
+  .transform-gpu {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
+  .transform-style-3d {
+    transform-style: preserve-3d;
+  }
+
+  /* Z-index utilities - Consolidated for simplicity */
   .z-1 {
     z-index: 1;
   }
@@ -279,9 +335,6 @@
   }
   .z-3 {
     z-index: 3;
-  }
-  .z-4 {
-    z-index: 4;
   }
   .z-5 {
     z-index: 5;
@@ -295,9 +348,6 @@
   .z-30 {
     z-index: 30;
   }
-  .z-40 {
-    z-index: 40;
-  }
   .z-50 {
     z-index: 50;
   }
@@ -309,6 +359,19 @@
 
   .text-pretty {
     text-wrap: pretty;
+  }
+
+  /* Text gradient effect - Vegas styled */
+  .text-gradient-gold {
+    background-clip: text;
+    color: transparent;
+    background-image: linear-gradient(to right, var(--gold), var(--chart-4));
+  }
+
+  .text-gradient-royal {
+    background-clip: text;
+    color: transparent;
+    background-image: linear-gradient(to right, var(--accent), var(--chart-5));
   }
 
   /* Animation utilities */
@@ -332,6 +395,87 @@
     animation: slideInLeft var(--duration-normal) ease-out;
   }
 
+  .animate-spin {
+    animation: spin 3s linear infinite;
+  }
+
+  .animate-flip {
+    animation: flip 0.6s ease-out forwards;
+  }
+
+  .animate-vegas-shine {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .animate-vegas-shine::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(var(--gold-rgb), 0.1) 25%,
+      rgba(var(--gold-rgb), 0.2) 50%,
+      rgba(var(--gold-rgb), 0.1) 75%,
+      transparent 100%
+    );
+    animation: vegas-shine 3s infinite linear;
+  }
+
+  .animate-vegas-lights {
+    animation: vegas-lights 2s infinite ease-in-out;
+  }
+
+  /* Animation duration utilities - Consolidated */
+  .animation-duration-fast {
+    animation-duration: var(--duration-fast);
+  }
+
+  .animation-duration-normal {
+    animation-duration: var(--duration-normal);
+  }
+
+  .animation-duration-slow {
+    animation-duration: var(--duration-slow);
+  }
+
+  .animation-duration-slower {
+    animation-duration: var(--duration-slower);
+  }
+
+  .animation-duration-3s {
+    animation-duration: 3s;
+  }
+
+  .animation-duration-5s {
+    animation-duration: 5s;
+  }
+
+  .animation-duration-8s {
+    animation-duration: 8s;
+  }
+
+  /* Animation delay utilities */
+  .animation-delay-0 {
+    animation-delay: 0s;
+  }
+
+  .animation-delay-200 {
+    animation-delay: 0.2s;
+  }
+
+  .animation-delay-400 {
+    animation-delay: 0.4s;
+  }
+
+  .animation-delay-600 {
+    animation-delay: 0.6s;
+  }
+
   /* Accessibility utilities */
   .sr-only {
     position: absolute;
@@ -350,7 +494,12 @@
     box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
   }
 
-  /* Glass morphism effect */
+  .focus-ring-gold {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--gold);
+  }
+
+  /* Glass effect - Vegas-styled */
   .glass {
     backdrop-filter: blur(10px) saturate(150%);
     background-color: rgba(255, 255, 255, 0.1);
@@ -362,7 +511,14 @@
     border: 1px solid rgba(255, 255, 255, 0.05);
   }
 
-  /* Fluid containers */
+  .glass-gold {
+    backdrop-filter: blur(10px) saturate(150%);
+    background-color: rgba(var(--gold-rgb), 0.05);
+    border: 1px solid rgba(var(--gold-rgb), 0.125);
+    box-shadow: 0 4px 15px rgba(var(--gold-rgb), 0.1);
+  }
+
+  /* Container utilities */
   .container-fluid {
     width: 100%;
     padding-right: var(--space-4);
@@ -371,14 +527,7 @@
     margin-left: auto;
   }
 
-  /* Gradient text */
-  .text-gradient {
-    background-clip: text;
-    color: transparent;
-    background-image: linear-gradient(to right, var(--chart-1), var(--chart-2));
-  }
-
-  /* Shadow utilities */
+  /* Shadow utilities - Vegas luxury styled */
   .shadow-sm {
     box-shadow: var(--shadow-sm);
   }
@@ -399,116 +548,153 @@
     box-shadow: var(--shadow-xl);
   }
 
+  .shadow-gold {
+    box-shadow: var(--shadow-gold);
+  }
+
+  /* Card patterns - Vegas themed */
   .card-pattern {
     background-image: radial-gradient(
       circle at 10px 10px,
-      rgba(255, 255, 255, 0.05) 1px,
+      rgba(var(--gold-rgb), 0.05) 1px,
       transparent 1px
     );
     background-size: 20px 20px;
   }
 
-  /* Smooth card background pattern */
-  .card-pattern-svg {
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  .vegas-card-pattern {
+    background-image: radial-gradient(
+        circle at 50% 50%,
+        rgba(var(--gold-rgb), 0.05) 1px,
+        transparent 1px
+      ),
+      repeating-linear-gradient(
+        45deg,
+        transparent 0px,
+        transparent 5px,
+        rgba(var(--gold-rgb), 0.02) 5px,
+        rgba(var(--gold-rgb), 0.02) 10px
+      );
+    background-size: 20px 20px, 10px 10px;
   }
 
-  /* Card highlight effect */
+  .vegas-felt {
+    background-color: var(--casino-green);
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.5) 1px, transparent 1px);
+    background-size: 10px 10px;
+    background-blend-mode: overlay;
+  }
+
+  /* Card highlight effects */
   .card-highlight-effect {
     background: linear-gradient(
       135deg,
-      rgba(255, 255, 255, 0.15) 0%,
+      rgba(var(--gold-rgb), 0.15) 0%,
       rgba(255, 255, 255, 0) 50%,
       rgba(255, 255, 255, 0) 100%
     );
   }
 
-  /* Custom fonts */
-  @font-face {
-    font-family: "Knewave";
-    src: url("/fonts/Knewave-Regular.ttf") format("truetype");
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
+  .vegas-card-highlight {
+    background: linear-gradient(
+      135deg,
+      rgba(var(--gold-rgb), 0.1) 0%,
+      rgba(var(--gold-rgb), 0.05) 15%,
+      rgba(255, 255, 255, 0) 30%,
+      rgba(255, 255, 255, 0) 100%
+    );
   }
 
-  @font-face {
-    font-family: "Permanent Marker";
-    src: url("/fonts/PermanentMarker-Regular.ttf") format("truetype");
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
+  /* Vegas spotlight effect */
+  .vegas-spotlight {
+    background: radial-gradient(
+      ellipse at center,
+      rgba(var(--gold-rgb), 0.15) 0%,
+      rgba(220, 38, 38, 0.05) 30%,
+      transparent 70%
+    );
   }
 
-  @font-face {
-    font-family: "Cinzel Decorative";
-    src: url("/fonts/CinzelDecorative-Regular.ttf") format("truetype");
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
+  /* Font family utilities */
+  .font-sans {
+    font-family: var(--font-sans);
+  }
+
+  .font-serif {
+    font-family: var(--font-serif);
+  }
+
+  .font-display {
+    font-family: var(--font-display);
   }
 
   .knewave-regular {
     font-family: "Knewave", cursive;
+    font-weight: 400;
+    font-style: normal;
   }
 
   .permanent-marker-regular {
     font-family: "Permanent Marker", cursive;
+    font-weight: 400;
+    font-style: normal;
   }
 
   .cinzel-decorative-regular {
     font-family: "Cinzel Decorative", serif;
+    font-weight: 400;
+    font-style: normal;
   }
 
-  /* Custom scrollbar for Webkit browsers */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+  .cinzel-decorative-bold {
+    font-family: "Cinzel Decorative", serif;
+    font-weight: 700;
+    font-style: normal;
   }
 
-  ::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.3);
+  .cinzel-decorative-black {
+    font-family: "Cinzel Decorative", serif;
+    font-weight: 900;
+    font-style: normal;
   }
 
-  ::-webkit-scrollbar-thumb {
-    background-color: rgba(251, 191, 36, 0.3);
-    border-radius: 4px;
+  .rubik-doodle-shadow-regular {
+    font-family: "Rubik Doodle Shadow", system-ui;
+    font-weight: 400;
+    font-style: normal;
   }
 
-  ::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(251, 191, 36, 0.5);
+  .charmonman-regular {
+    font-family: "Charmonman", cursive;
+    font-weight: 400;
+    font-style: normal;
   }
 
-  /* Animation durations */
-  .animation-duration-3s {
-    animation-duration: 3s;
+  .charmonman-bold {
+    font-family: "Charmonman", cursive;
+    font-weight: 700;
+    font-style: normal;
   }
 
-  .animation-duration-8s {
-    animation-duration: 8s;
+  /* Vegas neon glow effect */
+  .vegas-neon {
+    text-shadow: 0 0 5px rgba(220, 38, 38, 0.5), 0 0 10px rgba(220, 38, 38, 0.5),
+      0 0 15px rgba(220, 38, 38, 0.5), 0 0 20px rgba(var(--gold-rgb), 0.5),
+      0 0 35px rgba(var(--gold-rgb), 0.5);
   }
 
-  .animation-duration-12s {
-    animation-duration: 12s;
+  .vegas-neon-gold {
+    text-shadow: 0 0 5px rgba(var(--gold-rgb), 0.5),
+      0 0 10px rgba(var(--gold-rgb), 0.5), 0 0 15px rgba(var(--gold-rgb), 0.5),
+      0 0 20px rgba(var(--gold-rgb), 0.3);
   }
 
-  /* Fix for particle animation */
-  .transform-gpu {
-    transform: translateZ(0);
-    will-change: transform;
-  }
-
-  .transform-style-3d {
-    transform-style: preserve-3d;
-  }
-
-  .perspective-\[2000px\] {
-    perspective: 2000px;
-  }
-
-  /* Additional utility classes */
-  .rounded-lg-clip {
-    clip-path: inset(0 0 0 0 round 8px);
+  .vegas-neon-accent {
+    text-shadow: 0 0 5px rgba(var(--accent-rgb), 0.5),
+      0 0 10px rgba(var(--accent-rgb), 0.5),
+      0 0 15px rgba(var(--accent-rgb), 0.5),
+      0 0 20px rgba(var(--accent-rgb), 0.3);
   }
 
   /* Mix blend mode utilities */
@@ -516,12 +702,16 @@
     mix-blend-mode: color-dodge;
   }
 
+  .mix-blend-overlay {
+    mix-blend-mode: overlay;
+  }
+
   /* Opacity utilities */
   .opacity-60 {
     opacity: 0.6;
   }
 
-  /* Table lighting effects */
+  /* Table elements */
   .table-ambient-lighting {
     background-image: radial-gradient(
       circle at 50% 20%,
@@ -530,8 +720,51 @@
     );
   }
 
-  [data-table-color] {
-    --table-glow-color: attr(data-table-color);
+  /* Progress bar */
+  .progress-bar {
+    width: var(--progress-width, 0%);
+    transition: width 300ms ease;
+  }
+
+  /* Vegas-themed gradient backgrounds */
+  .bg-vegas-gold-gradient {
+    background: linear-gradient(
+      135deg,
+      var(--gold) 0%,
+      rgba(var(--gold-rgb), 0.7) 100%
+    );
+  }
+
+  .bg-vegas-green-gradient {
+    background: linear-gradient(
+      135deg,
+      var(--casino-green) 0%,
+      rgba(var(--casino-green-rgb), 0.7) 100%
+    );
+  }
+
+  .bg-vegas-accent-gradient {
+    background: linear-gradient(
+      135deg,
+      var(--accent) 0%,
+      rgba(var(--accent-rgb), 0.7) 100%
+    );
+  }
+
+  /* Ambient lighting effect */
+  .ambient-lighting {
+    background-image: radial-gradient(
+        circle at 50% 20%,
+        rgba(var(--gold-rgb), 0.15),
+        transparent 70%
+      ),
+      radial-gradient(
+        circle at 80% 50%,
+        rgba(var(--accent-rgb), 0.15),
+        transparent 50%
+      );
+    opacity: 0.7;
+    mix-blend-mode: color-dodge;
   }
 }
 
@@ -613,6 +846,261 @@
   }
 }
 
+/* Vegas shine effect */
+@keyframes vegas-shine {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Vegas lights animation */
+@keyframes vegas-lights {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Vegas spotlight pulse */
+@keyframes spotlight-pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+/* Vegas neon flicker */
+@keyframes neon-flicker {
+  0%,
+  19%,
+  21%,
+  23%,
+  25%,
+  54%,
+  56%,
+  100% {
+    text-shadow: 0 0 5px rgba(var(--gold-rgb), 0.5),
+      0 0 10px rgba(var(--gold-rgb), 0.5), 0 0 15px rgba(var(--gold-rgb), 0.5),
+      0 0 20px rgba(var(--gold-rgb), 0.5);
+  }
+  20%,
+  24%,
+  55% {
+    text-shadow: none;
+  }
+}
+
+/* Card shuffling animation */
+@keyframes shuffle {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-30px) rotate(-5deg);
+  }
+  50% {
+    transform: translateY(0) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-15px) rotate(5deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+/* Chip bounce animation */
+@keyframes chip-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/*
+ * ==========================================================================
+ * OPACITY UTILITIES - Consolidated
+ * ==========================================================================
+ */
+.bg-white-10 {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.bg-black-10 {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.bg-black-30 {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.bg-black-50 {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.bg-black-70 {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.bg-primary-10 {
+  background-color: rgba(var(--primary-rgb), 0.1);
+}
+
+.bg-primary-20 {
+  background-color: rgba(var(--primary-rgb), 0.2);
+}
+
+.bg-gold-5 {
+  background-color: rgba(var(--gold-rgb), 0.05);
+}
+
+.bg-gold-10 {
+  background-color: rgba(var(--gold-rgb), 0.1);
+}
+
+.bg-gold-20 {
+  background-color: rgba(var(--gold-rgb), 0.2);
+}
+
+.bg-accent-10 {
+  background-color: rgba(var(--accent-rgb), 0.1);
+}
+
+.bg-accent-20 {
+  background-color: rgba(var(--accent-rgb), 0.2);
+}
+
+.bg-casino-green-10 {
+  background-color: rgba(var(--casino-green-rgb), 0.1);
+}
+
+.bg-casino-green-20 {
+  background-color: rgba(var(--casino-green-rgb), 0.2);
+}
+
+.border-primary-10 {
+  border-color: rgba(var(--primary-rgb), 0.1);
+}
+
+.border-primary-20 {
+  border-color: rgba(var(--primary-rgb), 0.2);
+}
+
+.border-gold-10 {
+  border-color: rgba(var(--gold-rgb), 0.1);
+}
+
+.border-gold-20 {
+  border-color: rgba(var(--gold-rgb), 0.2);
+}
+
+.border-accent-10 {
+  border-color: rgba(var(--accent-rgb), 0.1);
+}
+
+.border-accent-20 {
+  border-color: rgba(var(--accent-rgb), 0.2);
+}
+
+/*
+ * ==========================================================================
+ * VEGAS CASINO SPECIFIC STYLES
+ * ==========================================================================
+ */
+
+/* Vegas chip design styles */
+.vegas-chip {
+  position: relative;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #000, 0 0 0 4px var(--gold), 0 0 0 6px #000,
+    0 0 0 8px var(--gold), 0 0 0 10px #000, 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+.vegas-chip::before {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.8) 0%,
+    rgba(255, 255, 255, 0) 60%
+  );
+  opacity: 0.5;
+}
+
+.vegas-chip-red {
+  box-shadow: 0 0 0 2px #000, 0 0 0 4px var(--destructive), 0 0 0 6px #000,
+    0 0 0 8px var(--destructive), 0 0 0 10px #000, 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+.vegas-chip-blue {
+  box-shadow: 0 0 0 2px #000, 0 0 0 4px var(--chart-5), 0 0 0 6px #000,
+    0 0 0 8px var(--chart-5), 0 0 0 10px #000, 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+.vegas-chip-green {
+  box-shadow: 0 0 0 2px #000, 0 0 0 4px var(--casino-green), 0 0 0 6px #000,
+    0 0 0 8px var(--casino-green), 0 0 0 10px #000,
+    0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+.vegas-chip-purple {
+  box-shadow: 0 0 0 2px #000, 0 0 0 4px var(--accent), 0 0 0 6px #000,
+    0 0 0 8px var(--accent), 0 0 0 10px #000, 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+/* Table color styles - Consolidated */
+.table-color-red {
+  --table-color: oklch(0.5 0.2 25);
+  --table-highlight: rgba(255, 100, 100, 0.1);
+  --table-glow-color: rgba(255, 100, 100, 0.15);
+}
+
+.table-color-green {
+  --table-color: var(--casino-green);
+  --table-highlight: rgba(var(--casino-green-rgb), 0.1);
+  --table-glow-color: rgba(var(--casino-green-rgb), 0.15);
+}
+
+.table-color-blue {
+  --table-color: oklch(0.5 0.15 230);
+  --table-highlight: rgba(100, 100, 255, 0.1);
+  --table-glow-color: rgba(100, 100, 255, 0.15);
+}
+
+.table-color-purple {
+  --table-color: var(--accent);
+  --table-highlight: rgba(var(--accent-rgb), 0.1);
+  --table-glow-color: rgba(var(--accent-rgb), 0.15);
+}
+
+.table-color-black {
+  --table-color: oklch(0.15 0.01 260);
+  --table-highlight: rgba(150, 150, 150, 0.1);
+  --table-glow-color: rgba(150, 150, 150, 0.15);
+}
+
+.table-color-gold {
+  --table-color: oklch(0.4 0.1 85);
+  --table-highlight: rgba(var(--gold-rgb), 0.1);
+  --table-glow-color: rgba(var(--gold-rgb), 0.15);
+}
+
 /*
  * ==========================================================================
  * PRINT STYLES
@@ -664,6 +1152,170 @@
 
 /*
  * ==========================================================================
+ * COMPONENT SPECIFIC STYLES
+ * ==========================================================================
+ */
+
+/* Chip component styles */
+.chip-dot {
+  transform-origin: center center;
+}
+
+/* Use CSS custom properties for ChipDot rotation */
+.chip-dot[data-rotation="0"] {
+  --rotation: 0deg;
+}
+.chip-dot[data-rotation="45"] {
+  --rotation: 45deg;
+}
+.chip-dot[data-rotation="90"] {
+  --rotation: 90deg;
+}
+.chip-dot[data-rotation="135"] {
+  --rotation: 135deg;
+}
+.chip-dot[data-rotation="180"] {
+  --rotation: 180deg;
+}
+.chip-dot[data-rotation="225"] {
+  --rotation: 225deg;
+}
+.chip-dot[data-rotation="270"] {
+  --rotation: 270deg;
+}
+.chip-dot[data-rotation="315"] {
+  --rotation: 315deg;
+}
+
+.chip-dot[data-size="sm"] {
+  transform: rotate(var(--rotation)) translateY(-30%);
+}
+
+.chip-dot[data-size="md"] {
+  transform: rotate(var(--rotation)) translateY(-38%);
+}
+
+.chip-dot[data-size="lg"] {
+  transform: rotate(var(--rotation)) translateY(-44%);
+}
+
+/* Stacked chip layer positioning using CSS classes instead of attr() */
+.stacked-chip-layer {
+  z-index: 5; /* Default z-index */
+}
+
+.stacked-chip-layer[data-idx="0"] {
+  z-index: 10;
+  transform: translateY(0) rotate(-4deg);
+}
+.stacked-chip-layer[data-idx="1"] {
+  z-index: 9;
+  transform: translateY(-2px) rotate(-2deg);
+}
+.stacked-chip-layer[data-idx="2"] {
+  z-index: 8;
+  transform: translateY(-4px) rotate(0deg);
+}
+.stacked-chip-layer[data-idx="3"] {
+  z-index: 7;
+  transform: translateY(-6px) rotate(2deg);
+}
+.stacked-chip-layer[data-idx="4"] {
+  z-index: 6;
+  transform: translateY(-8px) rotate(4deg);
+}
+
+/* Custom stacking offset variants if needed */
+.stacked-chip-layer[data-stacking-offset="3"][data-idx="1"] {
+  transform: translateY(-3px) rotate(-2deg);
+}
+.stacked-chip-layer[data-stacking-offset="3"][data-idx="2"] {
+  transform: translateY(-6px) rotate(0deg);
+}
+.stacked-chip-layer[data-stacking-offset="3"][data-idx="3"] {
+  transform: translateY(-9px) rotate(2deg);
+}
+.stacked-chip-layer[data-stacking-offset="3"][data-idx="4"] {
+  transform: translateY(-12px) rotate(4deg);
+}
+
+.stacked-chip-layer[data-stacking-offset="4"][data-idx="1"] {
+  transform: translateY(-4px) rotate(-2deg);
+}
+.stacked-chip-layer[data-stacking-offset="4"][data-idx="2"] {
+  transform: translateY(-8px) rotate(0deg);
+}
+.stacked-chip-layer[data-stacking-offset="4"][data-idx="3"] {
+  transform: translateY(-12px) rotate(2deg);
+}
+.stacked-chip-layer[data-stacking-offset="4"][data-idx="4"] {
+  transform: translateY(-16px) rotate(4deg);
+}
+
+.main-chip {
+  transform-origin: center center;
+}
+
+/* Main chip stacking transforms with hardcoded values for common cases */
+[data-stacked="true"][data-count="2"] .main-chip {
+  transform: translateY(-2px);
+}
+[data-stacked="true"][data-count="3"] .main-chip {
+  transform: translateY(-4px);
+}
+[data-stacked="true"][data-count="4"] .main-chip {
+  transform: translateY(-6px);
+}
+[data-stacked="true"][data-count="5"] .main-chip,
+[data-stacked="true"][data-count="6"] .main-chip,
+[data-stacked="true"][data-count="7"] .main-chip,
+[data-stacked="true"][data-count="8"] .main-chip,
+[data-stacked="true"][data-count="9"] .main-chip,
+[data-stacked="true"][data-count="10"] .main-chip {
+  transform: translateY(-8px);
+}
+
+/* Custom stacking offset variants */
+[data-stacked="true"][data-count="2"][data-stacking-offset="3"] .main-chip {
+  transform: translateY(-3px);
+}
+[data-stacked="true"][data-count="3"][data-stacking-offset="3"] .main-chip {
+  transform: translateY(-6px);
+}
+[data-stacked="true"][data-count="4"][data-stacking-offset="3"] .main-chip {
+  transform: translateY(-9px);
+}
+[data-stacked="true"][data-count="5"][data-stacking-offset="3"] .main-chip {
+  transform: translateY(-12px);
+}
+
+[data-stacked="true"][data-count="2"][data-stacking-offset="4"] .main-chip {
+  transform: translateY(-4px);
+}
+[data-stacked="true"][data-count="3"][data-stacking-offset="4"] .main-chip {
+  transform: translateY(-8px);
+}
+[data-stacked="true"][data-count="4"][data-stacking-offset="4"] .main-chip {
+  transform: translateY(-12px);
+}
+[data-stacked="true"][data-count="5"][data-stacking-offset="4"] .main-chip {
+  transform: translateY(-16px);
+}
+
+.main-chip[data-dragging="true"] {
+  z-index: 50;
+}
+
+.main-chip[data-draggable="true"] {
+  cursor: grab;
+}
+
+.main-chip[data-draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/*
+ * ==========================================================================
  * COMPONENT IMPORTS
  * ==========================================================================
  */
@@ -671,156 +1323,59 @@
 /* Import sidebar styles */
 @import "../styles/sidebar.css";
 
+/* Import tutorial styles */
+@import "../styles/tutorial.css";
+
 /*
  * ==========================================================================
- * OPACITY UTILITIES
+ * PROGRESS BAR STYLES
  * ==========================================================================
  */
-.bg-white-10 {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.bg-black-10 {
-  background-color: rgba(0, 0, 0, 0.1);
-}
-
-.bg-black-30 {
-  background-color: rgba(0, 0, 0, 0.3);
-}
-
-.bg-black-50 {
-  background-color: rgba(0, 0, 0, 0.5);
-}
-
-.bg-black-70 {
-  background-color: rgba(0, 0, 0, 0.7);
-}
-
-.bg-primary-10 {
-  background-color: rgba(var(--primary-rgb), 0.1);
-}
-
-.bg-primary-20 {
-  background-color: rgba(var(--primary-rgb), 0.2);
-}
-
-.border-primary-10 {
-  border-color: rgba(var(--primary-rgb), 0.1);
-}
-
-.border-primary-20 {
-  border-color: rgba(var(--primary-rgb), 0.2);
-}
-
-.border-primary-30 {
-  border-color: rgba(var(--primary-rgb), 0.3);
-}
-
-/* Custom utilities */
-.card-highlight-effect {
-  clip-path: polygon(0 0, 30% 0, 60% 100%, 0% 100%);
-}
-
-/* Animation duration utilities */
-.animation-duration-3s {
-  animation-duration: 3s;
-}
-
-.animation-duration-4s {
-  animation-duration: 4s;
-}
-
-.animation-duration-7s {
-  animation-duration: 7s;
-}
-
-/* Add to your global.css or tailwind.css */
-@keyframes spotlight-pulse {
-  0%,
-  100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
-.radial-spotlight {
-  pointer-events: none;
-  will-change: transform, opacity;
-  transform: translateZ(0);
-}
-
-.knewave-regular {
-  font-family: "Knewave", system-ui;
-  font-weight: 400;
-  font-style: normal;
-}
-
-.permanent-marker-regular {
-  font-family: "Permanent Marker", cursive;
-  font-weight: 400;
-  font-style: normal;
-}
-
-.cinzel-decorative-regular {
-  font-family: "Cinzel Decorative", serif;
-  font-weight: 400;
-  font-style: normal;
-}
-
-.cinzel-decorative-bold {
-  font-family: "Cinzel Decorative", serif;
-  font-weight: 700;
-  font-style: normal;
-}
-
-.cinzel-decorative-black {
-  font-family: "Cinzel Decorative", serif;
-  font-weight: 900;
-  font-style: normal;
-}
-
-.rubik-doodle-shadow-regular {
-  font-family: "Rubik Doodle Shadow", system-ui;
-  font-weight: 400;
-  font-style: normal;
-}
-
-.rubik-doodle-shadow-bold {
-  font-family: "Rubik Doodle Shadow", system-ui;
-  font-weight: 700;
-  font-style: normal;
-}
-
-.charmonman-regular {
-  font-family: "Charmonman", cursive;
-  font-weight: 400;
-  font-style: normal;
-}
-
-.charmonman-bold {
-  font-family: "Charmonman", cursive;
-  font-weight: 700;
-  font-style: normal;
-}
-
-.progressBar {
+.progress-bar {
+  height: 100%;
+  background-image: linear-gradient(to right, var(--gold), var(--chart-5));
+  transition: width 300ms;
   width: var(--progress-width, 0%);
-  /* other styles */
+}
+
+.progress-bar-gold {
+  background-image: linear-gradient(
+    to right,
+    var(--gold),
+    rgba(var(--gold-rgb), 0.7)
+  );
+}
+
+.progress-bar-accent {
+  background-image: linear-gradient(
+    to right,
+    var(--accent),
+    rgba(var(--accent-rgb), 0.7)
+  );
 }
 
 /*
  * ==========================================================================
- * MIGRATED STYLES FROM CSS MODULES
+ * GAME COMPONENTS STYLES
  * ==========================================================================
  */
 
-/*
- * Styles migrated from table.module.css
- */
+/* Card styles */
+.game-card {
+  left: calc(
+    50% - calc(attr(data-card-overlap) / 2 * 1px) +
+      calc(attr(data-offset) * 1px)
+  );
+  top: 0;
+  z-index: attr(data-z-index);
+  transition: transform 0.3s ease, left 0.3s ease;
+  transform-origin: bottom center;
+  transform: rotate(calc(attr(data-offset) / 5 * 1deg));
+}
+
+/* Dealer and playing area styles */
 .table-root {
-  --table-color: #1a5f7a;
+  --table-color: var(--casino-green);
   background-color: var(--table-color);
   position: relative;
   isolation: isolate;
@@ -840,33 +1395,7 @@
   pointer-events: none;
 }
 
-/* Custom color classes that can be dynamically applied */
-.table-color-red {
-  --table-color: #7a1a1a;
-  --table-highlight: rgba(255, 100, 100, 0.1);
-}
-
-.table-color-green {
-  --table-color: #1a7a1a;
-  --table-highlight: rgba(100, 255, 100, 0.1);
-}
-
-.table-color-blue {
-  --table-color: #1a1a7a;
-  --table-highlight: rgba(100, 100, 255, 0.1);
-}
-
-.table-color-purple {
-  --table-color: #6a1a7a;
-  --table-highlight: rgba(200, 100, 255, 0.1);
-}
-
-.table-color-black {
-  --table-color: #222222;
-  --table-highlight: rgba(150, 150, 150, 0.1);
-}
-
-/* Leather texture effect */
+/* Leather and wood textures */
 .table-leather-texture::after {
   content: "";
   position: absolute;
@@ -880,7 +1409,6 @@
   pointer-events: none;
 }
 
-/* Wood texture effect */
 .table-wood-texture::after {
   content: "";
   position: absolute;
@@ -894,13 +1422,7 @@
   pointer-events: none;
 }
 
-/* Class for custom colors */
-.table-custom-color {
-  /* Custom color value will be injected via JavaScript */
-  --table-highlight: rgba(255, 255, 255, 0.1);
-}
-
-/* Overlay for the felt texture */
+/* Felt texture */
 .table-felt-texture {
   position: absolute;
   inset: 0;
@@ -911,71 +1433,69 @@
   pointer-events: none;
 }
 
-/* Game area border */
-.table-game-area {
+/* Hand component styling */
+.cardContainer {
   position: relative;
-  border-radius: 0.5rem;
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+  flex: 1;
 }
 
-/* Casino chip slots styling */
-.table-chip-slot {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at center,
-    var(--table-highlight),
-    transparent
-  );
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+.card {
+  transform: translateX(var(--translate-x, 0));
+  margin-left: var(--margin-left, 0);
+  z-index: var(--z-index, 0);
+  transition: transform 0.2s ease;
 }
 
-/*
- * Styles migrated from ProgressBar.module.css
- */
-.progress-bar {
-  height: 100%;
-  background-image: linear-gradient(to right, #3b82f6, #8b5cf6);
-  transition: width 300ms;
-  width: var(--progress-width, 0%);
+/* Card positioning classes */
+.card0 {
+  --translate-x: 0;
+  z-index: 0;
+}
+.card1 {
+  --translate-x: 30px;
+  z-index: 1;
+}
+.card2 {
+  --translate-x: 60px;
+  z-index: 2;
+}
+.card3 {
+  --translate-x: 90px;
+  z-index: 3;
+}
+.card4 {
+  --translate-x: 120px;
+  z-index: 4;
+}
+.card5 {
+  --translate-x: 150px;
+  z-index: 5;
+}
+.card6 {
+  --translate-x: 180px;
+  z-index: 6;
+}
+.card7 {
+  --translate-x: 210px;
+  z-index: 7;
 }
 
-.background-pattern {
-  background-image: radial-gradient(
-    circle at 25px 25px,
-    rgba(255, 255, 255, 0.15) 2px,
-    transparent 0
-  );
-  background-size: 50px 50px;
-}
-
-/*
- * Styles migrated from SettingsDashboard.module.css
- */
-.table-color-base {
-  background-color: var(--table-color);
-}
-
-.settings-progress-bar {
-  height: 100%;
-}
-
-/* Define the width classes for the progress bars */
-.progress-width {
-  width: var(--progress-width);
-}
+@custom-variant dark (&:is(.dark *));
 
 /*
- * Styles migrated from house-rules.module.css
+ * ==========================================================================
+ * DECORATIVE ELEMENTS
+ * ==========================================================================
  */
-/* Decorative elements containers */
+
+/* Decorative containers */
 .decorative-cards-container {
   position: fixed;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
   opacity: 0.05;
+  z-index: 0;
 }
 
 .decorative-chips-container {
@@ -987,9 +1507,10 @@
   overflow: hidden;
   pointer-events: none;
   opacity: 0.3;
+  z-index: 0;
 }
 
-/* Decorative elements */
+/* Decorative elements - Casino themed */
 .decorative-card {
   position: absolute;
   width: 16rem;
@@ -1009,6 +1530,7 @@
   height: var(--size);
   border-radius: 9999px;
   background-color: var(--color);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5), 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
 /* Cards with different positions */
@@ -1085,129 +1607,129 @@
   left: 30%;
 }
 
-/* Chips with different colors and positions */
+/* Chips with different colors and positions - Vegas color themed */
 .chip-0 {
-  --color: #e11d48;
+  --color: var(--destructive);
   --size: 30px;
   --left: 10%;
   --bottom: -5px;
 }
 .chip-1 {
-  --color: #f59e0b;
+  --color: var(--gold);
   --size: 40px;
   --left: 25%;
   --bottom: -10px;
 }
 .chip-2 {
-  --color: #0891b2;
+  --color: var(--chart-5);
   --size: 25px;
   --left: 40%;
   --bottom: -8px;
 }
 .chip-3 {
-  --color: #4f46e5;
+  --color: var(--accent);
   --size: 35px;
   --left: 55%;
   --bottom: -12px;
 }
 .chip-4 {
-  --color: #e11d48;
+  --color: var(--destructive);
   --size: 28px;
   --left: 70%;
   --bottom: -7px;
 }
 .chip-5 {
-  --color: #f59e0b;
+  --color: var(--gold);
   --size: 42px;
   --left: 85%;
   --bottom: -15px;
 }
 .chip-6 {
-  --color: #0891b2;
+  --color: var(--chart-5);
   --size: 32px;
   --left: 5%;
   --bottom: -10px;
 }
 .chip-7 {
-  --color: #4f46e5;
+  --color: var(--accent);
   --size: 38px;
   --left: 18%;
   --bottom: -8px;
 }
 .chip-8 {
-  --color: #e11d48;
+  --color: var(--destructive);
   --size: 27px;
   --left: 33%;
   --bottom: -5px;
 }
 .chip-9 {
-  --color: #f59e0b;
+  --color: var(--gold);
   --size: 36px;
   --left: 48%;
   --bottom: -12px;
 }
 .chip-10 {
-  --color: #0891b2;
+  --color: var(--chart-5);
   --size: 31px;
   --left: 63%;
   --bottom: -9px;
 }
 .chip-11 {
-  --color: #4f46e5;
+  --color: var(--accent);
   --size: 39px;
   --left: 78%;
   --bottom: -14px;
 }
 .chip-12 {
-  --color: #e11d48;
+  --color: var(--destructive);
   --size: 26px;
   --left: 93%;
   --bottom: -6px;
 }
 .chip-13 {
-  --color: #f59e0b;
+  --color: var(--gold);
   --size: 33px;
   --left: 3%;
   --bottom: -11px;
 }
 .chip-14 {
-  --color: #0891b2;
+  --color: var(--chart-5);
   --size: 37px;
   --left: 15%;
   --bottom: -13px;
 }
 .chip-15 {
-  --color: #4f46e5;
+  --color: var(--accent);
   --size: 29px;
   --left: 30%;
   --bottom: -4px;
 }
 .chip-16 {
-  --color: #e11d48;
+  --color: var(--destructive);
   --size: 34px;
   --left: 45%;
   --bottom: -9px;
 }
 .chip-17 {
-  --color: #f59e0b;
+  --color: var(--gold);
   --size: 41px;
   --left: 60%;
   --bottom: -16px;
 }
 .chip-18 {
-  --color: #0891b2;
+  --color: var(--chart-5);
   --size: 24px;
   --left: 75%;
   --bottom: -7px;
 }
 .chip-19 {
-  --color: #4f46e5;
+  --color: var(--accent);
   --size: 43px;
   --left: 90%;
   --bottom: -18px;
 }
 
-/* Gradient positions */
+/* Gradient ambient effects */
 .red-gradient {
   position: absolute;
   inset: 0;
@@ -1220,16 +1742,28 @@
   left: 30%;
 }
 
-.amber-gradient {
+.gold-gradient {
   position: absolute;
   inset: 0;
   background: radial-gradient(
     circle,
-    rgba(146, 64, 14, 0.15) 0%,
+    rgba(var(--gold-rgb), 0.15) 0%,
     rgba(0, 0, 0, 0) 70%
   );
   bottom: -50%;
   right: 30%;
+}
+
+.purple-gradient {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle,
+    rgba(var(--accent-rgb), 0.15) 0%,
+    rgba(0, 0, 0, 0) 70%
+  );
+  top: -30%;
+  right: 20%;
 }
 
 /* Header section styling */
@@ -1237,6 +1771,22 @@
   position: relative;
   overflow: hidden;
 }
+
+/* Background patterns */
+.background-pattern {
+  background-image: radial-gradient(
+    circle at 25px 25px,
+    rgba(var(--gold-rgb), 0.15) 2px,
+    transparent 0
+  );
+  background-size: 50px 50px;
+}
+
+/*
+ * ==========================================================================
+ * THEME VARIANTS
+ * ==========================================================================
+ */
 
 /* Light mode UI styles */
 .light .bg-card-dark {
@@ -1249,14 +1799,10 @@
   color: rgb(51, 51, 51);
 }
 
-/* Add any additional theme styles below */
-
-/* Casino Theme Light/Dark Mode Colors */
-
 /* Light mode table and gambling element styles */
 .light .table-root {
-  background-color: rgb(40, 130, 80);
-  border-color: rgb(139, 69, 19);
+  background-color: var(--casino-green);
+  border-color: oklch(0.45 0.12 80); /* Gold-brown border */
 }
 
 .light .chip-stack {
@@ -1267,114 +1813,14 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Add this at the end of the file */
-@import "../styles/tutorial.css";
-
+/* Custom variant for dark mode */
 @custom-variant dark (&:is(.dark *));
 
-/**
-* Styles migrated from hand.module.css
-*/
-.cardContainer {
-  position: relative;
-  flex: 1;
-}
-
-.card {
-  transform: translateX(var(--translate-x, 0));
-  margin-left: var(--margin-left, 0);
-  z-index: var(--z-index, 0);
-  transition: transform 0.2s ease;
-}
-
-.firstCard {
-  --margin-left: 0;
-  z-index: 0;
-}
-
-.stackedCard {
-  --margin-left: -80px;
-}
-
-/* Card positioning classes */
-.card0 {
-  --translate-x: 0;
-  z-index: 0;
-}
-.card1 {
-  --translate-x: 30px;
-  z-index: 1;
-}
-.card2 {
-  --translate-x: 60px;
-  z-index: 2;
-}
-.card3 {
-  --translate-x: 90px;
-  z-index: 3;
-}
-.card4 {
-  --translate-x: 120px;
-  z-index: 4;
-}
-.card5 {
-  --translate-x: 150px;
-  z-index: 5;
-}
-.card6 {
-  --translate-x: 180px;
-  z-index: 6;
-}
-.card7 {
-  --translate-x: 210px;
-  z-index: 7;
-}
-
-:root {
-  --sidebar: hsl(0 0% 98%);
-  --sidebar-foreground: hsl(240 5.3% 26.1%);
-  --sidebar-primary: hsl(240 5.9% 10%);
-  --sidebar-primary-foreground: hsl(0 0% 98%);
-  --sidebar-accent: hsl(240 4.8% 95.9%);
-  --sidebar-accent-foreground: hsl(240 5.9% 10%);
-  --sidebar-border: hsl(220 13% 91%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
-}
-
-.dark {
-  --sidebar: hsl(240 5.9% 10%);
-  --sidebar-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-primary: hsl(224.3 76.3% 48%);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(240 3.7% 15.9%);
-  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-border: hsl(240 3.7% 15.9%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
-}
-
-@theme inline {
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-}
-
-@layer base {
-  * {
-    @apply border-slate-200;
-    outline-color: rgba(var(--ring-rgb), 0.5);
-  }
-  body {
-    background-color: var(--background);
-    color: var(--foreground);
-  }
-}
-
-/* Tutorial Overlay Styles */
+/*
+ * ==========================================================================
+ * TUTORIAL OVERLAY STYLES
+ * ==========================================================================
+ */
 .tutorial-overlay {
   background-color: attr(data-overlay-background);
   z-index: attr(data-overlay-z-index);
@@ -1421,234 +1867,124 @@
 
 /*
  * ==========================================================================
- * GAME COMPONENTS STYLES
+ * WIDTH UTILITIES FOR PROGRESS BARS - Consolidated
  * ==========================================================================
  */
-
-/* Card positioning in Hand component */
-.game-card {
-  left: calc(
-    50% - calc(attr(data-card-overlap) / 2 * 1px) +
-      calc(attr(data-offset) * 1px)
-  );
-  top: 0;
-  z-index: attr(data-z-index);
-  transition: transform 0.3s ease, left 0.3s ease;
-  transform-origin: bottom center;
-  transform: rotate(calc(attr(data-offset) / 5 * 1deg));
-}
-
-.game-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-}
-
-/* Append these Vegas-inspired CSS classes to the end of the file */
-
-/* Vegas card patterns */
-.vegas-card-pattern {
-  background-image: radial-gradient(
-      circle at 50% 50%,
-      rgba(255, 255, 255, 0.05) 1px,
-      transparent 1px
-    ),
-    repeating-linear-gradient(
-      45deg,
-      transparent 0px,
-      transparent 5px,
-      rgba(255, 255, 255, 0.02) 5px,
-      rgba(255, 255, 255, 0.02) 10px
-    );
-  background-size: 20px 20px, 10px 10px;
-}
-
-/* Vegas card highlight effect */
-.vegas-card-highlight {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.1) 0%,
-    rgba(255, 255, 255, 0.05) 15%,
-    rgba(255, 255, 255, 0) 30%,
-    rgba(255, 255, 255, 0) 100%
-  );
-}
-
-/* Vegas-style animations */
-@keyframes vegas-shine {
-  0% {
-    background-position: 0% 0%;
-  }
-  100% {
-    background-position: 200% 0%;
-  }
-}
-
-.vegas-shine {
-  position: relative;
-  overflow: hidden;
-}
-
-.vegas-shine::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 200%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.1) 25%,
-    rgba(255, 255, 255, 0.2) 50%,
-    rgba(255, 255, 255, 0.1) 75%,
-    transparent 100%
-  );
-  animation: vegas-shine 3s infinite linear;
-}
-
-/* Vegas felt texture background */
-.vegas-felt {
-  background-color: #002200;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.5) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.5) 1px, transparent 1px);
-  background-size: 10px 10px;
-  background-blend-mode: overlay;
-}
-
-/* Vegas dealer spotlight */
-.vegas-spotlight {
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 215, 0, 0.15) 0%,
-    rgba(220, 38, 38, 0.05) 30%,
-    transparent 70%
-  );
-}
-
-/* Vegas chip designs */
-.vegas-chip {
-  position: relative;
-  border-radius: 50%;
-  box-shadow: 0 0 0 2px #000, 0 0 0 4px #dc2626, 0 0 0 6px #000,
-    0 0 0 8px #dc2626, 0 0 0 10px #000, 0 5px 15px rgba(0, 0, 0, 0.5);
-}
-
-.vegas-chip::before {
-  content: "";
-  position: absolute;
-  inset: 10px;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at center,
-    rgba(255, 255, 255, 0.8) 0%,
-    rgba(255, 255, 255, 0) 60%
-  );
-  opacity: 0.5;
-}
-
-/* Vegas neon glow effect */
-.vegas-neon {
-  text-shadow: 0 0 5px rgba(220, 38, 38, 0.5), 0 0 10px rgba(220, 38, 38, 0.5),
-    0 0 15px rgba(220, 38, 38, 0.5), 0 0 20px rgba(251, 191, 36, 0.5),
-    0 0 35px rgba(251, 191, 36, 0.5);
-}
-
-/* Vegas casino light animation */
-@keyframes vegas-lights {
-  0%,
-  100% {
-    opacity: 0.4;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-.vegas-lights {
-  animation: vegas-lights 2s infinite ease-in-out;
-}
-
-/* Animation delay utility classes */
-.animation-delay-0 {
-  animation-delay: 0s;
-}
-
-.animation-delay-200 {
-  animation-delay: 0.2s;
-}
-
-.animation-delay-400 {
-  animation-delay: 0.4s;
-}
-
-/* Width utility classes for progress bars */
 .w-7 {
   width: 7%;
 }
-
 .w-25 {
   width: 25%;
 }
-
 .w-28 {
   width: 28%;
 }
-
 .w-30 {
   width: 30%;
 }
-
 .w-35 {
   width: 35%;
 }
-
 .w-50 {
   width: 50%;
 }
-
 .w-55 {
   width: 55%;
 }
-
 .w-65 {
   width: 65%;
 }
-
 .w-75 {
   width: 75%;
 }
-
 .w-80 {
   width: 80%;
 }
-
 .w-90 {
   width: 90%;
 }
-
 .w-100 {
   width: 100%;
 }
 
-/* Use CSS custom property for dynamic width */
-.progress-bar-dynamic {
+/* Dynamic width utility */
+.progress-width {
   width: var(--progress-width);
 }
 
-/* Ambient lighting effect for tutorial page */
-.ambient-lighting {
-  background-image: radial-gradient(
-      circle at 50% 20%,
-      rgba(236, 72, 153, 0.15),
-      transparent 70%
-    ),
-    radial-gradient(
-      circle at 80% 50%,
-      rgba(59, 130, 246, 0.15),
-      transparent 50%
-    );
-  opacity: 0.7;
-  mix-blend-mode: color-dodge;
+/* Root Variables for Sidebar Theme */
+:root {
+  --sidebar: hsl(0 0% 98%);
+  --sidebar-foreground: hsl(240 5.3% 26.1%);
+  --sidebar-primary: hsl(240 5.9% 10%);
+  --sidebar-primary-foreground: hsl(0 0% 98%);
+  --sidebar-accent: hsl(240 4.8% 95.9%);
+  --sidebar-accent-foreground: hsl(240 5.9% 10%);
+  --sidebar-border: hsl(220 13% 91%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+.dark {
+  --sidebar: hsl(240 5.9% 10%);
+  --sidebar-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-primary: hsl(224.3 76.3% 48%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(240 3.7% 15.9%);
+  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-border: hsl(240 3.7% 15.9%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+@theme inline {
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/*
+ * ==========================================================================
+ * CHIP STACK POSITIONING
+ * ==========================================================================
+ */
+.chip-stack-item-0 {
+  bottom: 0;
+}
+.chip-stack-item-1 {
+  bottom: 2px;
+}
+.chip-stack-item-2 {
+  bottom: 4px;
+}
+.chip-stack-item-3 {
+  bottom: 6px;
+}
+.chip-stack-item-4 {
+  bottom: 8px;
+}
+.chip-stack-item-5 {
+  bottom: 10px;
+}
+.chip-stack-item-6 {
+  bottom: 12px;
+}
+.chip-stack-item-7 {
+  bottom: 14px;
+}
+.chip-stack-item-8 {
+  bottom: 16px;
+}
+.chip-stack-item-9 {
+  bottom: 18px;
+}
+
+.chip-stack-even {
+  left: -1px;
+}
+.chip-stack-odd {
+  left: 1px;
 }

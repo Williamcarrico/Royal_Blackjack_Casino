@@ -12,6 +12,11 @@ import {
 } from "@/components/ui/card";
 import { ChevronRight, Crown, DollarSign, Zap } from "lucide-react";
 
+// Create custom motion components
+const MotionDiv = motion.div;
+const MotionH1 = motion.h1;
+const MotionP = motion.p;
+
 export default function LandingPage() {
   const router = useRouter();
 
@@ -75,7 +80,7 @@ export default function LandingPage() {
                 const driftRange = 120 - (depthIndex * 30); // Less drift for deeper cards
 
                 return (
-                  <motion.div
+                  <MotionDiv
                     key={`${cardId}-${depth.toString().replace('.', '-')}-${Math.random().toString(36).slice(2, 11)}`}
                     className="absolute"
                     initial={{
@@ -132,7 +137,7 @@ export default function LandingPage() {
 
         <div className="container z-10 px-4 mx-auto">
           <div className="flex flex-col items-center text-center">
-            <motion.div
+            <MotionDiv
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
@@ -143,30 +148,31 @@ export default function LandingPage() {
                 alt="Royal Blackjack Casino"
                 width={300}
                 height={150}
+                style={{ height: "auto" }}
                 priority
                 className="drop-shadow-[0_0_30px_rgba(255,215,0,0.5)]"
               />
-            </motion.div>
+            </MotionDiv>
 
-            <motion.h1
+            <MotionH1
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-              className="mb-6 text-5xl font-bold text-transparent md:text-7xl bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-500 to-amber-300"
+              className="mb-6 text-5xl font-bold text-transparent font-decorative md:text-7xl bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-500 to-amber-300"
             >
               The Ultimate Blackjack Experience
-            </motion.h1>
+            </MotionH1>
 
-            <motion.p
+            <MotionP
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
               className="max-w-3xl mb-10 text-xl md:text-2xl text-zinc-300"
             >
               Immerse yourself in the most sophisticated and realistic blackjack simulation, crafted with meticulous attention to detail and Vegas-authentic gameplay.
-            </motion.p>
+            </MotionP>
 
-            <motion.div
+            <MotionDiv
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
@@ -187,11 +193,11 @@ export default function LandingPage() {
               >
                 Sign Up
               </Button>
-            </motion.div>
+            </MotionDiv>
           </div>
         </div>
 
-        <motion.div
+        <MotionDiv
           initial={{ y: 30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 1, delay: 1.2, ease: "easeOut" }}
@@ -200,28 +206,28 @@ export default function LandingPage() {
           <div className="animate-bounce">
             <ChevronRight size={30} className="rotate-90 text-amber-500/70" />
           </div>
-        </motion.div>
+        </MotionDiv>
       </section>
 
       {/* Features Section */}
       <section className="relative py-24 bg-zinc-900/50">
         <div className="container px-4 mx-auto">
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 1 }}
             className="mb-16 text-center"
           >
-            <h2 className="mb-4 text-4xl font-bold text-amber-400">Exceptional Features</h2>
+            <h2 className="mb-4 text-4xl font-bold text-amber-400 font-decorative">Exceptional Features</h2>
             <p className="max-w-3xl mx-auto text-xl text-zinc-400">
               Discover what makes Royal Blackjack Casino the premier destination for blackjack enthusiasts worldwide.
             </p>
-          </motion.div>
+          </MotionDiv>
 
           <div className="grid gap-8 md:grid-cols-3">
             {features.map((feature) => (
-              <motion.div
+              <MotionDiv
                 key={`feature-${feature.title}`}
                 initial={{ y: 50, opacity: 0 }}
                 whileInView={{ y: 0, opacity: 1 }}
@@ -237,7 +243,7 @@ export default function LandingPage() {
                     <p className="text-zinc-300">{feature.description}</p>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </MotionDiv>
             ))}
           </div>
         </div>
@@ -248,14 +254,14 @@ export default function LandingPage() {
         <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-700/20 via-transparent to-transparent"></div>
         <div className="container px-4 mx-auto">
           <div className="flex flex-col items-center gap-12 lg:flex-row">
-            <motion.div
+            <MotionDiv
               initial={{ x: -100, opacity: 0 }}
               whileInView={{ x: 0, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
               className="lg:w-1/2"
             >
-              <h2 className="mb-6 text-4xl font-bold text-amber-400">
+              <h2 className="mb-6 text-4xl font-bold text-amber-400 font-decorative">
                 Authentic Casino Experience
               </h2>
               <p className="mb-8 text-xl text-zinc-300">
@@ -269,7 +275,7 @@ export default function LandingPage() {
                   "Multi-hand gameplay options",
                 ].map((item) => (
                   <li key={`list-item-${item}`}>
-                    <motion.div
+                    <MotionDiv
                       initial={{ opacity: 0, x: -20 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
@@ -278,7 +284,7 @@ export default function LandingPage() {
                     >
                       <span className="w-2 h-2 rounded-full bg-amber-500"></span>
                       {item}
-                    </motion.div>
+                    </MotionDiv>
                   </li>
                 ))}
               </ul>
@@ -289,9 +295,9 @@ export default function LandingPage() {
               >
                 Learn More About Gameplay
               </Button>
-            </motion.div>
+            </MotionDiv>
 
-            <motion.div
+            <MotionDiv
               initial={{ x: 100, opacity: 0 }}
               whileInView={{ x: 0, opacity: 1 }}
               viewport={{ once: true }}
@@ -312,10 +318,11 @@ export default function LandingPage() {
                   alt="Blackjack table gameplay"
                   width={960}
                   height={540}
-                  className="object-cover w-full h-full"
+                  style={{ width: "100%", height: "auto" }}
+                  className="object-cover"
                 />
               </div>
-            </motion.div>
+            </MotionDiv>
           </div>
         </div>
       </section>
@@ -323,22 +330,22 @@ export default function LandingPage() {
       {/* Testimonials Section */}
       <section className="py-24 bg-black">
         <div className="container px-4 mx-auto">
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 1 }}
             className="mb-16 text-center"
           >
-            <h2 className="mb-4 text-4xl font-bold text-amber-400">What Players Say</h2>
+            <h2 className="mb-4 text-4xl font-bold text-amber-400 font-decorative">What Players Say</h2>
             <p className="max-w-3xl mx-auto text-xl text-zinc-400">
               Join thousands of satisfied players who have experienced the Royal Blackjack Casino difference.
             </p>
-          </motion.div>
+          </MotionDiv>
 
           <div className="grid gap-8 md:grid-cols-3">
             {testimonials.map((testimonial) => (
-              <motion.div
+              <MotionDiv
                 key={`testimonial-${testimonial.author}`}
                 initial={{ y: 50, opacity: 0 }}
                 whileInView={{ y: 0, opacity: 1 }}
@@ -370,7 +377,7 @@ export default function LandingPage() {
                     <p className="font-medium text-zinc-400">— {testimonial.author}</p>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </MotionDiv>
             ))}
           </div>
         </div>
@@ -380,14 +387,14 @@ export default function LandingPage() {
       <section className="relative py-24">
         <div className="absolute inset-0 bg-gradient-to-b from-amber-900/20 to-black/50"></div>
         <div className="container relative z-10 px-4 mx-auto">
-          <motion.div
+          <MotionDiv
             initial={{ scale: 0.9, opacity: 0 }}
             whileInView={{ scale: 1, opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
             className="max-w-4xl mx-auto text-center"
           >
-            <h2 className="mb-6 text-4xl font-bold md:text-5xl text-amber-300">
+            <h2 className="mb-6 text-4xl font-bold md:text-5xl text-amber-300 font-decorative">
               Ready to Experience the Royal Treatment?
             </h2>
             <p className="mb-10 text-xl md:text-2xl text-zinc-300">
@@ -400,7 +407,7 @@ export default function LandingPage() {
             >
               Play Now
             </Button>
-          </motion.div>
+          </MotionDiv>
         </div>
       </section>
     </div>

@@ -17,6 +17,15 @@ const nextConfig: NextConfig = {
 	typescript: {
 		ignoreBuildErrors: true,
 	},
+	// Disable unnecessary preloading
+	experimental: {
+		optimizeCss: false,
+		optimizeServerReact: false
+	},
+	// Specify custom font loading strategy
+	fontLoaders: [
+		{ loader: '@next/font/google', options: { subsets: ['latin'] } },
+	],
 	webpack: (config, { isServer }) => {
 		// Only apply this on the client-side bundle
 		if (!isServer) {

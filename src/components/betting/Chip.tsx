@@ -102,25 +102,16 @@ const ChipDot = memo(({ color, idx, size }: { color: string; idx: number; size: 
 
     const dotSizeClass = sizeToClassMap[size] || 'w-2 h-2';
 
-    const sizeToTranslateMap = {
-        'sm': '30%',
-        'md': '38%',
-        'lg': '44%'
-    };
-
-    const translateYValue = sizeToTranslateMap[size] || '44%';
-
     return (
         <div
             className={cn(
                 'absolute rounded-full',
                 color,
-                dotSizeClass
+                dotSizeClass,
+                'chip-dot'
             )}
-            style={{
-                transform: `rotate(${idx * 45}deg) translateY(-${translateYValue})`,
-                transformOrigin: 'center center',
-            }}
+            data-rotation={idx * 45}
+            data-size={size}
         />
     );
 });
@@ -156,16 +147,15 @@ const StackedChipLayer = memo(({
             colors.bg,
             colors.border,
             sizeClasses[size],
-            disabled && 'opacity-50'
+            disabled && 'opacity-50',
+            'stacked-chip-layer'
         )}
         initial={initialAnimation ? 'initial' : false}
         animate={initialAnimation ? 'animate' : undefined}
         custom={idx}
         variants={variants}
-        style={{
-            zIndex: 10 - idx,
-            transform: `translateY(${-idx * stackingOffset}px) rotate(${(idx * 2) - 4}deg)`,
-        }}
+        data-idx={idx}
+        data-stacking-offset={stackingOffset}
     />
 ));
 
@@ -174,14 +164,6 @@ StackedChipLayer.displayName = 'StackedChipLayer';
 // Helper function to determine if chip is interactive
 const isChipInteractive = (interactive: boolean, draggable: boolean, disabled: boolean): boolean => {
     return (interactive || draggable) && !disabled;
-};
-
-// Helper function to calculate chip transform style
-const getChipTransform = (stacked: boolean, count: number, renderLimit: number, stackingOffset: number): string | undefined => {
-    if (stacked && count > 1) {
-        return `translateY(${-(Math.min(count, renderLimit) - 1) * stackingOffset}px)`;
-    }
-    return undefined;
 };
 
 // Helper functions for animation state determination
@@ -394,13 +376,20 @@ const Chip = ({
 
     // Compute derived values to reduce complexity in JSX
     const isInteractive = isChipInteractive(interactive, draggable, disabled);
-    const chipTransform = getChipTransform(stacked, count, renderLimit, stackingOffset);
     const initialAnimationValue = getInitialAnimationValue(appearWithAnimation, initialAnimation);
     const showHoverAnimation = interactive && !disabled ? 'hover' : undefined;
     const clickHandler = !draggable && !disabled ? onClick : undefined;
 
     return (
-        <div className={cn('relative', stacked && 'stack-container', className)} style={style} ref={chipRef}>
+        <div
+            className={cn('relative', stacked && 'stack-container', className)}
+            style={style}
+            ref={chipRef}
+            data-stacked={stacked}
+            data-count={count}
+            data-stacking-offset={stackingOffset}
+            data-render-limit={renderLimit}
+        >
             {/* Render multiple chips for stacks with optimized rendering */}
             {stacked && count > 1 && (
                 <AnimatePresence>
@@ -434,7 +423,8 @@ const Chip = ({
                     sizeClasses[size],
                     isInteractive && 'cursor-pointer',
                     disabled && 'opacity-50',
-                    isDragging && 'z-50'
+                    isDragging && 'z-50',
+                    'main-chip'
                 )}
                 initial={initialAnimationValue}
                 animate={animationState}
@@ -448,19 +438,18 @@ const Chip = ({
                 dragElastic={0.1}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
+                onClick={clickHandler}
+                disabled={disabled}
+                onKeyDown={handleKeyDown}
+                aria-label={`${value} chip` + (count > 1 ? `, ${count} chips` : '')}
+                data-dragging={isDragging ? "true" : "false"}
+                data-draggable={draggable ? "true" : "false"}
                 style={{
                     x,
                     y,
                     rotateX: draggable ? rotateX : 0,
                     rotateY: draggable ? rotateY : 0,
-                    zIndex: isDragging ? 50 : 20,
-                    transformOrigin: 'center center',
-                    transform: chipTransform,
                 }}
-                onClick={clickHandler}
-                disabled={disabled}
-                onKeyDown={handleKeyDown}
-                aria-label={`${value} chip` + (count > 1 ? `, ${count} chips` : '')}
             >
                 {/* Inner ring */}
                 <div className={cn(

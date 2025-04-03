@@ -1,6 +1,6 @@
 // src/app/layout.tsx
 import React from 'react'
-import { Inter, Playfair_Display } from 'next/font/google'
+import { Inter, Playfair_Display, Cinzel_Decorative } from 'next/font/google'
 import { Metadata, Viewport } from 'next'
 import Header from '../layout/Navbar'
 import Footer from '../layout/Footer'
@@ -10,23 +10,34 @@ import { Toaster as SonnerToaster } from 'sonner'
 import Providers from './providers'
 import AuthProviderWrapper from '@/components/providers/AuthProviderWrapper'
 
-// Configure fonts
+// Configure fonts with optimized loading
 const inter = Inter({
 	subsets: ['latin'],
 	variable: '--font-inter',
 	display: 'swap',
+	preload: false,
 })
 
 const playfair = Playfair_Display({
 	subsets: ['latin'],
 	variable: '--font-playfair',
 	display: 'swap',
+	preload: false,
 })
 
+const cinzelDecorative = Cinzel_Decorative({
+	weight: ['400', '700', '900'],
+	subsets: ['latin'],
+	display: 'swap',
+	variable: '--font-cinzel-decorative',
+	preload: false,
+})
+
+// Enhanced metadata for better SEO and sharing
 export const metadata: Metadata = {
 	title: 'Royal Blackjack Casino | Experience Authentic Vegas Blackjack',
 	description: 'Experience the thrill of Las Vegas blackjack with our premium casino game featuring realistic physics, strategy guides, and immersive gameplay.',
-	keywords: 'blackjack, casino, card game, gambling, strategy, vegas, las vegas, 21, card counting, casino game',
+	keywords: 'blackjack, casino, card game, gambling, strategy, vegas, las vegas, 21, card counting, casino game, royal blackjack',
 	authors: [{ name: 'House Edge Gaming' }],
 	creator: 'House Edge Gaming',
 	publisher: 'House Edge Gaming',
@@ -72,6 +83,10 @@ export const metadata: Metadata = {
 		creator: '@HouseEdgeGaming',
 		images: ['/twitter-image.jpg'],
 	},
+	verification: {
+		google: 'google-site-verification-code', // Replace with actual verification code if available
+	},
+	applicationName: 'Royal Blackjack Casino',
 }
 
 export const viewport: Viewport = {
@@ -91,24 +106,44 @@ export default function RootLayout({
 		<html lang="en" className={cn(
 			inter.variable,
 			playfair.variable,
+			cinzelDecorative.variable,
 			'font-sans',
 			'scroll-smooth'
 		)} suppressHydrationWarning>
+			<head>
+				<link rel="preconnect" href="https://fonts.googleapis.com" />
+				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+				<link rel="prefetch" href="/og-image.jpg" as="image" />
+				<link rel="prefetch" href="/twitter-image.jpg" as="image" />
+			</head>
 			<body
 				className={cn(
-					'min-h-screen bg-gradient-to-b from-black via-gray-950 to-black text-white antialiased',
-					'dark:bg-gradient-to-b dark:from-gray-950 dark:via-black dark:to-gray-950'
+					'min-h-screen text-white antialiased relative',
+					'bg-gradient-to-b from-black via-gray-950 to-black',
+					'dark:bg-gradient-to-b dark:from-gray-950 dark:via-black dark:to-gray-950',
+					'selection:bg-gold selection:text-black'
 				)}
 			>
+				{/* Ambient casino background effect overlay */}
+				<div className="fixed inset-0 z-0 pointer-events-none bg-vegas-card-pattern opacity-5" />
+				<div className="fixed inset-0 z-0 pointer-events-none ambient-lighting" />
+
 				<AuthProviderWrapper>
 					<Providers>
-						<div className="relative flex flex-col min-h-screen">
+						<div className="relative z-10 flex flex-col min-h-screen">
 							<Header />
 							<main className="flex-1">{children}</main>
 							<Footer />
 						</div>
 						<div id="toaster-container"></div>
-						<SonnerToaster richColors position="top-right" />
+						<SonnerToaster
+							richColors
+							position="top-right"
+							toastOptions={{
+								className: 'shadow-gold glass-gold',
+								duration: 5000,
+							}}
+						/>
 					</Providers>
 				</AuthProviderWrapper>
 			</body>

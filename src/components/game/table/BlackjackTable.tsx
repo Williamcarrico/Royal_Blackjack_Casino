@@ -267,11 +267,7 @@ const PlayerPosition: React.FC<{
                                                     return (
                                                         <div
                                                             key={`${chipStack.value}-${idx}`}
-                                                            className="absolute chip-image"
-                                                            style={{
-                                                                bottom: `${idx * 2}px`,
-                                                                left: `${idx % 2 === 0 ? -1 : 1}px`
-                                                            }}
+                                                            className={`absolute chip-image chip-stack-item-${idx} ${idx % 2 === 0 ? 'chip-stack-even' : 'chip-stack-odd'}`}
                                                         >
                                                             <div className={`w-10 h-10 rounded-full bg-gradient-to-br shadow-md flex items-center justify-center text-white font-bold text-xs ${chipColorClass}`}>
                                                                 ${chipStack.value}

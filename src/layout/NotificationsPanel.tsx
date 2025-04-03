@@ -27,7 +27,7 @@ const DialogComponent = React.forwardRef<
 DialogComponent.displayName = 'DialogComponent'
 
 // Then create the motion component
-const MotionDialog = motion(DialogComponent)
+const MotionDialog = motion.create(DialogComponent)
 
 export function NotificationsPanel() {
 	const [isOpen, setIsOpen] = useState(false)

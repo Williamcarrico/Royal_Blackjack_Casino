@@ -265,6 +265,7 @@ const TutorialPage = () => {
                         height={60}
                         className="w-auto h-12 md:h-16"
                         priority
+                        style={{ height: 'auto' }}
                     />
                     <motion.div
                         className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
@@ -303,6 +304,7 @@ const TutorialPage = () => {
                                     height={100}
                                     className="w-auto h-32 mx-auto mb-6 md:h-40"
                                     priority
+                                    style={{ height: 'auto' }}
                                 />
                                 <motion.h1
                                     className="font-serif text-2xl md:text-3xl text-amber-400"

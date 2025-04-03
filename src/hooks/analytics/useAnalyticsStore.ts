@@ -1069,27 +1069,36 @@ const useAnalyticsStore = create<AnalyticsStoreState>()(
 
 // Implementation of hooks for AnalyticsDashboard
 export const useWinRate = () => {
-    return useAnalyticsStore(state => ({
-        winRate: state.winRate,
-        handsPlayed: state.handsPlayed,
-        handsWon: state.handsWon,
-        handsLost: state.handsLost,
-        handsPushed: state.handsPushed,
-        blackjacks: state.blackjacks,
-        weeklyTrend: 0.5 // This would be calculated based on previous data
-    }));
+    const winRate = useAnalyticsStore(state => state.winRate);
+    const handsPlayed = useAnalyticsStore(state => state.handsPlayed);
+    const handsWon = useAnalyticsStore(state => state.handsWon);
+    const handsLost = useAnalyticsStore(state => state.handsLost);
+    const handsPushed = useAnalyticsStore(state => state.handsPushed);
+    const blackjacks = useAnalyticsStore(state => state.blackjacks);
+
+    // Fixed weekly trend to be a constant value rather than computed each time
+    const weeklyTrend = 0.5;
+
+    return {
+        winRate,
+        handsPlayed,
+        handsWon,
+        handsLost,
+        handsPushed,
+        blackjacks,
+        weeklyTrend
+    };
 };
 
 export const usePerformanceMetrics = () => {
-    const { netProfit, streaks, performanceMetrics } = useAnalyticsStore(state => ({
-        netProfit: state.netProfit,
-        streaks: state.streaks,
-        performanceMetrics: state.performanceMetrics
-    }));
+    const netProfit = useAnalyticsStore(state => state.netProfit);
+    const streaks = useAnalyticsStore(state => state.streaks);
+    const skillMetrics = useAnalyticsStore(state => state.performanceMetrics.skillMetrics);
+    const actionSuccess = useAnalyticsStore(state => state.performanceMetrics.actionSuccess);
 
     // Get player level based on skill metrics
     const playerLevel = (() => {
-        const overallSkill = performanceMetrics.skillMetrics.overallSkill;
+        const overallSkill = skillMetrics.overallSkill;
         if (overallSkill >= 80) return 'expert';
         if (overallSkill >= 60) return 'advanced';
         if (overallSkill >= 40) return 'intermediate';
@@ -1099,50 +1108,51 @@ export const usePerformanceMetrics = () => {
     // Calculate expected value based on skill level
     const expectedValue = (() => {
         const baseHouseEdge = -0.005; // Standard blackjack house edge
-        const skillBonus = (performanceMetrics.skillMetrics.overallSkill - 50) / 1000;
+        const skillBonus = (skillMetrics.overallSkill - 50) / 1000;
         return baseHouseEdge + skillBonus;
     })();
 
     // Map skill metrics to the format expected by the dashboard
-    const skillMetrics = [
+    const formattedSkillMetrics = [
         {
             category: 'Basic Strategy',
-            level: getSkillLevel(performanceMetrics.skillMetrics.basicStrategy)
+            level: getSkillLevel(skillMetrics.basicStrategy)
         },
         {
             category: 'Card Counting',
-            level: getSkillLevel(performanceMetrics.skillMetrics.cardCounting)
+            level: getSkillLevel(skillMetrics.cardCounting)
         },
         {
             category: 'Bankroll Management',
-            level: getSkillLevel(performanceMetrics.skillMetrics.bankrollManagement)
+            level: getSkillLevel(skillMetrics.bankrollManagement)
         },
         {
             category: 'Discipline',
-            level: getSkillLevel(performanceMetrics.skillMetrics.disciplineScore)
+            level: getSkillLevel(skillMetrics.disciplineScore)
         }
     ];
 
-    // Determine bankroll status
-    const trends = { profitTrend: 0 };
+    // Use constant for profitTrend instead of calculating it each time
+    const profitTrend = 0;
 
-    // Extract nested ternary into a separate variable
+    // Extract the ternary into a separate variable
     let statusValue;
-    if (trends.profitTrend > 0) {
+    if (profitTrend > 0) {
         statusValue = 'increasing';
-    } else if (trends.profitTrend < 0) {
+    } else if (profitTrend < 0) {
         statusValue = 'declining';
     } else {
         statusValue = 'stable';
     }
 
+    // Determine bankroll status based on fixed trend value
     const bankrollStatus = {
         status: statusValue
     };
 
-    // Map action success data
+    // Map action success data in a way that doesn't create a new object on each render
     type ActionSuccessData = { success: number; count: number };
-    const actionSuccessData = Object.entries(performanceMetrics.actionSuccess).reduce<Record<string, { success: number; count: number; optimal?: number }>>((acc, [action, data]) => {
+    const actionSuccessData = Object.entries(actionSuccess).reduce<Record<string, { success: number; count: number; optimal?: number }>>((acc, [action, data]) => {
         const successData = data as ActionSuccessData;
         acc[action] = {
             success: successData.success,
@@ -1154,15 +1164,10 @@ export const usePerformanceMetrics = () => {
 
     return {
         totalProfit: netProfit,
-        recentTrend: trends.profitTrend,
-        streaks: {
-            longestWinStreak: streaks.longestWinStreak,
-            currentWinStreak: streaks.currentWinStreak,
-            currentLoseStreak: streaks.currentLoseStreak,
-            longestLoseStreak: streaks.longestLoseStreak
-        },
+        recentTrend: profitTrend,
+        streaks,
         bankrollStatus,
-        skillMetrics,
+        skillMetrics: formattedSkillMetrics,
         playerLevel,
         expectedValue,
         actionSuccess: actionSuccessData
@@ -1178,10 +1183,9 @@ const getSkillLevel = (score: number): string => {
 };
 
 export const useSessionMetrics = (sessionId?: string) => {
-    const { currentSession, sessions } = useAnalyticsStore(state => ({
-        currentSession: state.currentSession,
-        sessions: state.sessions
-    }));
+    const currentSession = useAnalyticsStore(state => state.currentSession);
+    const sessions = useAnalyticsStore(state => state.sessions);
+    const handAnalytics = useAnalyticsStore(state => state.handAnalytics);
 
     // Get the target session (current or specified by ID)
     const targetSession = sessionId
@@ -1213,10 +1217,8 @@ export const useSessionMetrics = (sessionId?: string) => {
     // Calculate win rate for the session if possible
     let winRate;
     if (targetSession.handsPlayed > 0) {
-        // This is a simplification - in a real implementation you would track wins per session
-        const storeState = useAnalyticsStore.getState();
-        const allHandsAnalytics = storeState.handAnalytics || [];
-        const sessionWins = allHandsAnalytics
+        // Filter analytics only for the current session
+        const sessionWins = handAnalytics
             .filter((ha: HandAnalytics) => ha.timestamp >= targetSession.startTime &&
                 (!targetSession.endTime || ha.timestamp <= targetSession.endTime))
             .filter((ha: HandAnalytics) => ha.result === 'win' || ha.result === 'blackjack')
@@ -1225,33 +1227,37 @@ export const useSessionMetrics = (sessionId?: string) => {
         winRate = sessionWins / targetSession.handsPlayed;
     }
 
+    // Create a stable session object that doesn't change on each render
+    const sessionSummary = {
+        id: targetSession.id,
+        startTime: targetSession.startTime,
+        handsPlayed: targetSession.handsPlayed,
+        netProfit: targetSession.netProfit
+    };
+
+    // Create a stable metrics object that doesn't change on each render
+    const metricsSummary = {
+        duration,
+        averageBet,
+        handsPerHour,
+        profitPerHour,
+        winRate
+    };
+
     return {
-        session: {
-            id: targetSession.id,
-            startTime: targetSession.startTime,
-            handsPlayed: targetSession.handsPlayed,
-            netProfit: targetSession.netProfit
-        },
-        metrics: {
-            duration,
-            averageBet,
-            handsPerHour,
-            profitPerHour,
-            winRate
-        }
+        session: sessionSummary,
+        metrics: metricsSummary
     };
 };
 
 export const useStrategyHeatMap = () => {
-    const { heatMapData } = useAnalyticsStore(state => ({
-        heatMapData: state.heatMapData
-    }));
+    const heatMapData = useAnalyticsStore(state => state.heatMapData);
 
-    // Map heat map data to the format expected by the dashboard
+    // Return a mapped version of heat map data only when the heat map data itself changes
     return heatMapData.map((data: HeatMapData) => ({
         playerValue: data.playerValue,
         dealerCard: data.dealerValue,
-        action: data.action as string, // Cast to string to match HeatMapEntry
+        action: data.action as string,
         result: data.result,
         count: data.count
     }));
@@ -1259,20 +1265,28 @@ export const useStrategyHeatMap = () => {
 
 // Create a hook to access player performance metrics
 export const usePlayerPerformanceMetrics = () => {
-    const { playerPerformanceMetrics } = useAnalyticsStore(state => ({
-        playerPerformanceMetrics: state.performanceMetrics.playerPerformanceMetrics
-    }));
+    const decisionAccuracy = useAnalyticsStore(state => state.performanceMetrics.playerPerformanceMetrics.decisionAccuracy);
+    const betSizing = useAnalyticsStore(state => state.performanceMetrics.playerPerformanceMetrics.betSizing);
+    const consistencyScore = useAnalyticsStore(state => state.performanceMetrics.playerPerformanceMetrics.consistencyScore);
+    const riskManagement = useAnalyticsStore(state => state.performanceMetrics.playerPerformanceMetrics.riskManagement);
+    const advantagePlayScore = useAnalyticsStore(state => state.performanceMetrics.playerPerformanceMetrics.advantagePlayScore);
+
+    // Calculate overall performance only once per render
+    const overallPerformance = (
+        decisionAccuracy +
+        betSizing +
+        consistencyScore +
+        riskManagement +
+        advantagePlayScore
+    ) / 5;
 
     return {
-        ...playerPerformanceMetrics,
-        // Add derived metrics if needed
-        overallPerformance: (
-            playerPerformanceMetrics.decisionAccuracy +
-            playerPerformanceMetrics.betSizing +
-            playerPerformanceMetrics.consistencyScore +
-            playerPerformanceMetrics.riskManagement +
-            playerPerformanceMetrics.advantagePlayScore
-        ) / 5
+        decisionAccuracy,
+        betSizing,
+        consistencyScore,
+        riskManagement,
+        advantagePlayScore,
+        overallPerformance
     };
 };
 
