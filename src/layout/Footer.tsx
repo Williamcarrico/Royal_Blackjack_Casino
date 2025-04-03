@@ -105,7 +105,7 @@ const CardSuitAnimation = memo(() => {
 		<div className="absolute top-0 bottom-0 left-0 right-0 z-0 overflow-hidden pointer-events-none opacity-5">
 			{[...Array(12)].map((_, i) => (
 				<motion.div
-					key={i}
+					key={`card-suit-animation-${i}-${Math.random().toString(36).slice(2, 11)}`}
 					className="absolute text-4xl"
 					initial={{
 						x: Math.random() * 100 - 50 + "%",
@@ -350,27 +350,33 @@ const NewsletterForm = memo(() => {
 							}}
 							transition={{ duration: 0.3 }}
 						/>
-						<input
-							type="email"
-							id="newsletter-email"
-							name="email"
-							placeholder="Your email address"
-							value={emailValue}
-							onChange={handleEmailChange}
-							onFocus={() => setIsInputFocused(true)}
-							onBlur={() => setIsInputFocused(false)}
-							disabled={isSubmitting}
-							aria-label="Your email address"
-							aria-describedby={emailError ? 'newsletter-error' : undefined}
-							className={cn(
-								'bg-black/70 border-2 text-white px-4 py-2.5 rounded-l-md w-full focus:outline-none transition-all duration-300',
-								emailError
-									? 'border-red-700/80 focus:border-red-600'
-									: isInputFocused
-										? 'border-amber-500/80'
-										: 'border-amber-900/50'
-							)}
-						/>
+						{(() => {
+							const getBorderClass = () => {
+								if (emailError) return 'border-red-700/80 focus:border-red-600';
+								if (isInputFocused) return 'border-amber-500/80';
+								return 'border-amber-900/50';
+							};
+
+							return (
+								<input
+									type="email"
+									id="newsletter-email"
+									name="email"
+									placeholder="Your email address"
+									value={emailValue}
+									onChange={handleEmailChange}
+									onFocus={() => setIsInputFocused(true)}
+									onBlur={() => setIsInputFocused(false)}
+									disabled={isSubmitting}
+									aria-label="Your email address"
+									aria-describedby={emailError ? 'newsletter-error' : undefined}
+									className={cn(
+										'bg-black/70 border-2 text-white px-4 py-2.5 rounded-l-md w-full focus:outline-none transition-all duration-300',
+										getBorderClass()
+									)}
+								/>
+							);
+						})()}
 						{emailError && (
 							<div className="absolute -translate-y-1/2 right-2 top-1/2">
 								<AlertCircle size={16} className="text-red-500" aria-hidden="true" />
@@ -497,7 +503,7 @@ const CasinoChipsBackground = memo(() => {
 			<div className="relative h-full mx-auto max-w-7xl">
 				{[...Array(6)].map((_, i) => (
 					<motion.div
-						key={i}
+						key={`casino-chip-${i}-${Math.random().toString(36).slice(2, 11)}`}
 						className="absolute w-32 h-32 rounded-full border-4 border-amber-600/5 opacity-[0.03]"
 						style={{
 							left: `${Math.random() * 100}%`,
@@ -571,7 +577,7 @@ const FooterLogo = memo(() => (
 			<div className="flex mt-1">
 				{['♠', '♥', '♦', '♣'].map((suit, i) => (
 					<motion.span
-						key={i}
+						key={`card-suit-${suit}-${i}`}
 						className={cn(
 							"text-xs",
 							i % 2 === 0 ? "text-white" : "text-red-500"
@@ -600,7 +606,6 @@ FooterLogo.displayName = 'FooterLogo'
 
 export function Footer() {
 	const [showScrollTop, setShowScrollTop] = useState(false)
-	const [sparkPosition, setSparkPosition] = useState({ x: '50%', y: '50%' })
 	const footerRef = useRef<HTMLElement>(null)
 	const isInView = useInView(footerRef, { once: true, amount: 0.1 })
 	const currentYear = new Date().getFullYear()
@@ -611,7 +616,10 @@ export function Footer() {
 		const rect = footerRef.current.getBoundingClientRect()
 		const x = ((e.clientX - rect.left) / rect.width) * 100
 		const y = ((e.clientY - rect.top) / rect.height) * 100
-		setSparkPosition({ x: `${x}%`, y: `${y}%` })
+
+		// Update CSS variables directly on the element instead of using state
+		footerRef.current.style.setProperty('--spotlight-x', `${x}%`)
+		footerRef.current.style.setProperty('--spotlight-y', `${y}%`)
 	}, [])
 
 	// Footer link groups with icons for enhanced visual hierarchy
@@ -700,10 +708,7 @@ export function Footer() {
 
 			{/* Interactive spotlight effect */}
 			<div
-				className="absolute inset-0 pointer-events-none opacity-10"
-				style={{
-					background: `radial-gradient(circle 30rem at ${sparkPosition.x} ${sparkPosition.y}, rgba(245, 158, 11, 0.15), transparent)`
-				}}
+				className="absolute inset-0 pointer-events-none opacity-10 dynamic-spotlight"
 			/>
 
 			{/* Main Footer Content */}

@@ -616,6 +616,15 @@
     );
   }
 
+  /* Dynamic spotlight effect that follows cursor */
+  .dynamic-spotlight {
+    background: radial-gradient(
+      circle 30rem at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
+      rgba(245, 158, 11, 0.15),
+      transparent
+    );
+  }
+
   /* Font family utilities */
   .font-sans {
     font-family: var(--font-sans);
@@ -1910,6 +1919,11 @@
 /* Dynamic width utility */
 .progress-width {
   width: var(--progress-width);
+}
+
+/* Confidence bar for strategy advisor */
+.confidence-bar {
+  width: var(--confidence-width);
 }
 
 /* Root Variables for Sidebar Theme */

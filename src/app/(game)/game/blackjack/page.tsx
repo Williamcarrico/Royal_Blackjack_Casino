@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { Toaster, toast } from 'sonner';
@@ -141,96 +141,199 @@ const AudioManager = (() => {
         buttonClick: '/sounds/button-click.mp3'
     };
 
-    // Extract these handlers to module scope
-    const handleAudioLoad = (loadedCount: { value: number }, totalFiles: number, resolve: () => void) => {
-        loadedCount.value++;
-        if (loadedCount.value === totalFiles) resolve();
-    };
+    // Track last play time to prevent rapid repeats
+    const lastPlayTime: Record<string, number> = {};
 
-    const handleAudioError = (key: string, loadedCount: { value: number }, totalFiles: number, resolve: () => void, error: any) => {
-        console.warn(`Failed to load audio: ${key}`, error);
-        loadedCount.value++;
-        if (loadedCount.value === totalFiles) resolve();
-    };
+    // Lazy loading flag
+    let isPreloaded = false;
 
-    // Factory function for creating event handlers
-    const createAudioLoadHandler = (loadedCount: { value: number }, totalFiles: number, resolve: () => void) => {
-        return () => handleAudioLoad(loadedCount, totalFiles, resolve);
-    };
+    // Debounce time for sound effects (ms)
+    const DEBOUNCE_TIME = 80;
 
-    const createAudioErrorHandler = (key: string, loadedCount: { value: number }, totalFiles: number, resolve: () => void, src: string) => {
-        return () => handleAudioError(key, loadedCount, totalFiles, resolve, new Error(`Audio load error: ${src}`));
-    };
-
-    const preload = (): Promise<void> => {
+    // Load a single audio file with proper error handling
+    const loadAudio = (key: string, src: string): Promise<void> => {
         return new Promise((resolve) => {
-            const loadedCount = { value: 0 };
-            const totalFiles = Object.keys(sources).length;
-
-            Object.entries(sources).forEach(([key, src]) => {
-                try {
-                    const audio = new Audio();
-
-                    // Create handlers outside of addEventListener call
-                    const loadHandler = createAudioLoadHandler(loadedCount, totalFiles, resolve);
-                    const errorHandler = createAudioErrorHandler(key, loadedCount, totalFiles, resolve, src);
-
-                    audio.addEventListener('canplaythrough', loadHandler, { once: true });
-                    audio.addEventListener('error', errorHandler, { once: true });
-
-                    // Configure audio
-                    audio.preload = 'auto';
-                    audio.volume = key === 'music' ? 0.3 : 0.5;
-                    audio.loop = key === 'music';
-                    audio.src = src;
-
-                    // Store in sounds object
-                    sounds[key] = audio;
-                } catch (error) {
-                    handleAudioError(key, loadedCount, totalFiles, resolve, error);
-                }
-            });
-
-            setTimeout(() => {
-                if (loadedCount.value < totalFiles) {
-                    console.warn('Audio preload timed out, continuing anyway');
+            try {
+                // Check if already loaded
+                if (sounds[key] && sounds[key].readyState > 0) {
                     resolve();
+                    return;
                 }
-            }, 5000);
+
+                const audio = new Audio();
+
+                // Setup event handlers
+                const handleLoad = () => {
+                    sounds[key] = audio;
+                    resolve();
+                };
+
+                const handleError = () => {
+                    console.warn(`Failed to load audio: ${key} (${src})`);
+                    resolve(); // Resolve anyway to not block other operations
+                };
+
+                audio.addEventListener('canplaythrough', handleLoad, { once: true });
+                audio.addEventListener('error', handleError, { once: true });
+
+                // Set a timeout in case the audio never loads
+                const timeout = setTimeout(() => {
+                    audio.removeEventListener('canplaythrough', handleLoad);
+                    audio.removeEventListener('error', handleError);
+                    handleError();
+                }, 5000);
+
+                // Configure audio
+                audio.preload = 'auto';
+                audio.volume = key === 'music' ? 0.3 : 0.5;
+                audio.loop = key === 'music';
+
+                // Set source last to start loading
+                audio.src = src;
+
+                // Cleanup on successful load
+                audio.addEventListener('canplaythrough', () => clearTimeout(timeout), { once: true });
+            } catch (error) {
+                console.warn(`Error setting up audio ${key}:`, error);
+                resolve(); // Resolve anyway to not block other operations
+            }
         });
     };
 
-    // Enable or disable all sounds
+    // Preload audio files - with better error handling and performance
+    const preload = async (): Promise<void> => {
+        // Skip if already preloaded
+        if (isPreloaded) return;
+
+        try {
+            // Only preload critical sounds first
+            const critical = ['music', 'deal', 'buttonClick'] as const;
+
+            // Then load the rest in the background
+            const nonCritical = Object.keys(sources).filter(key =>
+                !critical.includes(key as any)
+            ) as (keyof typeof sources)[];
+
+            // Don't await these - let them load in background
+            nonCritical.forEach(key => {
+                loadAudio(key, sources[key]);
+            });
+
+            isPreloaded = true;
+        } catch (error) {
+            console.warn('Error during audio preload:', error);
+            // Continue regardless of errors
+        }
+    };
+
+    // Enable or disable all sounds - with better performance
     const setSoundEnabled = (enabled: boolean): void => {
+        if (isSoundEnabled === enabled) return; // No change needed
+
         isSoundEnabled = enabled;
 
         // Handle background music specifically
         if (sounds.music) {
             if (enabled) {
-                sounds.music.play().catch(() => console.warn('Failed to play background music'));
+                // Only try to play music if the document isn't hidden (tab in focus)
+                if (!document.hidden) {
+                    sounds.music.play().catch(() => {
+                        // Auto-play may be blocked - will try again when user interacts
+                        console.info('Background music auto-play prevented by browser');
+                    });
+                }
             } else {
                 sounds.music.pause();
+            }
+        } else if (enabled) {
+            // Lazy load music if needed
+            if ('music' in sources) {
+                const musicKey = 'music' as keyof typeof sources;
+                loadAudio('music', sources[musicKey]).then(() => {
+                    if (isSoundEnabled && !document.hidden) {
+                        sounds.music?.play().catch(() => {
+                            console.info('Background music auto-play prevented by browser');
+                        });
+                    }
+                });
             }
         }
     };
 
-    // Play a sound with error handling
+    // Play a sound with throttling to prevent rapid repeats
     const play = (key: string): void => {
-        if (!isSoundEnabled || !sounds[key]) return;
+        if (!isSoundEnabled) return;
+
+        // Check if the sound exists or needs to be loaded
+        if (!sounds[key]) {
+            // Lazy load sound if needed
+            if (key in sources) {
+                const soundKey = key as keyof typeof sources;
+                loadAudio(key, sources[soundKey]);
+            }
+            return; // Skip this time, it will be available next time
+        }
+
+        const now = performance.now();
+
+        // Throttle sound effects to prevent stuttering
+        if (lastPlayTime[key] && now - lastPlayTime[key] < DEBOUNCE_TIME) {
+            return;
+        }
+
+        lastPlayTime[key] = now;
 
         const sound = sounds[key];
-        sound.currentTime = 0;
-        sound.play().catch(e => console.warn(`Error playing sound ${key}:`, e));
+
+        // Skip if already playing and not a long sound
+        if (key !== 'music' && !sound.paused && sound.currentTime > 0 && sound.currentTime < sound.duration - 0.2) {
+            return;
+        }
+
+        // For short sounds, reset to beginning
+        if (key !== 'music') {
+            try {
+                sound.currentTime = 0;
+            } catch (e) {
+                // Some browsers might throw error if the audio isn't loaded yet
+            }
+        }
+
+        // Play with error handling
+        sound.play().catch(e => {
+            // Auto-play may be blocked - common in browsers
+            if (key === 'music') {
+                console.info('Background music auto-play prevented by browser');
+            }
+        });
     };
 
-    // Stop a specific sound
+    // Stop a specific sound - with better error handling
     const stop = (key: string): void => {
         if (!sounds[key]) return;
 
         try {
             const sound = sounds[key];
-            sound.pause();
-            sound.currentTime = 0;
+
+            // Fade out for better experience
+            if (key === 'music' && sound.volume > 0) {
+                // Simple fade out
+                const fadeOut = () => {
+                    if (sound.volume > 0.05) {
+                        sound.volume -= 0.05;
+                        setTimeout(fadeOut, 50);
+                    } else {
+                        sound.pause();
+                        sound.currentTime = 0;
+                        // Reset volume for next time
+                        sound.volume = key === 'music' ? 0.3 : 0.5;
+                    }
+                };
+                fadeOut();
+            } else {
+                sound.pause();
+                sound.currentTime = 0;
+            }
         } catch (e) {
             console.warn(`Error stopping sound ${key}:`, e);
         }
@@ -243,12 +346,33 @@ const AudioManager = (() => {
                 audio.pause();
                 audio.src = '';
                 audio.removeAttribute('src');
+
+                // Remove event listeners
+                audio.oncanplaythrough = null;
+                audio.onerror = null;
+
                 delete sounds[key];
             } catch (e) {
                 console.warn(`Error cleaning up sound ${key}:`, e);
             }
         });
+
+        // Reset state
+        isPreloaded = false;
     };
+
+    // Handle visibility change to pause/resume music
+    if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', () => {
+            if (isSoundEnabled && sounds.music) {
+                if (document.hidden) {
+                    sounds.music.pause();
+                } else {
+                    sounds.music.play().catch(() => { });
+                }
+            }
+        });
+    }
 
     return {
         preload,
@@ -557,8 +681,8 @@ function useSoundEffects(soundEnabled: boolean) {
 
 // Custom hook to handle card entities with improved memoization
 function useGameEntities(gameState: ExtendedGameState) {
-    // Player spots state with default value
-    const [playerSpots, setPlayerSpots] = useState<PlayerSpot[]>([{
+    // Player spots state with default value - use lazy initializer
+    const [playerSpots, setPlayerSpots] = useState<PlayerSpot[]>(() => [{
         id: 1,
         position: 'center',
         hand: null,
@@ -568,25 +692,59 @@ function useGameEntities(gameState: ExtendedGameState) {
         isCurrentPlayer: true,
     }]);
 
-    // Extract values from game state to reduce dependency tracking complexity
-    const activePlayerHandId = gameState.activePlayerHandId;
-    const hands = gameState.entities?.hands;
-    const chips = gameState?.chips || 0;
-    const bet = gameState?.bet || 0;
-    const gamePhase = gameState.gamePhase;
-    const roundResult = gameState.roundResult;
+    // Cache references to dependencies to reduce object identity changes
+    const activePlayerHandIdRef = useRef(gameState.activePlayerHandId);
+    const handsRef = useRef(gameState.entities?.hands);
+    const chipsRef = useRef(gameState?.chips || 0);
+    const betRef = useRef(gameState?.bet || 0);
+    const gamePhaseRef = useRef(gameState.gamePhase);
+    const roundResultRef = useRef(gameState.roundResult);
+    const dealerHandIdRef = useRef(gameState.dealerHandId);
+
+    // Update refs only when values actually change
+    useEffect(() => {
+        if (activePlayerHandIdRef.current !== gameState.activePlayerHandId) {
+            activePlayerHandIdRef.current = gameState.activePlayerHandId;
+        }
+        if (handsRef.current !== gameState.entities?.hands) {
+            handsRef.current = gameState.entities?.hands;
+        }
+        if (chipsRef.current !== (gameState?.chips || 0)) {
+            chipsRef.current = gameState?.chips || 0;
+        }
+        if (betRef.current !== (gameState?.bet || 0)) {
+            betRef.current = gameState?.bet || 0;
+        }
+        if (gamePhaseRef.current !== gameState.gamePhase) {
+            gamePhaseRef.current = gameState.gamePhase;
+        }
+        if (roundResultRef.current !== gameState.roundResult) {
+            roundResultRef.current = gameState.roundResult;
+        }
+        if (dealerHandIdRef.current !== gameState.dealerHandId) {
+            dealerHandIdRef.current = gameState.dealerHandId;
+        }
+    }, [
+        gameState.activePlayerHandId,
+        gameState.entities?.hands,
+        gameState?.chips,
+        gameState?.bet,
+        gameState.gamePhase,
+        gameState.roundResult,
+        gameState.dealerHandId
+    ]);
 
     // Memoize player hand info
     const playerHandInfo = useMemo(() => ({
-        hand: activePlayerHandId && hands ? hands[activePlayerHandId] : null,
-        chips,
-        bet,
-        isActive: gamePhase === 'playerTurn',
-        result: roundResult as 'win' | 'lose' | 'push' | 'blackjack' | undefined
-    }), [activePlayerHandId, hands, chips, bet, gamePhase, roundResult]);
+        hand: activePlayerHandIdRef.current && handsRef.current ? handsRef.current[activePlayerHandIdRef.current] : null,
+        chips: chipsRef.current,
+        bet: betRef.current,
+        isActive: gamePhaseRef.current === 'playerTurn',
+        result: roundResultRef.current as 'win' | 'lose' | 'push' | 'blackjack' | undefined
+    }), []);
 
-    // Update player spots based on memoized data
-    useEffect(() => {
+    // Use isomorphic layout effect to batch UI updates
+    useLayoutEffect(() => {
         setPlayerSpots(prevPlayers => {
             // Find the center player
             const centerPlayerIndex = prevPlayers.findIndex(p => p.position === 'center');
@@ -601,84 +759,136 @@ function useGameEntities(gameState: ExtendedGameState) {
             // Add null check for centerPlayer
             if (!centerPlayer) return prevPlayers;
 
-            newPlayers[centerPlayerIndex] = {
-                ...centerPlayer,
-                hand: playerHandInfo.hand,
-                chips: playerHandInfo.chips,
-                bet: playerHandInfo.bet,
-                isActive: playerHandInfo.isActive,
-                result: playerHandInfo.result,
-                id: centerPlayer.id,
-                position: centerPlayer.position || 'center', // Ensure position is always defined
-                isCurrentPlayer: centerPlayer.isCurrentPlayer || true
-            };
+            // Only update if values have actually changed
+            if (
+                centerPlayer.hand !== playerHandInfo.hand ||
+                centerPlayer.chips !== playerHandInfo.chips ||
+                centerPlayer.bet !== playerHandInfo.bet ||
+                centerPlayer.isActive !== playerHandInfo.isActive ||
+                centerPlayer.result !== playerHandInfo.result
+            ) {
+                newPlayers[centerPlayerIndex] = {
+                    ...centerPlayer,
+                    hand: playerHandInfo.hand,
+                    chips: playerHandInfo.chips,
+                    bet: playerHandInfo.bet,
+                    isActive: playerHandInfo.isActive,
+                    result: playerHandInfo.result
+                };
+                return newPlayers;
+            }
 
-            return newPlayers;
+            // No change needed
+            return prevPlayers;
         });
     }, [playerHandInfo]);
 
+    // Cache entities to reduce reference changes
+    const entitiesRef = useRef(gameState.entities);
+    useEffect(() => {
+        entitiesRef.current = gameState.entities;
+    }, [gameState.entities]);
+
     // Memoize dealer hand to prevent unnecessary re-renders
     const dealerHand = useMemo(() =>
-        gameState.dealerHandId && gameState.entities?.hands
-            ? gameState.entities.hands[gameState.dealerHandId]
+        dealerHandIdRef.current && entitiesRef.current?.hands
+            ? entitiesRef.current.hands[dealerHandIdRef.current]
             : null,
-        [gameState.dealerHandId, gameState.entities?.hands]
+        []
     );
 
-    // Memoize dealer cards to prevent unnecessary calculations in render
-    const dealerCards = useMemo(() => {
-        if (!dealerHand?.cards || !gameState.entities?.cards) return [];
+    // Cache the dealer hand cards to reduce reference changes
+    const dealerHandCardsRef = useRef(dealerHand?.cards || []);
+    useEffect(() => {
+        dealerHandCardsRef.current = dealerHand?.cards || [];
+    }, [dealerHand?.cards]);
 
-        return dealerHand.cards.map((cardId: string) => {
+    // Process dealer cards once per update to avoid repeated processing
+    const dealerCards = useMemo(() => {
+        if (!dealerHandCardsRef.current.length || !entitiesRef.current?.cards) return [];
+
+        // Create a cache for processed cards to avoid duplicate work
+        const processedCards: Record<string, any> = {};
+
+        return dealerHandCardsRef.current.map((cardId: string) => {
+            // Check if we've already processed this card
+            if (processedCards[cardId]) {
+                return processedCards[cardId];
+            }
+
             // Get the card data from the normalized state
-            if (typeof cardId === 'string' && gameState.entities?.cards) {
-                const cardData = gameState.entities.cards[cardId];
+            if (typeof cardId === 'string' && entitiesRef.current?.cards) {
+                const cardData = entitiesRef.current.cards[cardId];
                 if (cardData) {
-                    // Safely access suit and rank properties
-                    return {
+                    // Store processed card in cache
+                    const card = {
                         id: cardId,
                         suit: (cardData.suit || 'hearts') as Suit,
                         rank: (cardData.rank || 'A') as Rank
                     };
+                    processedCards[cardId] = card;
+                    return card;
                 }
             }
 
             // Fallback for missing card
-            return { ...DEFAULT_CARD, id: memoizedFormatCardId(cardId) };
+            const defaultCard = { ...DEFAULT_CARD, id: memoizedFormatCardId(cardId) };
+            processedCards[cardId] = defaultCard;
+            return defaultCard;
         });
-    }, [dealerHand?.cards, gameState.entities?.cards]);
+    }, [dealerHandCardsRef.current]);
 
-    // Memoize player cards for each spot
+    // Cache player hand cards
+    const playerHandsRef = useRef(playerSpots.map(spot => spot.hand?.cards || []));
+    useEffect(() => {
+        playerHandsRef.current = playerSpots.map(spot => spot.hand?.cards || []);
+    }, [playerSpots]);
+
+    // Process player cards once per update to avoid repeated processing
     const playerCards = useMemo(() => {
-        return playerSpots.map(spot => {
-            if (!spot.hand?.cards || !gameState.entities?.cards) return [];
+        // Use a single processed cards cache across all players
+        const processedCards: Record<string, any> = {};
 
-            return spot.hand.cards.map((cardId: string) => {
+        return playerSpots.map((spot, spotIndex) => {
+            const cards = spot.hand?.cards || [];
+            if (!cards.length || !entitiesRef.current?.cards) return [];
+
+            return cards.map((cardId: string) => {
+                // Check if we've already processed this card
+                if (processedCards[cardId]) {
+                    return processedCards[cardId];
+                }
+
                 // Get the card data from the normalized state
-                if (typeof cardId === 'string' && gameState.entities?.cards) {
-                    const cardData = gameState.entities.cards[cardId];
+                if (typeof cardId === 'string' && entitiesRef.current?.cards) {
+                    const cardData = entitiesRef.current.cards[cardId];
                     if (cardData) {
-                        return {
+                        // Store processed card in cache
+                        const card = {
                             id: cardId,
                             suit: (cardData.suit || 'hearts') as Suit,
                             rank: (cardData.rank || 'A') as Rank
                         };
+                        processedCards[cardId] = card;
+                        return card;
                     }
                 }
 
                 // Fallback for missing card
-                return { ...DEFAULT_CARD, id: memoizedFormatCardId(cardId) };
+                const defaultCard = { ...DEFAULT_CARD, id: memoizedFormatCardId(cardId) };
+                processedCards[cardId] = defaultCard;
+                return defaultCard;
             });
         });
-    }, [playerSpots, gameState.entities?.cards]);
+    }, [playerSpots, playerHandsRef.current]);
 
     // Determine dealer result based on game outcome
     const dealerResult = useMemo(() => {
-        if (gameState.roundResult === 'win' || gameState.roundResult === 'blackjack') return 'lose';
-        if (gameState.roundResult === 'lose' || gameState.roundResult === 'bust') return 'win';
-        if (gameState.roundResult === 'push') return 'push';
+        if (roundResultRef.current === 'win' || roundResultRef.current === 'blackjack') return 'lose';
+        if (roundResultRef.current === 'lose' || roundResultRef.current === 'bust') return 'win';
+        if (roundResultRef.current === 'push') return 'push';
         return undefined;
-    }, [gameState.roundResult]);
+    }, [roundResultRef.current]);
 
     return { playerSpots, dealerHand, dealerCards, playerCards, dealerResult };
 }
@@ -1160,9 +1370,10 @@ const StatusMessage = React.memo(({ message, type }: { message: string, type: Me
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
             className={cn(
-                "rounded-lg shadow-lg backdrop-blur-sm",
+                "rounded-lg shadow-md backdrop-blur-sm",
                 "flex items-center justify-center",
                 "text-white font-medium px-4 py-2",
+                "will-change-transform",
                 {
                     'bg-blue-500/70': type === 'info',
                     'bg-green-500/70': type === 'success',
@@ -1170,6 +1381,10 @@ const StatusMessage = React.memo(({ message, type }: { message: string, type: Me
                     'bg-red-500/70': type === 'error'
                 }
             )}
+            style={{
+                transform: 'translateZ(0)',
+                backfaceVisibility: 'hidden'
+            }}
             role="alert"
             aria-live="assertive"
         >
@@ -1246,7 +1461,10 @@ const IntroAnimation = React.memo(({ isShown }: { isShown: boolean }) => (
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 1 }}
-                className="absolute inset-0 z-50 flex items-center justify-center bg-black"
+                className="absolute inset-0 z-50 flex items-center justify-center bg-black will-change-opacity"
+                style={{
+                    transform: 'translateZ(0)'
+                }}
             >
                 <Image
                     src="/images/Royal-Blackjack-Logo.png"
@@ -1278,7 +1496,7 @@ const GameHeader = React.memo(({
     onShowSettings: () => void,
     onToggleMobileMenu: () => void
 }) => (
-    <header className="fixed left-0 right-0 z-40 flex items-center justify-between p-4 top-16 bg-gradient-to-b from-black via-black/80 to-transparent backdrop-blur-sm">
+    <header className="fixed left-0 right-0 z-40 flex items-center justify-between p-4 top-16 bg-gradient-to-b from-black via-black/80 to-transparent backdrop-blur-sm will-change-transform transform-gpu">
         <div className="flex items-center">
             <Image
                 src="/images/Royal-Blackjack-Logo.png"
@@ -1298,6 +1516,7 @@ const GameHeader = React.memo(({
                 size="icon"
                 onClick={onToggleSound}
                 className="rounded-full bg-black/40 backdrop-blur-sm hover:bg-black/60"
+                style={{ width: '36px', height: '36px' }}
             >
                 {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
             </Button>
@@ -1308,6 +1527,7 @@ const GameHeader = React.memo(({
                 size="icon"
                 onClick={onShowSettings}
                 className="rounded-full bg-black/40 backdrop-blur-sm hover:bg-black/60"
+                style={{ width: '36px', height: '36px' }}
             >
                 <Settings size={18} />
             </Button>
@@ -1318,6 +1538,7 @@ const GameHeader = React.memo(({
                 size="icon"
                 onClick={onToggleMobileMenu}
                 className="rounded-full md:hidden bg-black/40 backdrop-blur-sm hover:bg-black/60"
+                style={{ width: '36px', height: '36px' }}
             >
                 <Menu size={18} />
             </Button>
@@ -1325,7 +1546,7 @@ const GameHeader = React.memo(({
             {/* Chips display */}
             <Badge
                 variant="outline"
-                className="px-3 py-1.5 bg-black/40 backdrop-blur-sm text-amber-300 border-amber-500/50"
+                className="px-3 py-1.5 bg-black/40 backdrop-blur-sm text-amber-300 border-amber-500/50 min-w-[100px] text-center"
             >
                 <DollarSign className="w-4 h-4 mr-1" />
                 {chips.toLocaleString()}
@@ -1338,7 +1559,7 @@ GameHeader.displayName = 'GameHeader';
 
 // Status Message Display Component
 const StatusMessageDisplay = React.memo(({ message, type }: { message: string, type: MessageType }) => (
-    <div className="absolute z-40 w-full max-w-md transform -translate-x-1/2 top-40 left-1/2">
+    <div className="absolute z-40 w-full max-w-md transform -translate-x-1/2 top-40 left-1/2 min-h-[60px] flex items-center justify-center">
         {message && <StatusMessage message={message} type={type} />}
     </div>
 ));
@@ -1365,9 +1586,9 @@ const GameTabs = React.memo(({
         className="mx-auto max-w-7xl"
     >
         <TabsList className="mx-auto mb-4 border bg-black/50 border-slate-700 backdrop-blur-sm">
-            <TabsTrigger value="game">Main Game</TabsTrigger>
-            <TabsTrigger value="strategy">Strategy</TabsTrigger>
-            <TabsTrigger value="analysis">Analysis</TabsTrigger>
+            <TabsTrigger value="game" className="min-w-[100px]">Main Game</TabsTrigger>
+            <TabsTrigger value="strategy" className="min-w-[100px]">Strategy</TabsTrigger>
+            <TabsTrigger value="analysis" className="min-w-[100px]">Analysis</TabsTrigger>
         </TabsList>
 
         <TabsContent value="game" className="focus:outline-none">
@@ -1383,8 +1604,6 @@ const GameTabs = React.memo(({
         </TabsContent>
     </Tabs>
 ));
-
-GameTabs.displayName = 'GameTabs';
 
 // Mobile Menu Component
 const MobileMenu = React.memo(({
@@ -1411,7 +1630,11 @@ const MobileMenu = React.memo(({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: '100%' }}
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                className="fixed top-0 right-0 z-50 w-64 h-full p-4 border-l shadow-xl bg-slate-900/95 backdrop-blur-lg border-slate-700"
+                className="fixed top-0 right-0 z-50 w-64 h-full p-4 border-l shadow-lg bg-slate-900/95 backdrop-blur-sm border-slate-700 will-change-transform"
+                style={{
+                    transform: 'translate3d(0,0,0)',
+                    backfaceVisibility: 'hidden'
+                }}
             >
                 <div className="flex flex-col h-full">
                     <div className="flex items-center justify-between mb-6">
@@ -1550,7 +1773,7 @@ const GameContent = React.memo(({
         gameState?.bet
     ]);
 
-    // Create prepared players for BlackjackTable with proper memoization
+    // Create prepared players for BlackjackTable with proper memoization - use stable object references
     const preparedPlayers = useMemo(() => {
         return playerSpots.map((spot: PlayerSpot, index: number) => ({
             id: String(spot.id),
@@ -1578,10 +1801,10 @@ const GameContent = React.memo(({
         result: dealerResult
     }), [dealerCards, gameState.gamePhase, dealerResult]);
 
-    // Create game store data for sidebar
+    // Create game store data for sidebar - using primitive values in dependencies when possible
     const sidebarGameStore = useMemo(() => {
         // Create a partial implementation with the most important properties
-        const partialStore = {
+        return {
             isLoading: false,
             error: null,
             userId: null,
@@ -1600,11 +1823,7 @@ const GameContent = React.memo(({
             },
             entities: gameState.entities || { hands: {} },
             gamePhase: gameState?.gamePhase || 'betting'
-        };
-
-        // Use type assertion to bypass TypeScript's strict checking
-        // This is acceptable here since we're creating a mock for display purposes
-        return partialStore as any;
+        } as any;
     }, [
         gameState?.chips,
         gameState?.bet,
@@ -1616,21 +1835,23 @@ const GameContent = React.memo(({
         gameState.entities
     ]);
 
-    // Create enhanced settings for sidebar
+    // Create enhanced settings for sidebar - extract only needed primitives
     const sidebarEnhancedSettings = useMemo(() => {
-        // Create a partial implementation with the most important properties
-        const partialSettings = {
-            countingSystem: enhancedSettings.showCountingInfo ? 'hi-lo' : 'none',
-            showCountingInfo: !!enhancedSettings.showCountingInfo,
-            showBasicStrategy: !!enhancedSettings.showBasicStrategy,
-            showProbabilities: !!enhancedSettings.showProbabilities,
-            gameRules: enhancedSettings.gameRules || { minBet: 5, maxBet: 500 },
-            tableColor: enhancedSettings.tableColor
-        };
+        const showCountingInfo = !!enhancedSettings.showCountingInfo;
+        const showBasicStrategy = !!enhancedSettings.showBasicStrategy;
+        const showProbabilities = !!enhancedSettings.showProbabilities;
+        const gameRules = enhancedSettings.gameRules || { minBet: 5, maxBet: 500 };
+        const tableColorValue = enhancedSettings.tableColor;
 
-        // Use type assertion to bypass TypeScript's strict checking
-        // This is acceptable here since we're creating a mock for display purposes
-        return partialSettings as any;
+        // Create a partial implementation with the most important properties
+        return {
+            countingSystem: showCountingInfo ? 'hi-lo' : 'none',
+            showCountingInfo,
+            showBasicStrategy,
+            showProbabilities,
+            gameRules,
+            tableColor: tableColorValue
+        } as any;
     }, [
         enhancedSettings.showCountingInfo,
         enhancedSettings.showBasicStrategy,
@@ -1639,17 +1860,33 @@ const GameContent = React.memo(({
         enhancedSettings.tableColor
     ]);
 
-    // Create analytics data for sidebar
-    const sidebarAnalytics = useMemo(() => ({
-        gameStats: {
-            handsPlayed: analytics.gameStats?.handsPlayed || 0,
-            handsWon: analytics.gameStats?.handsWon || 0,
-            handsLost: analytics.gameStats?.handsLost || 0,
-            handsPushed: analytics.gameStats?.pushes || 0,
-            blackjacks: analytics.gameStats?.blackjacks || 0,
-            netProfit: analytics.gameStats?.netProfit || 0
-        }
-    }), [analytics.gameStats]);
+    // Create analytics data for sidebar - extract only needed primitives
+    const sidebarAnalytics = useMemo(() => {
+        const handsPlayed = analytics.gameStats?.handsPlayed || 0;
+        const handsWon = analytics.gameStats?.handsWon || 0;
+        const handsLost = analytics.gameStats?.handsLost || 0;
+        const pushes = analytics.gameStats?.pushes || 0;
+        const blackjacks = analytics.gameStats?.blackjacks || 0;
+        const netProfit = analytics.gameStats?.netProfit || 0;
+
+        return {
+            gameStats: {
+                handsPlayed,
+                handsWon,
+                handsLost,
+                handsPushed: pushes,
+                blackjacks,
+                netProfit
+            }
+        };
+    }, [
+        analytics.gameStats?.handsPlayed,
+        analytics.gameStats?.handsWon,
+        analytics.gameStats?.handsLost,
+        analytics.gameStats?.pushes,
+        analytics.gameStats?.blackjacks,
+        analytics.gameStats?.netProfit
+    ]);
 
     // Handle sidebar dialog toggles with proper memoization
     const handleShowRulesDialog = useCallback(() => {
@@ -1742,6 +1979,25 @@ const GameContent = React.memo(({
                 />
             </div>
         </div>
+    );
+}, (prevProps, nextProps) => {
+    // Custom comparison function to prevent unnecessary re-renders
+    // Only re-render when these specific props change
+    return (
+        prevProps.gameState.gamePhase === nextProps.gameState.gamePhase &&
+        prevProps.gameState.bet === nextProps.gameState.bet &&
+        prevProps.gameState.chips === nextProps.gameState.chips &&
+        prevProps.gameState.message === nextProps.gameState.message &&
+        prevProps.gameState.runningCount === nextProps.gameState.runningCount &&
+        prevProps.gameState.trueCount === nextProps.gameState.trueCount &&
+        prevProps.gameState.activePlayerHandId === nextProps.gameState.activePlayerHandId &&
+        prevProps.gameUI.isGamePlaying === nextProps.gameUI.isGamePlaying &&
+        prevProps.gameUI.soundEnabled === nextProps.gameUI.soundEnabled &&
+        prevProps.gameUI.tutorialMode === nextProps.gameUI.tutorialMode &&
+        prevProps.tableColor === nextProps.tableColor &&
+        prevProps.playerSpots.length === nextProps.playerSpots.length &&
+        prevProps.dealerCards.length === nextProps.dealerCards.length &&
+        JSON.stringify(prevProps.enhancedSettings.gameRules) === JSON.stringify(nextProps.enhancedSettings.gameRules)
     );
 });
 
@@ -2046,40 +2302,41 @@ export default function BlackjackPageWrapper() {
             lastLogTime: performance.now(),
         };
 
-        let frameCounter: number | null = null;
-        let skipFrames = 0; // Skip frames to reduce overhead
+        // Use a less intensive approach than requestAnimationFrame
+        // Sample frames periodically rather than every frame
+        const sampleInterval = 250; // Check every 250ms instead of every frame
+        let isRunning = true;
 
-        const countFrame = () => {
-            // Skip some frames to reduce overhead (only measure every 3rd frame)
-            skipFrames = (skipFrames + 1) % 3;
-            if (skipFrames !== 0) {
-                frameCounter = requestAnimationFrame(countFrame);
-                return;
-            }
+        const monitorPerformance = () => {
+            if (!isRunning) return;
 
             const now = performance.now();
             const frameDuration = now - performanceMetrics.lastFrameTime;
 
+            performanceMetrics.frames++;
+
             // Count frame as janky if it takes more than 50ms (less than 20fps)
             if (frameDuration > 50) {
                 performanceMetrics.jankyFrames++;
-                // Only log if more than 500ms has passed since last log to avoid console spam
-                if (now - performanceMetrics.lastLogTime > 500) {
+                // Only log if more than 2000ms has passed since last log to avoid console spam
+                if (now - performanceMetrics.lastLogTime > 2000) {
                     console.warn(`Janky frame detected: ${frameDuration.toFixed(2)}ms`);
                     performanceMetrics.lastLogTime = now;
                 }
             }
 
-            performanceMetrics.frames++;
             performanceMetrics.lastFrameTime = now;
 
-            frameCounter = requestAnimationFrame(countFrame);
+            // Schedule next check with setTimeout instead of requestAnimationFrame
+            setTimeout(monitorPerformance, sampleInterval);
         };
 
-        // Start monitoring frames
-        frameCounter = requestAnimationFrame(countFrame);
+        // Start monitoring with a delay to avoid initial load jank
+        const initialDelay = setTimeout(() => {
+            monitorPerformance();
+        }, 1000);
 
-        // Log metrics less frequently (every 30 seconds instead of 10)
+        // Log metrics less frequently (every 60 seconds instead of 30)
         const metricsInterval = setInterval(() => {
             const elapsedSeconds = (performance.now() - performanceMetrics.loadTime) / 1000;
             const fps = performanceMetrics.frames / elapsedSeconds;
@@ -2089,12 +2346,11 @@ export default function BlackjackPageWrapper() {
                 `Performance: ${fps.toFixed(1)} FPS, ` +
                 `${performanceMetrics.jankyFrames} janky frames (${jankyPercentage.toFixed(1)}%)`
             );
-        }, 30000); // Increased from 10000 to 30000
+        }, 60000); // Increased from 30000 to 60000
 
         return () => {
-            if (frameCounter !== null) {
-                cancelAnimationFrame(frameCounter);
-            }
+            isRunning = false;
+            clearTimeout(initialDelay);
             clearInterval(metricsInterval);
         };
     }, []);

@@ -410,7 +410,7 @@ const AutoStrategyPlayer: React.FC<AutoStrategyPlayerProps> = ({ className = '' 
                                 <span className="text-xs text-gray-400">Confidence:</span>
                                 <span className="text-xs text-gray-400">{Math.round(confidence * 100)}%</span>
                             </div>
-                            <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                            <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden" style={{ '--confidence-width': `${confidence * 100}%` } as React.CSSProperties}>
                                 {(() => {
                                     let confidenceColor = 'bg-red-500';
                                     if (confidence > 0.85) confidenceColor = 'bg-green-500';
@@ -419,8 +419,7 @@ const AutoStrategyPlayer: React.FC<AutoStrategyPlayerProps> = ({ className = '' 
 
                                     return (
                                         <div
-                                            className={`h-full ${confidenceColor}`}
-                                            style={{ width: `${confidence * 100}%` }}
+                                            className={`h-full ${confidenceColor} confidence-bar`}
                                         />
                                     );
                                 })()}
@@ -429,38 +428,43 @@ const AutoStrategyPlayer: React.FC<AutoStrategyPlayerProps> = ({ className = '' 
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                        {Object.entries(actionDisplay).map(([action, display]) => (
-                            <Button
-                                key={action}
-                                variant={action === recommendedAction ? 'default' : 'outline'}
-                                onClick={() => {
-                                    // Maps actions to game store functions
-                                    switch (action) {
-                                        case 'hit':
-                                            if (gameStore.hit) gameStore.hit();
-                                            break;
-                                        case 'stand':
-                                            if (gameStore.stand) gameStore.stand();
-                                            break;
-                                        case 'double':
-                                            if (gameStore.doubleDown) gameStore.doubleDown();
-                                            break;
-                                        case 'split':
-                                            if (gameStore.split) gameStore.split();
-                                            break;
-                                        case 'surrender':
-                                            if (gameStore.surrender) gameStore.surrender();
-                                            break;
-                                    }
-                                }}
-                                className={action === recommendedAction ?
-                                    `bg-opacity-90 ${display.color.replace('text-', 'bg-').replace('-400', '-600')}` :
-                                    'bg-black/40 border-slate-600'}
-                            >
-                                {action === recommendedAction && <CheckCircle className="w-3.5 h-3.5 mr-1" />}
-                                {display.text}
-                            </Button>
-                        ))}
+                        {Object.entries(actionDisplay).map(([action, display]) => {
+                            // Extract the conditional class logic into a variable
+                            const buttonClassName = action === recommendedAction
+                                ? `bg-opacity-90 ${display.color.replace('text-', 'bg-').replace('-400', '-600')}`
+                                : 'bg-black/40 border-slate-600';
+
+                            return (
+                                <Button
+                                    key={action}
+                                    variant={action === recommendedAction ? 'default' : 'outline'}
+                                    onClick={() => {
+                                        // Maps actions to game store functions
+                                        switch (action) {
+                                            case 'hit':
+                                                if (gameStore.hit) gameStore.hit();
+                                                break;
+                                            case 'stand':
+                                                if (gameStore.stand) gameStore.stand();
+                                                break;
+                                            case 'double':
+                                                if (gameStore.doubleDown) gameStore.doubleDown();
+                                                break;
+                                            case 'split':
+                                                if (gameStore.split) gameStore.split();
+                                                break;
+                                            case 'surrender':
+                                                if (gameStore.surrender) gameStore.surrender();
+                                                break;
+                                        }
+                                    }}
+                                    className={buttonClassName}
+                                >
+                                    {action === recommendedAction && <CheckCircle className="w-3.5 h-3.5 mr-1" />}
+                                    {display.text}
+                                </Button>
+                            );
+                        })}
                     </div>
 
                     {autoPlayEnabled && autoPlayBasicStrategy && (
