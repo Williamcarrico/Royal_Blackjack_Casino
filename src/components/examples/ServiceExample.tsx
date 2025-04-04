@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useServiceProvider } from '../../hooks/useServiceProvider';
+import { useServiceProvider } from '../../hooks/services/useServiceProvider';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 // Import the actual values, not just the type
@@ -37,7 +37,7 @@ export default function ServiceExample() {
             services.analytics.trackButtonClick('example_button', 'Example Button');
         }
 
-            services.audio.playSound(BUTTON_CLICK);
+        services.audio.playSound(BUTTON_CLICK);
         if (services.audio.service) {
             services.audio.playSound(BUTTON_CLICK);
         }
@@ -52,12 +52,12 @@ export default function ServiceExample() {
             });
 
             if (result.success) {
-                    services.audio.playSound(WIN);
+                services.audio.playSound(WIN);
                 if (services.audio.service) {
                     services.audio.playSound(WIN);
                 }
             } else {
-                    services.audio.playSound(ERROR);
+                services.audio.playSound(ERROR);
                 if (services.audio.service) {
                     services.audio.playSound(ERROR);
                 }
@@ -75,7 +75,7 @@ export default function ServiceExample() {
             });
 
             if (result.success) {
-                    services.audio.playSound(GAME_START);
+                services.audio.playSound(GAME_START);
                 if (services.audio.service) {
                     services.audio.playSound(GAME_START);
                 }

@@ -3,29 +3,11 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
 	/* config options here */
 	images: {
-		remotePatterns: [
-			{
-				protocol: 'https',
-				hostname: 'i.pravatar.cc',
-			},
-			{
-				protocol: 'https',
-				hostname: 'randomuser.me',
-			},
-		],
+		domains: ['i.pravatar.cc'],
 	},
 	typescript: {
 		ignoreBuildErrors: true,
 	},
-	// Disable unnecessary preloading
-	experimental: {
-		optimizeCss: false,
-		optimizeServerReact: false
-	},
-	// Specify custom font loading strategy
-	fontLoaders: [
-		{ loader: '@next/font/google', options: { subsets: ['latin'] } },
-	],
 	webpack: (config, { isServer }) => {
 		// Only apply this on the client-side bundle
 		if (!isServer) {

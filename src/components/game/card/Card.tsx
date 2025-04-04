@@ -3,6 +3,7 @@
 import React, { useRef } from 'react';
 import { cn } from '@/lib/utils/utils';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 export type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades';
 export type Rank = 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K';
@@ -20,6 +21,7 @@ export interface CardProps {
     index?: number;
     onClick?: () => void;
     'aria-label'?: string;
+    cardStyle?: string;
 }
 
 // Utility functions moved outside component
@@ -62,6 +64,41 @@ const dealVariants = {
             stiffness: 200
         }
     })
+};
+
+// Get path for card SVG file
+const getCardImagePath = (suit: Suit, rank: Rank, faceDown: boolean, cardStyle: string = 'modern'): string => {
+    if (faceDown) {
+        // Map card style to an available back style
+        const backStyleMap: Record<string, string> = {
+            'modern': 'blue',
+            'classic': 'red',
+            'retro': 'abstract_scene'
+        };
+
+        // Use the mapped style or fallback to blue
+        const backStyle = backStyleMap[cardStyle] || 'blue';
+        return `/card/backs/${backStyle}.svg`;
+    }
+
+    // Map rank names for file paths
+    const rankMap: Record<Rank, string> = {
+        'A': 'ace',
+        '2': '2',
+        '3': '3',
+        '4': '4',
+        '5': '5',
+        '6': '6',
+        '7': '7',
+        '8': '8',
+        '9': '9',
+        '10': '10',
+        'J': 'jack',
+        'Q': 'queen',
+        'K': 'king'
+    };
+
+    return `/card/fronts/${suit}_${rankMap[rank]}.svg`;
 };
 
 // Card corners component
@@ -124,6 +161,7 @@ const Card = ({
     index = 0,
     onClick,
     'aria-label': ariaLabel,
+    cardStyle = 'modern',
 }: CardProps) => {
     const cardRef = useRef<HTMLDivElement>(null);
     const isRed = isRedSuit(suit);
@@ -151,19 +189,7 @@ const Card = ({
         className
     );
 
-    // Generate card face class names
-    const cardFaceClasses = cn(
-        'absolute inset-0 w-full h-full p-2 flex flex-col justify-between backface-hidden',
-        'border border-gray-200 dark:border-gray-700 rounded-lg',
-        flipped && 'transform rotate-180'
-    );
-
-    // Generate card center class names
-    const cardCenterClasses = cn(
-        'flex-grow flex items-center justify-center',
-        'text-3xl font-bold',
-        isRed ? 'text-red-600' : 'text-black dark:text-white'
-    );
+    const imagePath = getCardImagePath(suit, rank, faceDown, cardStyle);
 
     return (
         <motion.div
@@ -190,15 +216,15 @@ const Card = ({
                 variants={flipVariants}
                 style={{ transformStyle: 'preserve-3d' }}
             >
-                {/* Card face */}
-                <div className={cardFaceClasses}>
-                    <CardCorner rank={rank} symbol={suitSymbol} isRed={isRed} />
-                    <div className={cardCenterClasses}>{suitSymbol}</div>
-                    <CardCorner rank={rank} symbol={suitSymbol} isRed={isRed} isRotated />
+                <div className="absolute inset-0 w-full h-full rounded-lg overflow-hidden">
+                    <Image
+                        src={imagePath}
+                        alt={cardLabel}
+                        fill
+                        style={{ objectFit: 'contain' }}
+                        priority={index < 4} // Prioritize loading the first few cards
+                    />
                 </div>
-
-                {/* Card back */}
-                <CardBack />
             </motion.div>
         </motion.div>
     );
