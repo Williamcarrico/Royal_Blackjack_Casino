@@ -1,5 +1,7 @@
+'use client';
+
 import { create } from 'zustand'
-import { devtools, persist } from 'zustand/middleware'
+import { devtools, persist, createJSONStorage } from 'zustand/middleware'
 import type { EnhancedSettingsStore } from '@/types/storeTypes'
 import type { GameVariant, GameOptions } from '@/types/gameTypes'
 
@@ -117,7 +119,60 @@ export const useEnhancedSettingsStore = create<EnhancedSettingsStore>()(
             }),
             {
                 name: 'enhanced-settings',
-                version: 1,
+                version: 2,
+                migrate: (persistedState: unknown, version: number) => {
+                    // If we're at a previous version, migrate to the current version
+                    if (version === 0 || version === 1) {
+                        const typedState = persistedState as Record<string, unknown>;
+                        return {
+                            ...typedState,
+                            // Set defaults for any new fields
+                            audioEnabled: typedState.audioEnabled ?? true,
+                            volume: typedState.volume ?? 0.7,
+                            musicEnabled: typedState.musicEnabled ?? true,
+                            musicVolume: typedState.musicVolume ?? 0.5,
+                            animationSpeed: typedState.animationSpeed ?? 'normal',
+                            tableColor: typedState.tableColor ?? '#076324',
+                            cardBack: typedState.cardBack ?? 'default',
+                            chipStyle: typedState.chipStyle ?? 'classic',
+                            theme: (
+                                typeof typedState.theme === 'string' &&
+                                Object.values(Theme).includes(typedState.theme as Theme)
+                            ) ? typedState.theme as Theme : Theme.SYSTEM,
+                            cardStyle: (
+                                typeof typedState.cardStyle === 'string' &&
+                                Object.values(CardStyle).includes(typedState.cardStyle as CardStyle)
+                            ) ? typedState.cardStyle as CardStyle : CardStyle.CLASSIC,
+                            advancedRules: typedState.advancedRules || {
+                                dealerPeeks: true,
+                                surrenderAllowed: 'late',
+                                doubleAllowed: 'any2',
+                                doubleAfterSplit: true,
+                                resplitAllowed: true,
+                                resplitAcesAllowed: false,
+                                hitSplitAces: false,
+                                maxSplits: 3,
+                                maxHands: 4,
+                                dealer17: 'stand',
+                            },
+                            countingSystem: typeof typedState.countingSystem === 'string' ?
+                                typedState.countingSystem as CountingSystem : 'hi-lo'
+                        };
+                    }
+                    return persistedState as Partial<EnhancedSettingsStore>;
+                },
+                storage: createJSONStorage(() => {
+                    if (typeof window !== 'undefined') {
+                        return localStorage;
+                    }
+                    // Return a no-op storage implementation when localStorage is not available
+                    return {
+                        getItem: (_name) => null,
+                        setItem: (_name, _value) => { },
+                        removeItem: (_name) => { }
+                    };
+                }),
+                skipHydration: true,
                 partialize: (state) => ({
                     ...state,
                     // Exclude computed properties or methods from persistence

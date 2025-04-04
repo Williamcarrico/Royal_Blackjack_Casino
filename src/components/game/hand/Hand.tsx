@@ -61,9 +61,8 @@ const Hand = ({
     } else if (isPush) {
         outcomeClass = 'ring-2 ring-yellow-500 dark:ring-yellow-400 bg-yellow-100/20';
     }
-
     return (
-        <fieldset
+        <div
             className={cn(
                 'relative py-2 px-1 rounded-xl transition-all duration-300',
                 isActive && 'outline-2 outline-offset-2 outline-primary',
@@ -121,7 +120,7 @@ const Hand = ({
                     isDealer={isDealer}
                 />
             )}
-        </fieldset>
+        </div>
     );
 };
 

@@ -1,10 +1,12 @@
+'use client';
+
 /**
  * Bet slice for the blackjack game store
  */
 import { StateCreator } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { BetSlice } from '../../types/storeTypes';
-import { Bet, BettingStrategy, ProgressiveBetting, TableLimits } from '../../types/betTypes';
+import { Bet, ProgressiveBetting, TableLimits } from '../../types/betTypes';
 
 // Default table limits
 const DEFAULT_TABLE_LIMITS: TableLimits = {
@@ -104,6 +106,9 @@ const createBetSlice: StateCreator<BetSlice> = (set, get) => ({
             }
 
             const bet = state.bets[betIndex];
+            if (!bet) {
+                throw new Error(`Bet with ID ${betId} not found`);
+            }
 
             // Validate bet amount
             if (amount < state.tableLimits.minimumBet) {
@@ -142,6 +147,9 @@ const createBetSlice: StateCreator<BetSlice> = (set, get) => ({
             }
 
             const bet = state.bets[betIndex];
+            if (!bet) {
+                throw new Error(`Bet with ID ${betId} not found`);
+            }
 
             // Ensure bet is pending (not already in play)
             if (bet.status !== 'pending') {
@@ -166,7 +174,7 @@ const createBetSlice: StateCreator<BetSlice> = (set, get) => ({
     },
 
     settleBet: (betId, result) => {
-        return set(state => {
+        set(state => {
             const betIndex = state.bets.findIndex(b => b.id === betId);
 
             if (betIndex === -1) {
@@ -174,11 +182,14 @@ const createBetSlice: StateCreator<BetSlice> = (set, get) => ({
             }
 
             const bet = state.bets[betIndex];
+            if (!bet) {
+                throw new Error(`Bet with ID ${betId} not found`);
+            }
 
             // Calculate payout based on result
             let payout = 0;
             let payoutMultiplier = 0;
-            let status: 'won' | 'lost' | 'push' | 'cancelled' | 'surrendered' = 'lost';
+            let status: 'won' | 'lost' | 'push' | 'cancelled' | 'surrendered';
 
             switch (result) {
                 case 'win':
@@ -231,12 +242,13 @@ const createBetSlice: StateCreator<BetSlice> = (set, get) => ({
             };
 
             return {
-                bets: updatedBets
+                bets: updatedBets,
+                payout
             };
-
-            // Return payout amount
-            return payout;
         });
+
+        // This will be the return value
+        return get().bets.find(b => b.id === betId)?.payout || 0;
     },
 
     calculateNextBet: () => {
@@ -257,9 +269,8 @@ const createBetSlice: StateCreator<BetSlice> = (set, get) => ({
             return progressiveBetting.baseBet;
         }
 
-        let nextBet = progressiveBetting.baseBet;
-
-        // Apply progression based on last result
+        // Determine initial bet value based on last result
+        let nextBet;
         if (lastBet.status === 'won') {
             nextBet = lastBet.amount * progressiveBetting.winProgression;
         } else if (lastBet.status === 'lost') {
@@ -275,7 +286,6 @@ const createBetSlice: StateCreator<BetSlice> = (set, get) => ({
                 .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
             // Use strategy to calculate next bet
-            // This is simplified - a real strategy might have more complex logic
             nextBet = bettingStrategy.getNextBet(previousBets, 1000, tableLimits);
         }
 
@@ -283,9 +293,7 @@ const createBetSlice: StateCreator<BetSlice> = (set, get) => ({
         nextBet = Math.max(tableLimits.minimumBet, Math.min(nextBet, tableLimits.maximumBet));
 
         // Round to nearest whole number
-        nextBet = Math.round(nextBet);
-
-        return nextBet;
+        return Math.round(nextBet);
     }
 });
 

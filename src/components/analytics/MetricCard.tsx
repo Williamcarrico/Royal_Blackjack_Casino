@@ -83,7 +83,7 @@ export const MetricCard = ({
             className={className}
         >
             <Card className={`bg-gradient-to-br border ${getColorScheme()} overflow-hidden relative`}>
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-slate-900/0 to-slate-800/80 z-0"></div>
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-slate-900/0 to-slate-800/80 z-0" />
                 <CardHeader className="relative z-10 pb-2">
                     <div className="flex items-center justify-between">
                         <CardTitle className="text-base font-medium text-gray-200">{title}</CardTitle>

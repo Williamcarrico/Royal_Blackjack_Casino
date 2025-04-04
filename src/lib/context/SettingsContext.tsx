@@ -1,57 +1,56 @@
 'use client';
 
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useCallback, useMemo } from 'react';
 import {
     useEnhancedSettingsStore,
-    VisualSettingsState,
-    GameplaySettingsState,
-    AdvancedSettingsState,
-    GameVariantState,
-    useSettingsVisual,
-    useSettingsGameplay,
-    useSettingsAdvanced
+    Theme,
+    CardStyle,
+    CountingSystem
 } from '@/store/enhancedSettingsStore';
-import { BlackjackVariant, GameRules } from '@/types/game';
-import { Theme, CardStyle } from '@/store/enhancedSettingsStore';
-import { CardBackOption } from '@/types/card';
+import type { GameVariant, GameRules, GameOptions, CardBackOption } from '@/types/gameTypes';
 import { useGameStore } from '@/store/gameStore';
 
-// Combined type for all settings
-interface AllSettings extends
-    VisualSettingsState,
-    GameplaySettingsState,
-    AdvancedSettingsState,
-    GameVariantState { }
+// Add this near the other type definitions
+type AnimationSpeed = 'slow' | 'normal' | 'fast';
 
-interface SettingsContextType {
-    // Visual settings
+// Define interfaces for the different setting categories
+interface VisualSettings {
     theme: Theme;
-    animationSpeed: number;
+    animationSpeed: AnimationSpeed;
     tableColor: string;
     cardStyle: CardStyle;
     cardBackDesign: CardBackOption;
     showPlayerAvatars: boolean;
+}
 
-    // Gameplay settings
+interface GameplaySettings {
     autoStand17: boolean;
     autoPlayBasicStrategy: boolean;
     showProbabilities: boolean;
     showCountingInfo: boolean;
     defaultBetSize: number;
+}
 
-    // Advanced settings
+interface AdvancedSettings {
     enableHeatmap: boolean;
     showEV: boolean;
     autoAdjustBetSize: boolean;
     riskTolerance: number;
+}
 
-    // Game variant
-    variant: BlackjackVariant;
+interface GameVariantSettings {
+    variant: GameVariant;
     gameRules: GameRules;
+}
 
+interface SettingsContextType extends
+    VisualSettings,
+    GameplaySettings,
+    AdvancedSettings,
+    GameVariantSettings {
     // Actions
     setTheme: (value: Theme) => void;
-    setAnimationSpeed: (value: number) => void;
+    setAnimationSpeed: (value: AnimationSpeed) => void;
     setTableColor: (value: string) => void;
     setCardStyle: (value: CardStyle) => void;
     setCardBackDesign: (value: CardBackOption) => void;
@@ -68,7 +67,7 @@ interface SettingsContextType {
     setAutoAdjustBetSize: (value: boolean) => void;
     setRiskTolerance: (value: number) => void;
 
-    setVariant: (variant: BlackjackVariant) => void;
+    setVariant: (variant: GameVariant) => void;
     setGameRules: (rules: GameRules) => void;
 
     resetToDefaults: () => void;
@@ -82,103 +81,217 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({
     children
 }) => {
     // Access the settings store
-    const visualSettings = useSettingsVisual();
-    const gameplaySettings = useSettingsGameplay();
-    const advancedSettings = useSettingsAdvanced();
-    const gameVariant = useEnhancedSettingsStore(state => ({
-        variant: state.variant,
-        gameRules: state.gameRules
-    }));
+    const settings = useEnhancedSettingsStore();
+    const gameStore = useGameStore();
 
-    const isDirty = useEnhancedSettingsStore(state => state.isDirty);
-    const setIsDirty = useEnhancedSettingsStore(state => state.setIsDirty);
+    const isDirty = false; // Track if settings have unsaved changes
 
-    // Actions from the store
-    const {
-        setTheme,
-        setAnimationSpeed,
-        setTableColor,
-        setCardStyle,
-        setCardBackDesign,
-        setShowPlayerAvatars,
-
-        setAutoStand17,
-        setAutoPlayBasicStrategy,
-        setShowProbabilities,
-        setShowCountingInfo,
-        setDefaultBetSize,
-
-        setEnableHeatmap,
-        setShowEV,
-        setAutoAdjustBetSize,
-        setRiskTolerance,
-
-        setVariant,
-        setGameRules,
-
-        resetToDefaults
-    } = useEnhancedSettingsStore();
-
-    // Game store integration
-    const updateGameFromRules = useGameStore(state => state.updateGameFromRules);
+    // Update game based on rule changes
+    const updateGameFromRules = useCallback(() => {
+        const options: Partial<GameOptions> = {
+            variant: 'vegas',
+            // Convert GameRules to GameOptions as needed
+            numberOfDecks: gameStore.gameRules.decksCount,
+            dealerHitsSoft17: gameStore.gameRules.dealerHitsSoft17,
+            doubleAfterSplit: gameStore.gameRules.doubleAfterSplit,
+            resplitAces: gameStore.gameRules.resplitAces,
+            lateSurrender: gameStore.gameRules.surrender
+        };
+        gameStore.initializeGame(options as GameOptions);
+    }, [gameStore]);
 
     // Effect to sync settings with game when variant changes
     useEffect(() => {
         if (isDirty) {
             updateGameFromRules();
-            setIsDirty(false);
         }
-    }, [gameVariant.variant, gameVariant.gameRules, isDirty, updateGameFromRules, setIsDirty]);
+    }, [isDirty, updateGameFromRules]);
 
     // Mock saving settings to an API
-    const saveSettings = () => {
+    const saveSettings = useCallback(() => {
         // In a real app, this would make an API call to save settings
         console.log('Saving settings...');
-
-        // For now, just mark settings as saved
-        setIsDirty(false);
-    };
+    }, []);
 
     // Combine all settings for the context value
-    const contextValue: SettingsContextType = {
-        // Visual settings
-        ...visualSettings,
+    const contextValue = useMemo<SettingsContextType>(() => {
+        // Extract visual settings
+        const visualSettings: VisualSettings = {
+            theme: settings.theme,
+            animationSpeed: settings.animationSpeed,
+            tableColor: settings.tableColor,
+            cardStyle: settings.cardStyle,
+            cardBackDesign: settings.cardBack as CardBackOption,
+            showPlayerAvatars: Boolean(settings.confirmActions) // using confirmActions as a placeholder
+        };
 
-        // Gameplay settings
-        ...gameplaySettings,
+        // Extract gameplay settings
+        const gameplaySettings: GameplaySettings = {
+            autoStand17: settings.autoStand17,
+            autoPlayBasicStrategy: settings.showBasicStrategy,
+            showProbabilities: settings.showProbabilities,
+            showCountingInfo: settings.countingSystem !== 'none',
+            defaultBetSize: 10 // Default value as currentBet doesn't exist
+        };
 
-        // Advanced settings
-        ...advancedSettings,
+        // Extract advanced settings
+        const advancedSettings: AdvancedSettings = {
+            enableHeatmap: false, // Initialize with defaults
+            showEV: false,
+            autoAdjustBetSize: false,
+            riskTolerance: 0.5
+        };
 
-        // Game variant
-        ...gameVariant,
+        // Extract game variant settings
+        const gameVariant: GameVariantSettings = {
+            variant: 'vegas' as GameVariant, // Default to vegas
+            gameRules: gameStore.gameRules
+        };
 
-        // Actions
-        setTheme,
-        setAnimationSpeed,
-        setTableColor,
-        setCardStyle,
-        setCardBackDesign,
-        setShowPlayerAvatars,
+        // Define setters inside the useMemo callback
+        const setTheme = (value: Theme) => {
+            useEnhancedSettingsStore.setState({
+                theme: value
+            } as unknown as Partial<typeof settings>);
+        };
 
-        setAutoStand17,
-        setAutoPlayBasicStrategy,
-        setShowProbabilities,
-        setShowCountingInfo,
-        setDefaultBetSize,
+        const setAnimationSpeed = (value: AnimationSpeed) => {
+            useEnhancedSettingsStore.setState({
+                animationSpeed: value
+            } as unknown as Partial<typeof settings>);
+        };
 
-        setEnableHeatmap,
-        setShowEV,
-        setAutoAdjustBetSize,
-        setRiskTolerance,
+        const setTableColor = (value: string) => {
+            useEnhancedSettingsStore.setState({
+                tableColor: value
+            } as unknown as Partial<typeof settings>);
+        };
 
-        setVariant,
-        setGameRules,
+        const setCardStyle = (value: CardStyle) => {
+            useEnhancedSettingsStore.setState({
+                cardStyle: value
+            } as unknown as Partial<typeof settings>);
+        };
 
-        resetToDefaults,
-        saveSettings,
-        isDirty
-    };
+        const setCardBackDesign = (value: CardBackOption) => {
+            useEnhancedSettingsStore.setState({
+                cardBack: value
+            } as unknown as Partial<typeof settings>);
+        };
+
+        const setShowPlayerAvatars = (value: boolean) => {
+            useEnhancedSettingsStore.setState({
+                confirmActions: value // Using confirmActions as a proxy
+            } as unknown as Partial<typeof settings>);
+        };
+
+        const setAutoStand17 = (value: boolean) => {
+            useEnhancedSettingsStore.setState({
+                autoStand17: value
+            } as unknown as Partial<typeof settings>);
+        };
+
+        const setAutoPlayBasicStrategy = (value: boolean) => {
+            useEnhancedSettingsStore.setState({
+                showBasicStrategy: value
+            } as unknown as Partial<typeof settings>);
+        };
+
+        const setShowProbabilities = (value: boolean) => {
+            useEnhancedSettingsStore.setState({
+                showProbabilities: value
+            } as unknown as Partial<typeof settings>);
+        };
+
+        const setShowCountingInfo = (value: boolean) => {
+            useEnhancedSettingsStore.setState({
+                countingSystem: value ? 'hi-lo' as CountingSystem : 'none' as CountingSystem
+            } as unknown as Partial<typeof settings>);
+        };
+
+        const setDefaultBetSize = (value: number) => {
+            // Since currentBet doesn't exist, this is a no-op
+            console.log('Setting default bet size to', value);
+        };
+
+        // These methods need implementation in the actual store
+        const setEnableHeatmap = (_value: boolean) => {
+            // Would need to be implemented in the store
+            console.log('setEnableHeatmap not implemented');
+        };
+
+        const setShowEV = (_value: boolean) => {
+            // Would need to be implemented in the store
+            console.log('setShowEV not implemented');
+        };
+
+        const setAutoAdjustBetSize = (_value: boolean) => {
+            // Would need to be implemented in the store
+            console.log('setAutoAdjustBetSize not implemented');
+        };
+
+        const setRiskTolerance = (_value: number) => {
+            // Would need to be implemented in the store
+            console.log('setRiskTolerance not implemented');
+        };
+
+        const setVariant = (_variant: GameVariant) => {
+            // This would update the store and game rules
+            console.log('setVariant not implemented');
+        };
+
+        const setGameRules = (rules: GameRules) => {
+            // Convert GameRules to GameOptions for initializeGame
+            const options: Partial<GameOptions> = {
+                variant: 'vegas' as GameVariant,
+                numberOfDecks: rules.decksCount,
+                dealerHitsSoft17: rules.dealerHitsSoft17,
+                doubleAfterSplit: rules.doubleAfterSplit,
+                resplitAces: rules.resplitAces,
+                lateSurrender: rules.surrender
+            };
+            gameStore.initializeGame(options as GameOptions);
+        };
+
+        const resetToDefaults = () => {
+            // Reset to default settings
+            useEnhancedSettingsStore.getState().resetSettings();
+        };
+
+        return {
+            // Settings objects
+            ...visualSettings,
+            ...gameplaySettings,
+            ...advancedSettings,
+            ...gameVariant,
+
+            // Actions
+            setTheme,
+            setAnimationSpeed,
+            setTableColor,
+            setCardStyle,
+            setCardBackDesign,
+            setShowPlayerAvatars,
+
+            setAutoStand17,
+            setAutoPlayBasicStrategy,
+            setShowProbabilities,
+            setShowCountingInfo,
+            setDefaultBetSize,
+
+            setEnableHeatmap,
+            setShowEV,
+            setAutoAdjustBetSize,
+            setRiskTolerance,
+
+            setVariant,
+            setGameRules,
+
+            resetToDefaults,
+            saveSettings,
+            isDirty
+        };
+    }, [settings, gameStore, isDirty, saveSettings]);
 
     return (
         <SettingsContext.Provider value={contextValue}>

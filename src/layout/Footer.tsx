@@ -544,9 +544,10 @@ const FooterLogo = memo(() => (
 			<Image
 				src="/images/Royal-Blackjack-Logo.png"
 				alt="Royal Blackjack Casino Logo"
-				fill
-				sizes="64px"
+				width={64}
+				height={64}
 				className="object-contain"
+				style={{ width: 'auto', height: 'auto' }}
 				priority
 			/>
 			{/* Animated glow effect on hover */}

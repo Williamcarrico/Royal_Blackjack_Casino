@@ -140,8 +140,11 @@ export default function Providers({ children }: ProvidersProps) {
         }
     }, [pathname, isInitialized]);
 
-    // Initialize game store with event listeners
-    useGameStoreInitializer();
+    // GameStore initializer
+    const GameStoreInitializer = () => {
+        useGameStoreInitializer();
+        return null;
+    };
 
     return (
         <ThemeProvider
@@ -153,6 +156,8 @@ export default function Providers({ children }: ProvidersProps) {
                 {/* Modified condition to ensure we don't get stuck on loading screen */}
                 {(isLocalStorageRegistered && isLocalStorageInitialized) || !isInitializing ? (
                     <>
+                        {/* Initialize game store properly with React component */}
+                        <GameStoreInitializer />
                         {children}
                         {/* Global toast notifications */}
                         <Toaster

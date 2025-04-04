@@ -34,7 +34,7 @@ export const DynamicIcon: FC<DynamicIconProps> = ({
     const IconLibrary = iconLibraries[library]
 
     // Get the icon component from the library
-    const IconComponent = IconLibrary[icon as keyof typeof IconLibrary]
+    const IconComponent = IconLibrary[icon as keyof typeof IconLibrary] as React.ComponentType<React.SVGProps<SVGSVGElement>>
 
     if (!IconComponent) {
         console.warn(`Icon ${icon} not found in library ${library}`)

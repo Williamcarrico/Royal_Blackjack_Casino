@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Hand slice for the blackjack game store
  */

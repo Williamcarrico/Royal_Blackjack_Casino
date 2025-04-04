@@ -975,7 +975,11 @@ const AdvicePanel = ({
                         <Label htmlFor="adviceMode" className="text-sm">Advice Mode</Label>
                         <Tabs
                             value={localMode}
-                            onValueChange={(value) => setLocalMode(value as AdviceMode)}
+                            onValueChange={(value) => {
+                                if (value === 'basic' || value === 'counting' || value === 'perfect') {
+                                    setLocalMode(value);
+                                }
+                            }}
                             className="w-auto"
                         >
                             <TabsList className="h-7">

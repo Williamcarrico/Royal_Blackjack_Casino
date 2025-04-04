@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -148,7 +149,7 @@ export default function LandingPage() {
                 alt="Royal Blackjack Casino"
                 width={300}
                 height={150}
-                style={{ height: "auto" }}
+                style={{ width: "auto", height: "auto" }}
                 priority
                 className="drop-shadow-[0_0_30px_rgba(255,215,0,0.5)]"
               />

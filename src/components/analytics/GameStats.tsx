@@ -27,10 +27,10 @@ const GameStats: React.FC<GameStatsProps> = ({ stats, className }) => {
 
     return (
         <Card className={cn("p-4 border rounded-lg bg-black/30 backdrop-blur-sm border-slate-700", className)}>
-            <div className="flex items-center mb-3">
+            <motion.div className="flex items-center mb-3">
                 <BarChart className="w-5 h-5 mr-2 text-indigo-400" />
-                <h3 className="text-lg font-semibold text-white">Game Stats</h3>
-            </div>
+                <motion.h3 className="text-lg font-semibold text-white">Game Stats</motion.h3>
+            </motion.div>
 
             <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="space-y-1">

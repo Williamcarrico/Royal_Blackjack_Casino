@@ -879,31 +879,26 @@ const useAnalyticsStore = create<AnalyticsStoreState>()(
                     };
 
                     // Generate skill metrics for UI display
-                    const skillMetrics = [
+                    const formattedSkillMetrics = [
                         {
                             category: 'Basic Strategy',
-                            level: getPlayerLevel(performanceMetrics.skillMetrics.basicStrategy),
+                            level: getSkillLevel(performanceMetrics.skillMetrics.basicStrategy),
                             score: performanceMetrics.skillMetrics.basicStrategy
                         },
                         {
                             category: 'Card Counting',
-                            level: getPlayerLevel(performanceMetrics.skillMetrics.cardCounting),
+                            level: getSkillLevel(performanceMetrics.skillMetrics.cardCounting),
                             score: performanceMetrics.skillMetrics.cardCounting
                         },
                         {
                             category: 'Bankroll Management',
-                            level: getPlayerLevel(performanceMetrics.skillMetrics.bankrollManagement),
+                            level: getSkillLevel(performanceMetrics.skillMetrics.bankrollManagement),
                             score: performanceMetrics.skillMetrics.bankrollManagement
                         },
                         {
                             category: 'Discipline',
-                            level: getPlayerLevel(performanceMetrics.skillMetrics.disciplineScore),
+                            level: getSkillLevel(performanceMetrics.skillMetrics.disciplineScore),
                             score: performanceMetrics.skillMetrics.disciplineScore
-                        },
-                        {
-                            category: 'Overall Skill',
-                            level: getPlayerLevel(performanceMetrics.skillMetrics.overallSkill),
-                            score: performanceMetrics.skillMetrics.overallSkill
                         }
                     ];
 
@@ -917,7 +912,7 @@ const useAnalyticsStore = create<AnalyticsStoreState>()(
                     };
 
                     return {
-                        skillMetrics,
+                        skillMetrics: formattedSkillMetrics,
                         detailedPerformance,
                         streaks,
                         winRate,
@@ -1116,19 +1111,23 @@ export const usePerformanceMetrics = () => {
     const formattedSkillMetrics = [
         {
             category: 'Basic Strategy',
-            level: getSkillLevel(skillMetrics.basicStrategy)
+            level: getSkillLevel(skillMetrics.basicStrategy),
+            score: skillMetrics.basicStrategy
         },
         {
             category: 'Card Counting',
-            level: getSkillLevel(skillMetrics.cardCounting)
+            level: getSkillLevel(skillMetrics.cardCounting),
+            score: skillMetrics.cardCounting
         },
         {
             category: 'Bankroll Management',
-            level: getSkillLevel(skillMetrics.bankrollManagement)
+            level: getSkillLevel(skillMetrics.bankrollManagement),
+            score: skillMetrics.bankrollManagement
         },
         {
             category: 'Discipline',
-            level: getSkillLevel(skillMetrics.disciplineScore)
+            level: getSkillLevel(skillMetrics.disciplineScore),
+            score: skillMetrics.disciplineScore
         }
     ];
 

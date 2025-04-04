@@ -75,7 +75,6 @@ export interface ChipProps {
     count?: number;
     stacked?: boolean;
     className?: string;
-    style?: React.CSSProperties;
     size?: ChipSize;
     interactive?: boolean;
     selected?: boolean;
@@ -205,7 +204,6 @@ const Chip = ({
     count = 1,
     stacked = false,
     className = '',
-    style,
     size = 'md',
     interactive = false,
     selected = false,

@@ -191,7 +191,7 @@ const CountingDisplay = ({
             // Update the last processed card index
             lastProcessedCardIndex.current = playedCards.length - 1;
         }
-    }, [playedCards, countingSystem, autoCount, manualMode, onRunningCountChange]);
+    }, [playedCards, countingSystem, autoCount, manualMode, onRunningCountChange, remainingDecks]);
 
     // Reset count
     const handleReset = () => {

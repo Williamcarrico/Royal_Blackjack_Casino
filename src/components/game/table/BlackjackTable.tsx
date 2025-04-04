@@ -246,36 +246,41 @@ const PlayerPosition: React.FC<{
                                     <div className="absolute bottom-0 z-10 transform -translate-x-1/2 translate-y-3 left-1/2">
                                         <div className="relative flex items-center justify-center">
                                             {/* Bet chips stack */}
-                                            <div className="relative chips-stack">
-                                                {hand.betChips?.map((chipStack, idx) => {
-                                                    // Extract chip color logic to avoid nested ternaries
-                                                    let chipColorClass = '';
-                                                    if (chipStack.value === 1) {
-                                                        chipColorClass = 'from-gray-400 to-gray-600';
-                                                    } else if (chipStack.value === 5) {
-                                                        chipColorClass = 'from-red-400 to-red-600';
-                                                    } else if (chipStack.value === 25) {
-                                                        chipColorClass = 'from-green-400 to-green-600';
-                                                    } else if (chipStack.value === 100) {
-                                                        chipColorClass = 'from-blue-400 to-blue-600';
-                                                    } else if (chipStack.value === 500) {
-                                                        chipColorClass = 'from-purple-400 to-purple-600';
-                                                    } else {
-                                                        chipColorClass = 'from-amber-400 to-amber-600';
-                                                    }
+                                            {enableChips && (
+                                                <div className="relative chips-stack">
+                                                    {hand.betChips?.map((chipStack, idx) => {
+                                                        // Extract chip color logic to avoid nested ternaries
+                                                        let chipColorClass = '';
+                                                        if (chipStack.value === 1) {
+                                                            chipColorClass = 'from-gray-400 to-gray-600';
+                                                        } else if (chipStack.value === 5) {
+                                                            chipColorClass = 'from-red-400 to-red-600';
+                                                        } else if (chipStack.value === 25) {
+                                                            chipColorClass = 'from-green-400 to-green-600';
+                                                        } else if (chipStack.value === 100) {
+                                                            chipColorClass = 'from-blue-400 to-blue-600';
+                                                        } else if (chipStack.value === 500) {
+                                                            chipColorClass = 'from-purple-400 to-purple-600';
+                                                        } else {
+                                                            chipColorClass = 'from-amber-400 to-amber-600';
+                                                        }
 
-                                                    return (
-                                                        <div
-                                                            key={`${chipStack.value}-${idx}`}
-                                                            className={`absolute chip-image chip-stack-item-${idx} ${idx % 2 === 0 ? 'chip-stack-even' : 'chip-stack-odd'}`}
-                                                        >
-                                                            <div className={`w-10 h-10 rounded-full bg-gradient-to-br shadow-md flex items-center justify-center text-white font-bold text-xs ${chipColorClass}`}>
-                                                                ${chipStack.value}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
+                                                        return (
+                                                            <button
+                                                                key={`${chipStack.value}-${idx}`}
+                                                                className={`absolute chip-image chip-stack-item-${idx} ${idx % 2 === 0 ? 'chip-stack-even' : 'chip-stack-odd'}`}
+                                                                onClick={() => onBetChange && onBetChange(chipStack.value)}
+                                                                type="button"
+                                                                aria-label={`${chipStack.value} chip`}
+                                                            >
+                                                                <div className={`w-10 h-10 rounded-full bg-gradient-to-br shadow-md flex items-center justify-center text-white font-bold text-xs ${chipColorClass}`}>
+                                                                    ${chipStack.value}
+                                                                </div>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
 
                                             {/* Bet amount label */}
                                             <div className="px-2 py-1 mt-2 text-xs font-medium text-white rounded-full bet-label bg-black/60">
@@ -308,16 +313,15 @@ const PlayerPosition: React.FC<{
                         );
                     })}
                 </div>
-
                 {/* Player info */}
-                <div className="mt-12 text-center player-info">
-                    <div className="mb-1 text-sm font-medium text-white player-name">
+                <section className="mt-12 text-center player-info">
+                    <p className="mb-1 text-sm font-medium text-white player-name">
                         {player.name}
-                    </div>
-                    <div className="player-balance text-xs bg-black/40 text-amber-300 px-2 py-0.5 rounded-full">
+                    </p>
+                    <p className="player-balance text-xs bg-black/40 text-amber-300 px-2 py-0.5 rounded-full">
                         ${player.balance.toLocaleString()}
-                    </div>
-                </div>
+                    </p>
+                </section>
             </motion.div>
         );
     };
@@ -420,7 +424,13 @@ const BlackjackTable = ({
             variants={tableVariants}
         >
             {/* Table felt background */}
-            <TableFelt darkMode={darkMode}>
+            <TableFelt
+                darkMode={darkMode}
+                pattern="custom"
+                variant={gamePhase === 'betting' ? 'default' : 'blackjack'}
+                borderRadiusClass="rounded-3xl"
+                borderWidth={30}
+            >
                 {/* Dealer position - with proper z-index for layering */}
                 <div className="absolute z-20 transform -translate-x-1/2 top-24 left-1/2">
                     <DealerPosition

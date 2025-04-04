@@ -5,6 +5,12 @@ import { Card, Deck, Shoe } from './cardTypes';
 import { Hand, DealerHand, HandAction } from './handTypes';
 import { Bet, TableLimits, PayoutRules } from './betTypes';
 
+// Card style options
+export type CardStyleOption = 'modern' | 'classic' | 'minimal' | 'retro';
+
+// Card back design options
+export type CardBackOption = 'blue' | 'red' | 'abstract' | 'abstract_scene' | 'abstract_clouds' | 'astronaut' | 'cars' | 'castle' | 'fish' | 'frog';
+
 // Game phases
 export type GamePhase =
     | 'betting'    // Initial betting phase
@@ -127,15 +133,26 @@ export interface GameAction {
 
 // Game rules
 export interface GameRules {
-    variant: GameVariant;
-    description: string;
-    options: GameOptions;
-    getAvailableActions: (hand: Hand, dealerUpCard?: Card) => HandAction[];
-    isBlackjack: (hand: Hand) => boolean;
-    calculatePayout: (bet: Bet, result: string) => number;
-    dealerMustHitOn: (dealerValue: number) => boolean;
-    dealerMustStandOn: (dealerValue: number) => boolean;
-    shouldReshuffleDeck: (deck: Deck) => boolean;
+    decksCount: number;
+    dealerHitsSoft17: boolean;
+    blackjackPayout: number;
+    doubleAllowed: boolean;
+    doubleAfterSplit: boolean;
+    surrender: boolean;
+    insuranceAvailable: boolean;
+    maxSplits: number;
+    resplitAces: boolean;
+    hitSplitAces: boolean;
+    // Keep existing properties if needed
+    variant?: GameVariant;
+    description?: string;
+    options?: GameOptions;
+    getAvailableActions?: (hand: Hand, dealerUpCard?: Card) => HandAction[];
+    isBlackjack?: (hand: Hand) => boolean;
+    calculatePayout?: (bet: Bet, result: string) => number;
+    dealerMustHitOn?: (dealerValue: number) => boolean;
+    dealerMustStandOn?: (dealerValue: number) => boolean;
+    shouldReshuffleDeck?: (deck: Deck) => boolean;
 }
 
 // Game statistics

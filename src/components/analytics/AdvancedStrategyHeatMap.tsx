@@ -25,6 +25,9 @@ type PlayerValue = {
     isPair?: boolean;
 };
 
+// Add type alias for hand types
+type HandType = 'hard' | 'soft' | 'pair';
+
 const dealerCards = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'A'];
 const playerValues = [
     { display: 'Hard 8', value: 8 },
@@ -112,7 +115,7 @@ const actionColors: Record<string, string> = {
 };
 
 // Replace the nested ternary with a function that uses if/else
-const getPlayerValueFilter = (type: 'hard' | 'soft' | 'pair'): (pv: PlayerValue) => boolean => {
+const getPlayerValueFilter = (type: HandType): (pv: PlayerValue) => boolean => {
     if (type === 'hard') {
         return (pv: PlayerValue) => !pv.isSoft && !pv.isPair;
     } else if (type === 'soft') {
@@ -123,14 +126,14 @@ const getPlayerValueFilter = (type: 'hard' | 'soft' | 'pair'): (pv: PlayerValue)
 };
 
 // Add a helper function to get the display text based on hand type
-const getHandTypeDisplay = (type: 'hard' | 'soft' | 'pair'): string => {
+const getHandTypeDisplay = (type: HandType): string => {
     if (type === 'hard') return 'Hard Total';
     if (type === 'soft') return 'Soft Hand';
     return 'Pairs';
 };
 
 export const AdvancedStrategyHeatMap = ({ heatMapData, className = '' }: AdvancedStrategyHeatMapProps) => {
-    const [handType, setHandType] = useState<'hard' | 'soft' | 'pair'>('hard');
+    const [handType, setHandType] = useState<HandType>('hard');
     const [showOptimal, setShowOptimal] = useState(false);
 
     // Process and aggregate heat map data
@@ -230,11 +233,19 @@ export const AdvancedStrategyHeatMap = ({ heatMapData, className = '' }: Advance
         animate: { opacity: 1, scale: 1, transition: { duration: 0.3 } }
     };
 
+    // Extract the nested ternary for empty cell content
+    const renderEmptyCellContent = (showOptimal: boolean, optimalAction: string | null) => {
+        if (showOptimal && optimalAction) {
+            return <span className="text-xs text-gray-500">{optimalAction}</span>;
+        }
+        return <span className="text-xs text-gray-500">-</span>;
+    };
+
     return (
         <div className={`space-y-4 ${className}`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center space-x-2">
-                    <Select value={handType} onValueChange={(value: 'hard' | 'soft' | 'pair') => setHandType(value)}>
+                    <Select value={handType} onValueChange={(value: HandType) => setHandType(value)}>
                         <SelectTrigger className="w-[120px] bg-gray-800 border-gray-700">
                             <SelectValue placeholder="Hand Type" />
                         </SelectTrigger>
@@ -331,11 +342,7 @@ export const AdvancedStrategyHeatMap = ({ heatMapData, className = '' }: Advance
                                                 </motion.div>
                                             ) : (
                                                 <div className="flex items-center justify-center w-full h-full p-2 bg-gray-800/50">
-                                                    {showOptimal && optimalAction ? (
-                                                        <span className="text-xs text-gray-500">{optimalAction}</span>
-                                                    ) : (
-                                                        <span className="text-xs text-gray-500">-</span>
-                                                    )}
+                                                    {renderEmptyCellContent(showOptimal, optimalAction)}
                                                 </div>
                                             )}
                                         </td>

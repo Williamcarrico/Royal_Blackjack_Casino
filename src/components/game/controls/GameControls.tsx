@@ -221,7 +221,7 @@ const GameControls = ({
             </div>
 
             {/* Secondary controls */}
-            <div className="flex items-center justify-between mt-3">
+            <motion.div className="flex items-center justify-between mt-3">
                 {/* Mute toggle */}
                 <motion.div variants={itemVariants}>
                     <Button
@@ -282,7 +282,7 @@ const GameControls = ({
                         </Button>
                     </motion.div>
                 )}
-            </div>
+            </motion.div>
 
             {/* Tutorial mode indicator */}
             <AnimatePresence>

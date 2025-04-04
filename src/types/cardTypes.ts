@@ -11,6 +11,9 @@ export type Rank = 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 
 // Card face status
 export type CardFace = 'up' | 'down';
 
+// Card color
+export type CardColor = 'red' | 'black';
+
 // Card representation
 export interface Card {
     id: string;

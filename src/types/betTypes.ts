@@ -64,6 +64,9 @@ export interface TableLimits {
     maximumSideBet?: number;
 }
 
+// Betting outcome type
+export type BettingOutcome = 'win' | 'loss' | 'push' | 'blackjack' | 'surrender' | 'insurance';
+
 // Betting strategy types
 export type BettingStrategyType =
     | 'flat'           // Same bet every time
@@ -73,6 +76,10 @@ export type BettingStrategyType =
     | 'oscarsGrind'    // Incremental recovery
     | 'labouchere'     // Cancellation system
     | 'dAlembert'      // Gradual progression
+    | 'paroli'         // Positive progression
+    | 'oneThreeTwoSix' // 1-3-2-6 progression
+    | 'd_alembert'     // D'Alembert system
+    | 'oscar'          // Oscar's Grind
     | 'custom';        // Custom strategy
 
 // Betting strategy

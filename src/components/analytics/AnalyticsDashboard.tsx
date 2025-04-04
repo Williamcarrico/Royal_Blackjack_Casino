@@ -1,7 +1,6 @@
 'use client'
 
-import React from 'react'
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import useAnalyticsStore, {
     useWinRate,
@@ -520,7 +519,7 @@ export default function AnalyticsDashboard() {
 
     // Use typed interfaces for our analytics data
     const winRateData: WinRateData = useWinRate()
-    const performanceData: PerformanceMetricsType = usePerformanceMetrics()
+    const performanceData = usePerformanceMetrics()
     const currentSession: SessionMetrics = useSessionMetrics()
     const heatMapData: HeatMapEntry[] = useStrategyHeatMap()
 

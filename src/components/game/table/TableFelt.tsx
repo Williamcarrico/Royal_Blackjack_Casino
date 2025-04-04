@@ -8,7 +8,7 @@ export interface TableFeltProps {
     children: React.ReactNode;
     className?: string;
     darkMode?: boolean;
-    pattern?: 'default' | 'dots' | 'lines' | 'subtle' | 'none' | 'luxury' | 'art-deco' | 'carpet';
+    pattern?: 'default' | 'dots' | 'lines' | 'subtle' | 'none' | 'luxury' | 'art-deco' | 'carpet' | 'custom';
     color?: 'green' | 'blue' | 'red' | 'black' | 'purple' | 'light' | 'dark' | 'vip' | 'green-vip';
     borderRadiusClass?: string;
     strokeWidth?: number;
@@ -22,7 +22,7 @@ const TableFelt = ({
     children,
     className = '',
     darkMode = true,
-    pattern = 'default',
+    pattern = 'custom',
     color = 'green',
     borderRadiusClass = 'rounded-3xl',
     strokeWidth = 3,
@@ -64,7 +64,8 @@ const TableFelt = ({
             case 'luxury':
             case 'art-deco':
             case 'carpet':
-                // These patterns will use external SVG files
+            case 'custom':
+                // These patterns will use external files
                 return '';
             case 'none':
             default:
@@ -72,11 +73,16 @@ const TableFelt = ({
         }
     };
 
-    // Check if we should use an image-based pattern
-    const useImagePattern = color !== 'green' || ['luxury', 'art-deco', 'carpet'].includes(pattern);
+    // Always use image pattern for realistic look
+    const useImagePattern = true;
 
-    // Get the image pattern path if needed
+    // Get the image pattern path
     const getPatternImage = () => {
+        // Always return the custom table felt image
+        if (pattern === 'custom') {
+            return '/pattern/table-felt.webp';
+        }
+
         if (['luxury', 'art-deco', 'carpet'].includes(pattern)) {
             const patternMap = {
                 'luxury': '/pattern/luxury-casino-pattern.svg',
@@ -118,23 +124,23 @@ const TableFelt = ({
     const getFillValue = () => {
         if (customPattern) return `url(${customPattern})`;
         if (pattern === 'none') return getBgColor();
-        if (['luxury', 'art-deco', 'carpet'].includes(pattern)) return `url(#pattern-${pattern})`;
+        if (['luxury', 'art-deco', 'carpet', 'custom'].includes(pattern)) return `url(#pattern-${pattern})`;
 
         const patternId = pattern === 'default' ? 'diamonds' : pattern;
         return `url(#${patternId})`;
     };
 
     // Calculate the inner radius based on border radius
-    const getInnerBorderRadius = () => {
+    const getInnerBorderRadius = React.useCallback(() => {
         if (borderRadiusClass === 'rounded-none') return 'rounded-none';
         if (borderRadiusClass === 'rounded-3xl') return 'rounded-2xl';
         if (borderRadiusClass === 'rounded-full') return 'rounded-full';
         return 'rounded-xl';
-    };
+    }, [borderRadiusClass]);
 
     // Generate SVG pattern markup
     const patternMarkup = pattern !== 'none' &&
-        !['luxury', 'art-deco', 'carpet'].includes(pattern) ?
+        !['luxury', 'art-deco', 'carpet', 'custom'].includes(pattern) ?
         generatePattern() : '';
 
     // Render the felt based on pattern type
@@ -205,7 +211,7 @@ const TableFelt = ({
                     <text x="400" y="230" fill="#FFDF00" fontFamily="serif" fontSize="24" fontWeight="bold" textAnchor="middle" filter="drop-shadow(0px 0px 2px #000)">BLACKJACK PAYS 3 TO 2</text>
 
                     {/* Dealer rules text */}
-                    <text x="400" y="320" fill="#FFDF00" fontFamily="serif" fontSize="22" fontWeight="bold" textAnchor="middle" filter="drop-shadow(0px 0px 2px #000)">Dealer must draw to 16 and stand on all 17's</text>
+                    <text x="400" y="320" fill="#FFDF00" fontFamily="serif" fontSize="22" fontWeight="bold" textAnchor="middle" filter="drop-shadow(0px 0px 2px #000)">Dealer must draw to 16 and stand on all 17&apos;s</text>
 
                     {/* Left text: PAYS 2 TO 1 */}
                     <text x="200" y="345" fill="#FFDF00" fontFamily="serif" fontSize="22" fontWeight="bold" textAnchor="middle" filter="drop-shadow(0px 0px 2px #000)">PAYS 2 TO 1</text>
@@ -249,7 +255,7 @@ const TableFelt = ({
         // to avoid CSS parsing errors with dynamic values
 
         return classes;
-    }, [getInnerBorderRadius, useImagePattern, pattern]);
+    }, [getInnerBorderRadius]);
 
     return (
         <div
@@ -259,17 +265,21 @@ const TableFelt = ({
                 borderRadiusClass,
                 className
             )}
+            style={!useImagePattern && pattern === 'none' ?
+                { "--felt-color": getBgColor() } as React.CSSProperties :
+                undefined
+            }
         >
             {/* Wooden Table Border */}
             <div className={cn(
-                "absolute inset-0 z-0 overflow-hidden",
+                "absolute inset-0 z-0 overflow-hidden wooden-table-border",
                 borderRadiusClass
             )}>
                 <Image
                     src="/texture/wooden-table.png"
                     alt="Wooden table border"
                     fill
-                    className="object-cover"
+                    className="object-cover opacity-90 mix-blend-multiply"
                     priority
                 />
             </div>
@@ -281,7 +291,7 @@ const TableFelt = ({
                     "table-felt",
                     (!useImagePattern && pattern === 'none') && "felt-bg-color"
                 )}
-                style={!useImagePattern && pattern === 'none' ? { "--felt-bg-color": getBgColor() } as React.CSSProperties : {}}
+                data-felt-color={!useImagePattern && pattern === 'none' ? getBgColor() : undefined}
                 data-border-width={borderWidth}
             >
                 <div className="table-felt-inner">

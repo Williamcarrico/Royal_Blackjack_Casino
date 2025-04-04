@@ -2,8 +2,8 @@
  * Game-related constants for the blackjack game application
  */
 
-import { GameRules, CardStyleOption, CardBackOption } from '@/types/game';
-import { Rank, Suit, CardColor } from '@/types/card';
+import { GameRules, CardStyleOption, CardBackOption } from '@/types/gameTypes';
+import { Rank, Suit, CardColor } from '@/types/cardTypes';
 
 /**
  * Default number of decks in shoe

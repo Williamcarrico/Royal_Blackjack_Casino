@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import useGameStore from '@/store/gameStore';
+import { useGameStore } from '@/store/gameStore';
 
 /**
  * Hook to initialize the game store and set up event listeners for user authentication

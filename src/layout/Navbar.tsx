@@ -281,7 +281,7 @@ const Logo = memo(() => {
 						height={76}
 						priority // Prioritize loading the logo
 						className="object-contain" // Maintain aspect ratio
-						style={{ height: 'auto' }}
+						style={{ width: 'auto', height: 'auto' }}
 					/>
 
 					{/* Premium Overlay Effect */}

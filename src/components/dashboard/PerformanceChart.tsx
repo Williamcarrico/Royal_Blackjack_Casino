@@ -68,8 +68,8 @@ const CustomTooltip = ({ active, payload, label, series }: TooltipProps & { seri
             {payload.map((entry) => (
                 <div key={`tooltip-${entry.name}-${entry.dataKey}`} className="flex items-center gap-2">
                     <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: entry.color }}
+                        className="w-3 h-3 rounded-full tooltip-color-indicator"
+                        data-color={entry.color}
                     />
                     <span className="text-muted-foreground">{entry.name}:</span>
                     <span className="font-medium">{formatValue(entry.value, entry.name, series)}</span>

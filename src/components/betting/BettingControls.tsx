@@ -109,6 +109,33 @@ const BettingControls: React.FC<BettingControlsProps> = ({
     }, [isChipAvailable, disabledChips, balance, currentBet, maxBet]);
 
     /**
+     * Adds a chip to the current bet with validation
+     *
+     * @param {ChipValue} value - The chip value to add to the bet
+     */
+    const addChipToBet = useCallback((value: ChipValue): void => {
+        // Calculate the new bet amount
+        const newBet = currentBet + value;
+
+        // Validate against constraints
+        if (newBet > maxBet) {
+            setErrorMessage(`Cannot exceed maximum bet of $${maxBet}`);
+            return;
+        }
+
+        if (value > balance) {
+            setErrorMessage(`Not enough balance for a $${value} chip`);
+            return;
+        }
+
+        // Place the bet through the callback
+        onPlaceBet?.(newBet);
+
+        // Clear selected chip after placing bet
+        setSelectedChip(null);
+    }, [currentBet, maxBet, balance, onPlaceBet]);
+
+    /**
      * Handles chip selection and updates the selected chip state
      *
      * @param {ChipValue} value - The chip value being selected
@@ -135,34 +162,7 @@ const BettingControls: React.FC<BettingControlsProps> = ({
 
             setErrorMessage(errorMsg);
         }
-    }, [disabled, canSelectChip, autoConfirm, balance, currentBet, maxBet]);
-
-    /**
-     * Adds a chip to the current bet with validation
-     *
-     * @param {ChipValue} value - The chip value to add to the bet
-     */
-    const addChipToBet = useCallback((value: ChipValue): void => {
-        // Calculate the new bet amount
-        const newBet = currentBet + value;
-
-        // Validate against constraints
-        if (newBet > maxBet) {
-            setErrorMessage(`Cannot exceed maximum bet of $${maxBet}`);
-            return;
-        }
-
-        if (value > balance) {
-            setErrorMessage(`Not enough balance for a $${value} chip`);
-            return;
-        }
-
-        // Place the bet through the callback
-        onPlaceBet?.(newBet);
-
-        // Clear selected chip after placing bet
-        setSelectedChip(null);
-    }, [currentBet, maxBet, balance, onPlaceBet]);
+    }, [disabled, canSelectChip, autoConfirm, addChipToBet, balance, currentBet, maxBet]);
 
     /**
      * Handles confirmation of bet
@@ -200,7 +200,12 @@ const BettingControls: React.FC<BettingControlsProps> = ({
             return;
         }
 
-        onMaxBet?.() || onPlaceBet?.(maxPossibleBet);
+        // Call onMaxBet if available, otherwise call onPlaceBet with maxPossibleBet
+        if (onMaxBet) {
+            onMaxBet();
+        } else if (onPlaceBet) {
+            onPlaceBet(maxPossibleBet);
+        }
     }, [balance, maxBet, minBet, onMaxBet, onPlaceBet]);
 
     /**
@@ -220,9 +225,12 @@ const BettingControls: React.FC<BettingControlsProps> = ({
             setErrorMessage(`Not enough balance to double bet`);
             return;
         }
-
         // Double the bet through callback or fallback to place bet
-        onDoubleBet?.() || onPlaceBet?.(doubledBet);
+        if (onDoubleBet) {
+            onDoubleBet();
+        } else if (onPlaceBet) {
+            onPlaceBet(doubledBet);
+        }
     }, [currentBet, maxBet, balance, onDoubleBet, onPlaceBet]);
 
     /**

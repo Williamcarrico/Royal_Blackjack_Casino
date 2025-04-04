@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Player slice for the blackjack game store
  */
@@ -39,9 +41,8 @@ const createPlayerSlice: StateCreator<PlayerSlice> = (set, get) => ({
             set({ activePlayerIndex: 0 });
 
             // Set player as active
-            const updatedPlayers = [...players, player];
-            updatedPlayers[0] = { ...updatedPlayers[0], isActive: true };
-            set({ players: updatedPlayers });
+            const newPlayer = { ...player, isActive: true };
+            set({ players: [newPlayer] });
         }
 
         return player;
@@ -97,6 +98,10 @@ const createPlayerSlice: StateCreator<PlayerSlice> = (set, get) => ({
             }
 
             const player = state.players[playerIndex];
+
+            if (!player) {
+                throw new Error(`Player at index ${playerIndex} is undefined`);
+            }
 
             // Update player's balance
             const updatedPlayers = [...state.players];

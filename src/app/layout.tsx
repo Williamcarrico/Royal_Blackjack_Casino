@@ -10,6 +10,22 @@ import { Toaster as SonnerToaster } from 'sonner'
 import Providers from './providers'
 import AuthProviderWrapper from '@/components/providers/AuthProviderWrapper'
 
+// Add JSX namespace for intrinsic elements
+/* eslint-disable @typescript-eslint/no-namespace */
+declare global {
+	namespace JSX {
+		interface IntrinsicElements {
+			html: React.DetailedHTMLProps<React.HtmlHTMLAttributes<HTMLHtmlElement>, HTMLHtmlElement>;
+			head: React.DetailedHTMLProps<React.HTMLAttributes<HTMLHeadElement>, HTMLHeadElement>;
+			body: React.DetailedHTMLProps<React.HTMLAttributes<HTMLBodyElement>, HTMLBodyElement>;
+			div: React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
+			main: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+			link: React.DetailedHTMLProps<React.LinkHTMLAttributes<HTMLLinkElement>, HTMLLinkElement>;
+		}
+	}
+}
+/* eslint-enable @typescript-eslint/no-namespace */
+
 // Configure fonts with optimized loading
 const inter = Inter({
 	subsets: ['latin'],

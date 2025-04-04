@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Hook for managing Blackjack game state
  */

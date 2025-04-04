@@ -2,8 +2,7 @@
  * Betting helper functions for the blackjack game
  */
 
-import type { BettingOutcome, BettingStrategyType } from '@/types/bettingTypes';
-import type { SideBetType } from '@/types/game';
+import type { BettingOutcome, BettingStrategyType, SideBetType } from '@/types/betTypes';
 import { SIDE_BET_PAYOUTS } from '@/lib/constants/gameConstants';
 
 /**
@@ -51,14 +50,13 @@ export const calculateSideBetPayout = (
     if (!outcomeType) return 0;
 
     // Get the payout multiplier from the constants
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const payouts = (SIDE_BET_PAYOUTS as any)[betType];
+    const payouts = SIDE_BET_PAYOUTS[betType as keyof typeof SIDE_BET_PAYOUTS];
 
-    if (!payouts || !payouts[outcomeType]) {
+    if (!payouts || !payouts[outcomeType as keyof typeof payouts]) {
         return 0;
     }
 
-    return betAmount * payouts[outcomeType];
+    return betAmount * payouts[outcomeType as keyof typeof payouts];
 };
 
 /**
@@ -146,6 +144,8 @@ export const calculateNextBet = (
     const lastOutcome = previousOutcomes.length > 0 ?
         previousOutcomes[previousOutcomes.length - 1] : null;
 
+    let consecutiveWins = 0;
+
     // Implement different strategies
     switch (strategy) {
         case 'martingale':
@@ -163,7 +163,6 @@ export const calculateNextBet = (
             }
 
             // Count consecutive wins
-            let consecutiveWins = 0;
             for (let i = previousOutcomes.length - 1; i >= 0; i--) {
                 if (previousOutcomes[i] === 'win') {
                     consecutiveWins++;
@@ -181,17 +180,16 @@ export const calculateNextBet = (
                 return Math.min(currentBet, availableChips);
             }
 
-        case 'oneThreeTwoSix':
+        case 'oneThreeTwoSix': {
             // 1-3-2-6 progression (bet 1×, 3×, 2×, 6× the base unit)
-            const multipliers = [1, 3, 2, 6];
+            const multipliers: number[] = [1, 3, 2, 6];
 
             if (!lastOutcome || lastOutcome === 'loss') {
                 // Start or restart the sequence
-                return Math.min(baseUnit * multipliers[0], availableChips);
+                return Math.min(baseUnit * (multipliers[0] || 1), availableChips);
             }
 
             // Count consecutive wins to determine position in sequence
-            let consecutiveWins = 0;
             for (let i = previousOutcomes.length - 1; i >= 0; i--) {
                 if (previousOutcomes[i] === 'win') {
                     consecutiveWins++;
@@ -203,12 +201,15 @@ export const calculateNextBet = (
             if (lastOutcome === 'win') {
                 // Progress to next multiplier in sequence
                 const nextPosition = Math.min(consecutiveWins, multipliers.length - 1);
-                return Math.min(baseUnit * multipliers[nextPosition], maxBet, availableChips);
+                const multiplier = multipliers[nextPosition] || 1;
+                return Math.min(baseUnit * multiplier, maxBet, availableChips);
             } else { // push
                 return Math.min(currentBet, availableChips);
             }
+        }
 
         case 'd_alembert':
+        case 'dAlembert':
             // Add one unit after loss, subtract one unit after win
             if (!lastOutcome) {
                 return Math.min(baseUnit, availableChips);
@@ -222,12 +223,14 @@ export const calculateNextBet = (
                 return Math.min(currentBet, availableChips);
             }
 
-        case 'fibonacci':
+        case 'fibonacci': {
             // Use Fibonacci sequence for bet progression
             const generateFibonacci = (length: number): number[] => {
-                const sequence = [1, 1];
+                const sequence: number[] = [1, 1];
                 for (let i = 2; i < length; i++) {
-                    sequence.push(sequence[i - 1] + sequence[i - 2]);
+                    const prev1 = sequence[i - 1] || 0;
+                    const prev2 = sequence[i - 2] || 0;
+                    sequence.push(prev1 + prev2);
                 }
                 return sequence;
             };
@@ -236,7 +239,8 @@ export const calculateNextBet = (
             const fibonacci = generateFibonacci(10); // 10 steps should be enough
 
             if (!lastOutcome) {
-                return Math.min(baseUnit * fibonacci[0], availableChips);
+                const firstValue = fibonacci[0] || 1;
+                return Math.min(baseUnit * firstValue, availableChips);
             }
 
             // Find current position in sequence
@@ -256,7 +260,22 @@ export const calculateNextBet = (
                 nextIndex = currentIndex;
             }
 
-            return Math.min(baseUnit * fibonacci[nextIndex], maxBet, availableChips);
+            const nextValue = fibonacci[nextIndex] || 1;
+            return Math.min(baseUnit * nextValue, maxBet, availableChips);
+        }
+
+        case 'oscar':
+        case 'oscarsGrind':
+            // Oscar's Grind: increase bet by one unit after a win, keep same after loss
+            if (!lastOutcome) {
+                return Math.min(baseUnit, availableChips);
+            }
+
+            if (lastOutcome === 'win') {
+                return Math.min(currentBet + baseUnit, maxBet, availableChips);
+            } else {
+                return Math.min(currentBet, availableChips);
+            }
 
         default:
             return Math.min(baseUnit, availableChips);
@@ -271,15 +290,19 @@ export const calculateNextBet = (
 export const getBettingStrategyRiskLevel = (
     strategy: BettingStrategyType
 ): number => {
-    const riskLevels: Record<BettingStrategyType, number> = {
+    const riskLevels: Record<string, number> = {
         'flat': 1,
+        'dAlembert': 2,
         'd_alembert': 2,
         'oneThreeTwoSix': 2,
         'paroli': 3,
         'fibonacci': 4,
         'martingale': 5,
         'labouchere': 4,
-        'oscar': 3
+        'oscar': 3,
+        'oscarsGrind': 3,
+        'parlay': 3,
+        'custom': 3
     };
 
     return riskLevels[strategy] || 1;
@@ -332,22 +355,22 @@ export const formatBetAmount = (amount: number, currency = '$'): string => {
  * @returns Object with bets grouped by standard increments
  */
 export const groupBetsByIncrement = (allBets: number[]): Record<string, number[]> => {
-    const groups: Record<string, number[]> = {
-        'small': [],   // 1-9
-        'medium': [],  // 10-49
-        'large': [],   // 50-99
-        'xlarge': []   // 100+
+    const groups = {
+        'small': [] as number[],   // 1-9
+        'medium': [] as number[],  // 10-49
+        'large': [] as number[],   // 50-99
+        'xlarge': [] as number[]   // 100+
     };
 
     for (const bet of allBets) {
         if (bet < 10) {
-            groups.small.push(bet);
+            groups['small'].push(bet);
         } else if (bet < 50) {
-            groups.medium.push(bet);
+            groups['medium'].push(bet);
         } else if (bet < 100) {
-            groups.large.push(bet);
+            groups['large'].push(bet);
         } else {
-            groups.xlarge.push(bet);
+            groups['xlarge'].push(bet);
         }
     }
 

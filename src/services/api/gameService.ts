@@ -20,9 +20,8 @@ import {
     GameVariant,
     GameAction
 } from '../../types/gameTypes';
-import { HandAction } from '../../types/handTypes';
+import { HandAction, Hand } from '../../types/handTypes';
 import { Bet, SideBetType } from '../../types/betTypes';
-import { Hand } from '../../types/handTypes';
 import { Card } from '../../types/cardTypes';
 
 export interface GameServiceConfig extends ServiceOptions {

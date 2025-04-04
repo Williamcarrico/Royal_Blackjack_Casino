@@ -16,11 +16,11 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 import { format } from 'date-fns'
 
 interface DateRangeSelectorProps {
-    onRangeChange: (range: { start: Date; end: Date }) => void;
+    onRangeChangeAction: (range: { start: Date; end: Date }) => void;
     className?: string;
 }
 
-export const DateRangeSelector = ({ onRangeChange, className = '' }: DateRangeSelectorProps) => {
+export const DateRangeSelector = ({ onRangeChangeAction, className = '' }: DateRangeSelectorProps) => {
     const [selectedRange, setSelectedRange] = useState<string>('last7days');
     const [customStartDate, setCustomStartDate] = useState<Date | undefined>(undefined);
     const [customEndDate, setCustomEndDate] = useState<Date | undefined>(undefined);
@@ -57,12 +57,12 @@ export const DateRangeSelector = ({ onRangeChange, className = '' }: DateRangeSe
             start.setDate(start.getDate() - option.days);
         }
 
-        onRangeChange({ start, end });
+        onRangeChangeAction({ start, end });
     };
 
     const handleCustomRangeApply = () => {
         if (customStartDate && customEndDate) {
-            onRangeChange({
+            onRangeChangeAction({
                 start: customStartDate,
                 end: customEndDate
             });
@@ -91,7 +91,7 @@ export const DateRangeSelector = ({ onRangeChange, className = '' }: DateRangeSe
 
             setCustomStartDate(newStartDate);
             setCustomEndDate(newEndDate);
-            onRangeChange({ start: newStartDate, end: newEndDate });
+            onRangeChangeAction({ start: newStartDate, end: newEndDate });
             return;
         }
 
@@ -109,7 +109,7 @@ export const DateRangeSelector = ({ onRangeChange, className = '' }: DateRangeSe
             end.setDate(end.getDate() + days);
         }
 
-        onRangeChange({ start, end });
+        onRangeChangeAction({ start, end });
     };
 
     const formatDateRange = () => {
@@ -120,9 +120,8 @@ export const DateRangeSelector = ({ onRangeChange, className = '' }: DateRangeSe
         const option = dateRangeOptions.find(opt => opt.value === selectedRange);
         return option?.label ?? '';
     };
-
     return (
-        <div className={`flex items-center space-x-2 ${className}`}>
+        <section className={`flex items-center space-x-2 ${className}`}>
             <Button
                 variant="outline"
                 size="sm"
@@ -199,7 +198,7 @@ export const DateRangeSelector = ({ onRangeChange, className = '' }: DateRangeSe
             >
                 <ArrowRight className="w-4 h-4" />
             </Button>
-        </div>
+        </section>
     );
 };
 

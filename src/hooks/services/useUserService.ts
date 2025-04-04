@@ -8,6 +8,8 @@ import EventTracker from '../../services/analytics/eventTracker';
 import { ServiceError } from '../../services/serviceInterface';
 import ServiceManager from '../../services/serviceRegistry';
 import { useAuthService } from './';
+import { UserProfile, Transaction, UpdateProfileRequest, DepositRequest, WithdrawalRequest } from '../../types/authTypes';
+import { PlayerStatsResponse } from '../../types/apiTypes';
 
 export default function useUserService() {
     const {
@@ -18,25 +20,11 @@ export default function useUserService() {
 
     const { isAuthenticated, user: authUser } = useAuthService();
 
-    const [userProfile, setUserProfile] = useState<any | null>(null);
-    const [userStats, setUserStats] = useState<any | null>(null);
-    const [transactionHistory, setTransactionHistory] = useState<any[]>([]);
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+    const [userStats, setUserStats] = useState<PlayerStatsResponse['data'] | null>(null);
+    const [transactionHistory, setTransactionHistory] = useState<Transaction[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<ServiceError | null>(null);
-
-    // Load user profile when authenticated
-    useEffect(() => {
-        if (isAuthenticated && authUser && userService && !serviceLoading) {
-            fetchUserProfile();
-        }
-    }, [isAuthenticated, authUser, userService, serviceLoading]);
-
-    // Update error state if there's a service error
-    useEffect(() => {
-        if (serviceError) {
-            setError(serviceError);
-        }
-    }, [serviceError]);
 
     /**
      * Fetch the user profile
@@ -54,7 +42,7 @@ export default function useUserService() {
         setError(null);
 
         try {
-            const profile = await userService.getUserProfile();
+            const profile = await userService.getUserProfile(authUser.id);
 
             setUserProfile(profile);
             setIsLoading(false);
@@ -65,7 +53,7 @@ export default function useUserService() {
                 eventTracker.track('user', 'profile_fetched', {
                     userId: profile.id
                 });
-            } catch (e) {
+            } catch (_e) {
                 // Silently fail if analytics isn't available
             }
 
@@ -79,7 +67,7 @@ export default function useUserService() {
                 error = new ServiceError(
                     'Failed to fetch user profile',
                     'profile_fetch_failed',
-                    err
+                    err as Record<string, unknown>
                 );
             }
 
@@ -89,6 +77,20 @@ export default function useUserService() {
             return { success: false, error };
         }
     }, [userService, isAuthenticated, authUser]);
+
+    // Load user profile when authenticated
+    useEffect(() => {
+        if (isAuthenticated && authUser && userService && !serviceLoading) {
+            fetchUserProfile();
+        }
+    }, [isAuthenticated, authUser, userService, serviceLoading, fetchUserProfile]);
+
+    // Update error state if there's a service error
+    useEffect(() => {
+        if (serviceError) {
+            setError(serviceError);
+        }
+    }, [serviceError]);
 
     /**
      * Fetch user statistics
@@ -106,7 +108,7 @@ export default function useUserService() {
         setError(null);
 
         try {
-            const stats = await userService.getUserStats();
+            const stats = await userService.getUserStats(authUser.id);
 
             setUserStats(stats);
             setIsLoading(false);
@@ -121,7 +123,7 @@ export default function useUserService() {
                 error = new ServiceError(
                     'Failed to fetch user statistics',
                     'stats_fetch_failed',
-                    err
+                    err as Record<string, unknown>
                 );
             }
 
@@ -148,12 +150,17 @@ export default function useUserService() {
         setError(null);
 
         try {
-            const history = await userService.getTransactionHistory(limit, offset);
+            // Note: getUserTransactions doesn't actually support limit/offset
+            // This would need to be implemented in the service if needed
+            const history = await userService.getUserTransactions(authUser.id);
 
-            setTransactionHistory(history);
+            // Apply limit/offset client-side for now
+            const paginatedHistory = history.slice(offset, offset + limit);
+
+            setTransactionHistory(paginatedHistory);
             setIsLoading(false);
 
-            return { success: true, history };
+            return { success: true, history: paginatedHistory };
         } catch (err) {
             let error: ServiceError;
 
@@ -163,7 +170,7 @@ export default function useUserService() {
                 error = new ServiceError(
                     'Failed to fetch transaction history',
                     'transaction_history_fetch_failed',
-                    err
+                    err as Record<string, unknown>
                 );
             }
 
@@ -177,7 +184,7 @@ export default function useUserService() {
     /**
      * Update user profile
      */
-    const updateProfile = useCallback(async (profileData: Partial<any>) => {
+    const updateProfile = useCallback(async (profileData: Partial<UpdateProfileRequest>) => {
         if (!userService) {
             throw new Error('User service not initialized');
         }
@@ -190,7 +197,7 @@ export default function useUserService() {
         setError(null);
 
         try {
-            const updatedProfile = await userService.updateUserProfile(profileData);
+            const updatedProfile = await userService.updateUserProfile(authUser.id, profileData);
 
             setUserProfile(updatedProfile);
             setIsLoading(false);
@@ -202,7 +209,7 @@ export default function useUserService() {
                     userId: updatedProfile.id,
                     fields: Object.keys(profileData).join(',')
                 });
-            } catch (e) {
+            } catch (_e) {
                 // Silently fail if analytics isn't available
             }
 
@@ -216,7 +223,7 @@ export default function useUserService() {
                 error = new ServiceError(
                     'Failed to update user profile',
                     'profile_update_failed',
-                    err
+                    err as Record<string, unknown>
                 );
             }
 
@@ -230,7 +237,7 @@ export default function useUserService() {
     /**
      * Update user preferences
      */
-    const updatePreferences = useCallback(async (preferences: Partial<any>) => {
+    const updatePreferences = useCallback(async (preferences: Partial<UserProfile['preferences']>) => {
         if (!userService) {
             throw new Error('User service not initialized');
         }
@@ -243,17 +250,13 @@ export default function useUserService() {
         setError(null);
 
         try {
-            const updatedPreferences = await userService.updateUserPreferences(preferences);
+            // We'll use updateUserProfile since there's no dedicated preferences endpoint
+            const updatedProfile = await userService.updateUserProfile(authUser.id, {
+                preferences
+            });
 
             // Update the profile with new preferences
-            setUserProfile(prev => ({
-                ...prev,
-                preferences: {
-                    ...prev?.preferences,
-                    ...updatedPreferences
-                }
-            }));
-
+            setUserProfile(updatedProfile);
             setIsLoading(false);
 
             // Track preferences update in analytics
@@ -261,13 +264,13 @@ export default function useUserService() {
                 const eventTracker = await ServiceManager.getInstance().getService<EventTracker>('eventTracker');
                 eventTracker.track('user', 'preferences_updated', {
                     userId: authUser.id,
-                    fields: Object.keys(preferences).join(',')
+                    fields: Object.keys(preferences || {}).join(',')
                 });
-            } catch (e) {
+            } catch (_e) {
                 // Silently fail if analytics isn't available
             }
 
-            return { success: true, preferences: updatedPreferences };
+            return { success: true, preferences: updatedProfile.preferences };
         } catch (err) {
             let error: ServiceError;
 
@@ -277,7 +280,7 @@ export default function useUserService() {
                 error = new ServiceError(
                     'Failed to update user preferences',
                     'preferences_update_failed',
-                    err
+                    err as Record<string, unknown>
                 );
             }
 
@@ -304,17 +307,14 @@ export default function useUserService() {
         setError(null);
 
         try {
-            const balance = await userService.getUserBalance();
+            // We'll fetch the full profile since there's no dedicated balance endpoint
+            const profile = await userService.getUserProfile(authUser.id);
 
             // Update the profile with new balance
-            setUserProfile(prev => ({
-                ...prev,
-                balance
-            }));
-
+            setUserProfile(profile);
             setIsLoading(false);
 
-            return { success: true, balance };
+            return { success: true, balance: profile.balance };
         } catch (err) {
             let error: ServiceError;
 
@@ -324,7 +324,7 @@ export default function useUserService() {
                 error = new ServiceError(
                     'Failed to get user balance',
                     'balance_fetch_failed',
-                    err
+                    err as Record<string, unknown>
                 );
             }
 
@@ -338,7 +338,7 @@ export default function useUserService() {
     /**
      * Process a deposit
      */
-    const processDeposit = useCallback(async (amount: number, method: string, extras?: any) => {
+    const processDeposit = useCallback(async (amount: number, method: string, extras?: Record<string, unknown>) => {
         if (!userService) {
             throw new Error('User service not initialized');
         }
@@ -351,19 +351,20 @@ export default function useUserService() {
         setError(null);
 
         try {
-            const result = await userService.processDeposit(amount, method, extras);
+            const request: DepositRequest = {
+                amount,
+                paymentMethod: method,
+                ...(extras && typeof extras === 'object' ? { savePaymentMethod: !!extras.savePaymentMethod } : {})
+            };
 
-            // Update the profile with new balance
-            if (result.success) {
-                setUserProfile(prev => ({
-                    ...prev,
-                    balance: result.newBalance
-                }));
+            const transaction = await userService.deposit(authUser.id, request);
 
-                // Add the transaction to history
-                setTransactionHistory(prev => [result.transaction, ...prev]);
-            }
+            // Refresh profile to get updated balance
+            const profile = await userService.getUserProfile(authUser.id);
+            setUserProfile(profile);
 
+            // Add the transaction to history
+            setTransactionHistory(prev => [transaction, ...prev]);
             setIsLoading(false);
 
             // Track deposit in analytics
@@ -373,13 +374,17 @@ export default function useUserService() {
                     userId: authUser.id,
                     amount,
                     method,
-                    status: result.success ? 'success' : 'pending'
+                    status: transaction.status
                 });
-            } catch (e) {
+            } catch (_e) {
                 // Silently fail if analytics isn't available
             }
 
-            return result;
+            return {
+                success: true,
+                transaction,
+                newBalance: profile.balance
+            };
         } catch (err) {
             let error: ServiceError;
 
@@ -389,7 +394,7 @@ export default function useUserService() {
                 error = new ServiceError(
                     'Failed to process deposit',
                     'deposit_failed',
-                    err
+                    err as Record<string, unknown>
                 );
             }
 
@@ -403,7 +408,7 @@ export default function useUserService() {
     /**
      * Process a withdrawal
      */
-    const processWithdrawal = useCallback(async (amount: number, method: string, extras?: any) => {
+    const processWithdrawal = useCallback(async (amount: number, method: string, extras?: Record<string, unknown>) => {
         if (!userService) {
             throw new Error('User service not initialized');
         }
@@ -416,19 +421,22 @@ export default function useUserService() {
         setError(null);
 
         try {
-            const result = await userService.processWithdrawal(amount, method, extras);
+            const request: WithdrawalRequest = {
+                amount,
+                paymentMethod: method,
+                ...(extras?.accountDetails && typeof extras.accountDetails === 'object'
+                    ? { accountDetails: extras.accountDetails as Record<string, string> }
+                    : {})
+            };
 
-            // Update the profile with new balance
-            if (result.success) {
-                setUserProfile(prev => ({
-                    ...prev,
-                    balance: result.newBalance
-                }));
+            const transaction = await userService.withdraw(authUser.id, request);
 
-                // Add the transaction to history
-                setTransactionHistory(prev => [result.transaction, ...prev]);
-            }
+            // Refresh profile to get updated balance
+            const profile = await userService.getUserProfile(authUser.id);
+            setUserProfile(profile);
 
+            // Add the transaction to history
+            setTransactionHistory(prev => [transaction, ...prev]);
             setIsLoading(false);
 
             // Track withdrawal in analytics
@@ -438,13 +446,17 @@ export default function useUserService() {
                     userId: authUser.id,
                     amount,
                     method,
-                    status: result.success ? 'success' : 'pending'
+                    status: transaction.status
                 });
-            } catch (e) {
+            } catch (_e) {
                 // Silently fail if analytics isn't available
             }
 
-            return result;
+            return {
+                success: true,
+                transaction,
+                newBalance: profile.balance
+            };
         } catch (err) {
             let error: ServiceError;
 
@@ -454,7 +466,7 @@ export default function useUserService() {
                 error = new ServiceError(
                     'Failed to process withdrawal',
                     'withdrawal_failed',
-                    err
+                    err as Record<string, unknown>
                 );
             }
 

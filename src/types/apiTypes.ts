@@ -194,3 +194,11 @@ export interface WebSocketMessage<T = unknown> {
     timestamp: string;
     data: T;
 }
+
+// WebSocket connection handler
+export interface WebSocketHandler {
+    socket: WebSocket;
+    request: Request;
+    clientId: string;
+    userId?: string;
+}

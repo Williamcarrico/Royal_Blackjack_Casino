@@ -2,26 +2,11 @@
  * Utility type definitions for the blackjack game
  */
 
-// UUID type
-export type UUID = string;
-
-// Timestamp type
-export type Timestamp = number;
-
-// ISO Date string type
-export type ISODateString = string;
-
 // Currency code
 export type CurrencyCode = 'USD' | 'EUR' | 'GBP' | 'CAD' | 'AUD' | 'JPY' | 'CNY';
 
 // Language code
 export type LanguageCode = 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'ru' | 'zh' | 'ja';
-
-// Country code
-export type CountryCode = string;
-
-// Percentage (0-100)
-export type Percentage = number;
 
 // Money amount
 export interface Money {
@@ -55,8 +40,8 @@ export interface FilterParams {
 
 // Date range
 export interface DateRange {
-    start: Date | ISODateString;
-    end: Date | ISODateString;
+    start: Date | string;
+    end: Date | string;
 }
 
 // Result type

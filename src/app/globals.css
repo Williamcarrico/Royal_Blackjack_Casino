@@ -729,6 +729,32 @@
     );
   }
 
+  /* Table felt styling for realistic casino tables */
+  .table-felt {
+    position: absolute;
+    inset: 0;
+    margin: var(--border-width, 24px);
+    overflow: hidden;
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+  }
+
+  .table-felt-inner {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  /* Make wooden table border more realistic */
+  .wooden-table-border {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-color: #4a3319;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6),
+      0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+
   /* Progress bar */
   .progress-bar {
     height: 100%;
@@ -1580,14 +1606,116 @@
  * ==========================================================================
  */
 
+/* Tooltip color indicator */
+.tooltip-color-indicator {
+  background-color: var(--indicator-color);
+}
+
+.tooltip-color-indicator[data-color] {
+  --indicator-color: attr(data-color);
+}
+
+/* Chart tooltip color indicators for specific colors */
+.tooltip-color-indicator[data-color="#0ea5e9"] {
+  background-color: #0ea5e9;
+}
+
+.tooltip-color-indicator[data-color="#22c55e"] {
+  background-color: #22c55e;
+}
+
+.tooltip-color-indicator[data-color="#f59e0b"] {
+  background-color: #f59e0b;
+}
+
+.tooltip-color-indicator[data-color="#ef4444"] {
+  background-color: #ef4444;
+}
+
+.tooltip-color-indicator[data-color="#8b5cf6"] {
+  background-color: #8b5cf6;
+}
+
+.tooltip-color-indicator[data-color="#ec4899"] {
+  background-color: #ec4899;
+}
+
+.tooltip-color-indicator[data-color="#06b6d4"] {
+  background-color: #06b6d4;
+}
+
+.tooltip-color-indicator[data-color="#f97316"] {
+  background-color: #f97316;
+}
+
 /* Chip component styles */
 .chip-dot {
   transform-origin: center center;
 }
 
-/* Table felt background color using CSS variable */
+/* Chip positioning in betting circle */
+.chip-position {
+  z-index: calc(10 + attr(data-index integer));
+  transform: translateY(calc(attr(data-index integer) * -2px));
+}
+
+.chip-position[data-index="0"] {
+  z-index: 10;
+  transform: translateY(0);
+}
+
+.chip-position[data-index="1"] {
+  z-index: 11;
+  transform: translateY(-2px);
+}
+
+.chip-position[data-index="2"] {
+  z-index: 12;
+  transform: translateY(-4px);
+}
+
+.chip-position[data-index="3"] {
+  z-index: 13;
+  transform: translateY(-6px);
+}
+
+.chip-position[data-index="4"] {
+  z-index: 14;
+  transform: translateY(-8px);
+}
+
+.chip-position[data-index="5"] {
+  z-index: 15;
+  transform: translateY(-10px);
+}
+
+.chip-position[data-index="6"] {
+  z-index: 16;
+  transform: translateY(-12px);
+}
+
+.chip-position[data-index="7"] {
+  z-index: 17;
+  transform: translateY(-14px);
+}
+
+.chip-position[data-index="8"] {
+  z-index: 18;
+  transform: translateY(-16px);
+}
+
+.chip-position[data-index="9"] {
+  z-index: 19;
+  transform: translateY(-18px);
+}
+
+/* Table felt background color using data attributes */
 .felt-bg-color {
-  background-color: var(--felt-bg-color);
+  background-color: #0e472a; /* Default fallback */
+}
+
+.felt-bg-color[data-felt-color] {
+  background-color: var(--felt-color);
 }
 
 /* Use CSS custom properties for ChipDot rotation */

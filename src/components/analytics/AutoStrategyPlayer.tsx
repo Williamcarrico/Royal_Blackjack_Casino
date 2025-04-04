@@ -51,7 +51,7 @@ const actionDisplay = {
 };
 
 const AutoStrategyPlayer: React.FC<AutoStrategyPlayerProps> = ({ className = '' }) => {
-    const gameStore = useGameStore() as ExtendedGameStore;
+    const gameStore = useGameStore() as unknown as ExtendedGameStore;
     const settings = useEnhancedSettingsStore();
 
     // Auto strategy state

@@ -1,10 +1,12 @@
+'use client';
+
 /**
  * Deck slice for the blackjack game store
  */
 import { StateCreator } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { DeckSlice } from '../../types/storeTypes';
-import { Card, Deck, Shoe, Rank, Suit, ShuffleMethod } from '../../types/cardTypes';
+import { Card, Deck, Shoe, Rank, Suit } from '../../types/cardTypes';
 
 // Card values mapping
 const CARD_VALUES: Record<Rank, number | number[]> = {
@@ -64,7 +66,12 @@ const fisherYatesShuffle = <T>(array: T[]): T[] => {
 
     for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        // Use a temporary variable to ensure type safety
+        const temp = shuffled[i];
+        if (temp !== undefined && shuffled[j] !== undefined) {
+            shuffled[i] = shuffled[j];
+            shuffled[j] = temp;
+        }
     }
 
     return shuffled;
@@ -150,9 +157,14 @@ const createDeckSlice: StateCreator<DeckSlice> = (set, get) => ({
             throw new Error('No cards remaining in shoe');
         }
 
-        // Get the next card from the shoe
-        const card = {
-            ...shoe.cards[cardsDealt],
+        // We've already checked that cardsDealt is within the array bounds,
+        // so we can safely use non-null assertion here
+        const cardFromShoe = shoe.cards[cardsDealt]!;
+        const card: Card = {
+            id: cardFromShoe.id,
+            suit: cardFromShoe.suit,
+            rank: cardFromShoe.rank,
+            value: cardFromShoe.value,
             face: isFaceUp ? 'up' : 'down'
         };
 
@@ -180,8 +192,16 @@ const createDeckSlice: StateCreator<DeckSlice> = (set, get) => ({
             throw new Error('No cards remaining in shoe');
         }
 
-        // Get the next card from the shoe (but don't return it)
-        const card = { ...shoe.cards[cardsDealt] };
+        // We've already checked that cardsDealt is within the array bounds,
+        // so we can safely use non-null assertion here
+        const cardFromShoe = shoe.cards[cardsDealt]!;
+        const card: Card = {
+            id: cardFromShoe.id,
+            suit: cardFromShoe.suit,
+            rank: cardFromShoe.rank,
+            value: cardFromShoe.value,
+            face: cardFromShoe.face
+        };
 
         // Update state to skip this card
         set({

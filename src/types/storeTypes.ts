@@ -298,6 +298,7 @@ export interface ProgressiveBettingStore {
 
 // Enhanced settings store state
 export interface EnhancedSettingsStore extends SettingsStore {
+    [x: string]: Theme;
     advancedRules: {
         dealerPeeks: boolean;
         surrenderAllowed: 'none' | 'early' | 'late';

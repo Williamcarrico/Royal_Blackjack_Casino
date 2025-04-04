@@ -19,7 +19,12 @@ import AudioManager from './audio/audioManager';
 // Analytics services
 import EventTracker from './analytics/eventTracker';
 
-type ServiceType = typeof BaseService;
+// Define a more specific service class interface
+interface ServiceClassType {
+    getInstance(config?: ServiceOptions): BaseService;
+}
+
+type ServiceType = ServiceClassType;
 type ServiceInstance = BaseService;
 type ServiceConfig = ServiceOptions;
 
@@ -35,7 +40,7 @@ interface ServiceRegistry {
 class ServiceManager {
     private static instance: ServiceManager;
     private registry: ServiceRegistry = {};
-    private initializedServices: Set<string> = new Set();
+    private readonly initializedServices: Set<string> = new Set();
     private initializationInProgress: Set<string> = new Set();
 
     private constructor() {
@@ -53,14 +58,14 @@ class ServiceManager {
     /**
      * Register a service with the registry
      */
-    public register<T extends ServiceType>(
+    public register<T>(
         name: string,
         serviceClass: T,
         config?: ServiceConfig,
         dependencies?: string[]
     ): void {
         this.registry[name] = {
-            service: serviceClass,
+            service: serviceClass as ServiceType,
             config,
             dependencies,
         };
@@ -120,7 +125,7 @@ class ServiceManager {
         }
 
         if (this.initializedServices.has(name) && this.registry[name].instance) {
-            await this.registry[name].instance!.reset();
+            await this.registry[name].instance.reset();
             this.initializedServices.delete(name);
             this.registry[name].instance = undefined;
         }
@@ -187,6 +192,13 @@ class ServiceManager {
         this.initializationInProgress.add(name);
 
         try {
+            if (!this.registry[name]) {
+                throw new ServiceError(
+                    `Service ${name} is not registered`,
+                    'service_not_found'
+                );
+            }
+
             // Initialize dependencies first
             const dependencies = this.registry[name].dependencies || [];
             for (const dep of dependencies) {
@@ -200,10 +212,8 @@ class ServiceManager {
 
             // Create an instance if it doesn't exist
             if (!this.registry[name].instance) {
-                // Get the getInstance method dynamically
-                const getInstanceMethod = service.prototype.constructor.getInstance;
-
-                if (typeof getInstanceMethod !== 'function') {
+                // Check for getInstance method
+                if (typeof service.getInstance !== 'function') {
                     throw new ServiceError(
                         `Service ${name} does not have a getInstance method`,
                         'invalid_service'
@@ -211,7 +221,7 @@ class ServiceManager {
                 }
 
                 // Create the instance
-                this.registry[name].instance = getInstanceMethod(config);
+                this.registry[name].instance = service.getInstance(config);
             }
 
             // Initialize the service
@@ -233,7 +243,7 @@ class ServiceManager {
             throw new ServiceError(
                 `Failed to initialize service ${name}: ${error}`,
                 'initialization_failed',
-                error
+                { originalError: error }
             );
         }
     }

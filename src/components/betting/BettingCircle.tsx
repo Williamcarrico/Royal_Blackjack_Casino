@@ -13,20 +13,6 @@ import { cn } from '@/lib/utils/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import Chip, { ChipValue } from './Chip';
 
-/**
- * Generates position styles for stacked chips with proper layering
- *
- * @param {number} index - The index of the chip in the stack
- * @returns {object} Style object for positioning the chip
- */
-const getChipPositionStyles = (index: number) => {
-    return {
-        position: 'absolute',
-        transform: `translateY(-${index * 2}px)`,
-        zIndex: 10 + index
-    };
-};
-
 export interface BetInfo {
     amount: number;
     chips: Array<{
@@ -174,7 +160,8 @@ const BettingCircle = ({
                         {placedChips.map((chipInfo, index) => (
                             <div
                                 key={`${chipInfo.value}-${index}`}
-                                style={getChipPositionStyles(index)}
+                                className="absolute chip-position"
+                                data-index={index}
                             >
                                 <Chip
                                     value={chipInfo.value}
@@ -234,7 +221,7 @@ const BettingCircle = ({
 
             {/* Bet amount display with responsive sizing */}
             {betAmount > 0 && (
-                <div className="px-2 py-1 mt-2 text-xs sm:text-sm font-medium text-white rounded bg-black/40">
+                <div className="px-2 py-1 mt-2 text-xs font-medium text-white rounded sm:text-sm bg-black/40">
                     ${betAmount.toLocaleString()}
                 </div>
             )}
