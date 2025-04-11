@@ -18,7 +18,7 @@ const SafePopoverContext = React.createContext<{
 function Popover({
   children,
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Root>) {
+}: Readonly<React.ComponentProps<typeof PopoverPrimitive.Root>>) {
   const [open, setOpen] = React.useState(props.open || false);
   const isUpdating = React.useRef(false);
 
@@ -34,20 +34,22 @@ function Popover({
     [open]
   );
 
+  const { onOpenChange } = props;
+
   const handleOpenChange = React.useCallback((newOpen: boolean) => {
     if (!isUpdating.current) {
       isUpdating.current = true;
       setOpen(newOpen);
 
       // Call the original handler if provided
-      props.onOpenChange?.(newOpen);
+      onOpenChange?.(newOpen);
 
       // Reset the flag after the update completes
       setTimeout(() => {
         isUpdating.current = false;
       }, 0);
     }
-  }, [props.onOpenChange]);
+  }, [onOpenChange]);
 
   return (
     <SafePopoverContext.Provider value={contextValue}>
@@ -66,7 +68,7 @@ function Popover({
 // Legacy implementation kept for backwards compatibility
 function LegacyPopover({
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Root>) {
+}: Readonly<React.ComponentProps<typeof PopoverPrimitive.Root>>) {
   return <PopoverPrimitive.Root data-slot="popover" {...props} />
 }
 
