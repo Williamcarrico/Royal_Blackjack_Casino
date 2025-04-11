@@ -1,42 +1,50 @@
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
-    <!-- Background felt -->
-    <rect width="800" height="600" fill="#0A5F2C" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <!-- Background felt - semi-transparent so it inherits table color -->
+  <rect width="800" height="600" fill="rgba(0,0,0,0.02)" />
 
-    <!-- Dealer card placement outline - moved above the title -->
-    <rect x="360" y="10" width="70" height="100" rx="5" ry="5" fill="none" stroke="#D4AF37" stroke-width="2" />
+  <!-- Dealer Box for Initial Card -->
+  <rect x="360" y="40" width="70" height="100" rx="5" ry="5" fill="none" stroke="#FFDF00" stroke-width="2" />
 
-    <!-- Royal Blackjack text below dealer card -->
-    <text x="400" y="180" fill="#D4AF37" font-family="Times New Roman, serif" font-size="28" font-weight="bold" text-anchor="middle">ROYAL BLACKJACK</text>
+  <!-- Royal Logo in Dealer Box -->
+  <text x="395" y="95" fill="#FFDF00" font-family="serif" font-size="24" font-weight="bold" text-anchor="middle" filter="drop-shadow(0px 0px 1px #000)">ROYAL</text>
 
-    <!-- BLACKJACK PAYS 3 TO 2 -->
-    <text x="400" y="230" fill="#D4AF37" font-family="serif" font-size="24" font-weight="bold" text-anchor="middle">BLACKJACK PAYS 3 TO 2</text>
+  <!-- Main casino branding -->
+  <text x="400" y="180" fill="#FFDF00" font-family="serif" font-size="28" font-weight="bold" text-anchor="middle" filter="drop-shadow(0px 0px 1px #000)">ROYAL BLACKJACK</text>
 
-  <!-- Dealer rules text - moved up -->
-  <text x="400" y="320" fill="#D4AF37" font-family="serif" font-size="22" font-weight="bold" text-anchor="middle">Dealer must draw to 16 and stand on all 17's</text>
+  <!-- Payout notification -->
+  <text x="400" y="210" fill="#FFDF00" font-family="serif" font-size="22" font-weight="bold" text-anchor="middle" filter="drop-shadow(0px 0px 1px #000)">BLACKJACK PAYS 3 TO 2</text>
 
-  <!-- Left text: PAYS 2 TO 1 -->
-  <text x="200" y="345" fill="#D4AF37" font-family="serif" font-size="22" font-weight="bold" text-anchor="middle">PAYS 2 TO 1</text>
+  <!-- Dealer rules -->
+  <text x="400" y="300" fill="#FFDF00" font-family="serif" font-size="20" font-weight="bold" text-anchor="middle" filter="drop-shadow(0px 0px 1px #000)">Dealer must draw to 16 and stand on all 17's</text>
 
-  <!-- INSURANCE text -->
-  <text x="400" y="345" fill="#D4AF37" font-family="serif" font-size="22" font-weight="bold" text-anchor="middle">INSURANCE</text>
+  <!-- Insurance Banner - Hexagonal shape to match reference image -->
+  <path d="M100,295 L700,295 L720,325 L680,355 L120,355 L80,325 Z" fill="rgba(0,0,0,0.1)" stroke="#FFDF00" stroke-width="2" />
 
-  <!-- Right text: PAYS 2 TO 1 -->
-  <text x="600" y="345" fill="#D4AF37" font-family="serif" font-size="22" font-weight="bold" text-anchor="middle">PAYS 2 TO 1</text>
+  <!-- Insurance text elements -->
+  <text x="200" y="335" fill="#FFDF00" font-family="serif" font-size="18" font-weight="bold" text-anchor="middle" filter="drop-shadow(0px 0px 1px #000)">PAYS 2 TO 1</text>
+  <text x="400" y="335" fill="#FFDF00" font-family="serif" font-size="18" font-weight="bold" text-anchor="middle" filter="drop-shadow(0px 0px 1px #000)">INSURANCE</text>
+  <text x="600" y="335" fill="#FFDF00" font-family="serif" font-size="18" font-weight="bold" text-anchor="middle" filter="drop-shadow(0px 0px 1px #000)">PAYS 2 TO 1</text>
 
-  <!-- Decorative banner shape with a zigzag pattern -->
-  <path d="M100,295 L700,295 L720,325 L680,355 L120,355 L80,325 Z" fill="none" stroke="#D4AF37" stroke-width="2" />
-  <path d="M100,295 L700,295 L720,325 L680,355 L120,355 L80,325 Z" fill="none" stroke="#D4AF37" stroke-width="2" />
+  <!-- Card placement outlines - player positions -->
+  <rect x="160" y="400" width="70" height="100" rx="5" ry="5" fill="none" stroke="#FFDF00" stroke-width="2" />
+  <rect x="260" y="400" width="70" height="100" rx="5" ry="5" fill="none" stroke="#FFDF00" stroke-width="2" />
+  <rect x="360" y="400" width="70" height="100" rx="5" ry="5" fill="none" stroke="#FFDF00" stroke-width="2" />
+  <rect x="460" y="400" width="70" height="100" rx="5" ry="5" fill="none" stroke="#FFDF00" stroke-width="2" />
+  <rect x="560" y="400" width="70" height="100" rx="5" ry="5" fill="none" stroke="#FFDF00" stroke-width="2" />
 
-  <!-- Card placement outlines - adjusted for better spacing -->
-  <rect x="160" y="390" width="70" height="100" rx="5" ry="5" fill="none" stroke="#D4AF37" stroke-width="2" />
-  <rect x="260" y="390" width="70" height="100" rx="5" ry="5" fill="none" stroke="#D4AF37" stroke-width="2" />
-  <rect x="360" y="390" width="70" height="100" rx="5" ry="5" fill="none" stroke="#D4AF37" stroke-width="2" />
-  <rect x="460" y="390" width="70" height="100" rx="5" ry="5" fill="none" stroke="#D4AF37" stroke-width="2" />
-  <rect x="560" y="390" width="70" height="100" rx="5" ry="5" fill="none" stroke="#D4AF37" stroke-width="2" />
+  <!-- Betting circles - aligned with the player positions -->
+  <circle cx="195" cy="530" r="25" fill="rgba(0,0,0,0.1)" stroke="#FFDF00" stroke-width="2" />
+  <circle cx="295" cy="530" r="25" fill="rgba(0,0,0,0.1)" stroke="#FFDF00" stroke-width="2" />
+  <circle cx="395" cy="530" r="25" fill="rgba(0,0,0,0.1)" stroke="#FFDF00" stroke-width="2" />
+  <circle cx="495" cy="530" r="25" fill="rgba(0,0,0,0.1)" stroke="#FFDF00" stroke-width="2" />
+  <circle cx="595" cy="530" r="25" fill="rgba(0,0,0,0.1)" stroke="#FFDF00" stroke-width="2" />
 
-  <circle cx="195" cy="540" r="30" fill="none" stroke="#D4AF37" stroke-width="2" />
-  <circle cx="295" cy="540" r="30" fill="none" stroke="#D4AF37" stroke-width="2" />
-  <circle cx="395" cy="540" r="30" fill="none" stroke="#D4AF37" stroke-width="2" />
-  <circle cx="495" cy="540" r="30" fill="none" stroke="#D4AF37" stroke-width="2" />
-  <circle cx="595" cy="540" r="30" fill="none" stroke="#D4AF37" stroke-width="2" />
+  <!-- Subtle grid pattern overlay for realistic look -->
+  <pattern id="grid-pattern" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+    <line x1="0" y1="10" x2="20" y2="10" stroke="#FFDF00" stroke-width="0.2" opacity="0.2" />
+    <line x1="10" y1="0" x2="10" y2="20" stroke="#FFDF00" stroke-width="0.2" opacity="0.2" />
+  </pattern>
+
+  <!-- Apply grid pattern to specific regions for texture -->
+  <rect x="100" y="280" width="600" height="90" fill="url(#grid-pattern)" opacity="0.2" />
 </svg>

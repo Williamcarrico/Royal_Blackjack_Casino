@@ -302,7 +302,7 @@ const TutorialPage = () => {
                                     alt="Royal Edge Casino"
                                     width={300}
                                     height={100}
-                                    className="w-auto h-32 mx-auto mb-6 md:h-40"
+                                    className="mx-auto mb-6 w-auto h-auto"
                                     priority
                                     style={{ width: 'auto', height: 'auto' }}
                                 />

@@ -97,10 +97,109 @@ If you encounter issues:
 - Age verification is enforced both client-side and server-side
 - Country restrictions allow compliance with regional gambling laws
 
+## Advanced Supabase Integration
+
+This project has been optimized with several additional Supabase features:
+
+### Middleware Protection
+
+A Next.js middleware has been added to protect routes that require authentication. The middleware automatically:
+
+- Checks for valid Supabase sessions
+- Redirects unauthenticated users to the login page
+- Preserves the originally requested URL for post-login redirection
+
+### Optimized Client Architecture
+
+The Supabase client implementation follows best practices:
+- Server-side client with cookie handling for SSR
+- Browser-side client for client components
+- Type-safe database operations with TypeScript interfaces
+
+### Utility Hooks and Functions
+
+Several custom utilities have been added to make working with Supabase easier:
+
+1. **useSupabase hook**: Easy access to the Supabase client in React components
+2. **supabaseUtils**: Functions for standardized error handling and data fetching
+3. **RealtimeService**: Singleton service for managing realtime subscriptions
+
+### Best Practices Implemented
+
+- Consistent error handling
+- Proper type definitions
+- Separation of concerns with dedicated services
+- Environment variable management
+
+## Usage Examples
+
+### Fetching Data
+
+```typescript
+import { withErrorHandling } from '@/lib/utils/supabaseUtils'
+import { createServerClient } from '@/lib/supabase'
+
+async function getUserProfile(userId: string) {
+  const supabase = createServerClient()
+  return withErrorHandling(
+    () => supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', userId)
+      .single(),
+    'Failed to load user profile'
+  )
+}
+```
+
+### Using Realtime Subscriptions
+
+```typescript
+import { RealtimeService } from '@/services/supabase/realtime-service'
+
+// In a React component
+useEffect(() => {
+  const realtimeService = RealtimeService.getInstance()
+  const subscriptionId = realtimeService.subscribeToRow(
+    'user_profiles',
+    userId,
+    'UPDATE',
+    (payload) => {
+      console.log('Profile updated:', payload)
+      // Update UI state
+    }
+  )
+
+  return () => {
+    realtimeService.unsubscribe(subscriptionId)
+  }
+}, [userId])
+```
+
+### Client Components
+
+```typescript
+import { useSupabase } from '@/lib/hooks/useSupabase'
+
+function ProfileComponent() {
+  const supabase = useSupabase()
+
+  useEffect(() => {
+    if (!supabase) return
+
+    // Fetch data or set up subscriptions
+  }, [supabase])
+
+  // Component rendering
+}
+```
+
 ## Next Steps
 
-After successful deployment:
+To further enhance the Supabase implementation:
 
-1. Consider adding additional verification methods (ID verification, etc.)
-2. Implement admin panel for managing country restrictions
-3. Set up monitoring and alerts for suspicious signup patterns
+1. Consider implementing RLS (Row Level Security) policies for improved data security
+2. Add database migrations for schema versioning
+3. Implement edge functions for server-side business logic
+4. Set up Supabase Storage for file uploads
+5. Configure webhook integrations if needed

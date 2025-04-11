@@ -9,6 +9,7 @@ import './globals.css'
 import { Toaster as SonnerToaster } from 'sonner'
 import Providers from './providers'
 import AuthProviderWrapper from '@/components/providers/AuthProviderWrapper'
+import { validateConfig } from '@/lib/utils/validateConfig'
 
 // Add JSX namespace for intrinsic elements
 /* eslint-disable @typescript-eslint/no-namespace */
@@ -113,6 +114,14 @@ export const viewport: Viewport = {
 	colorScheme: 'dark',
 }
 
+// Run validation in a try/catch block
+try {
+	validateConfig()
+} catch (error) {
+	console.error('Environment configuration error:', error)
+	// Validation errors will be handled during rendering
+}
+
 export default function RootLayout({
 	children,
 }: {
@@ -131,6 +140,7 @@ export default function RootLayout({
 				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 				<link rel="prefetch" href="/og-image.jpg" as="image" />
 				<link rel="prefetch" href="/twitter-image.jpg" as="image" />
+				<link rel="preload" href="/images/Royal-Blackjack-Logo.png" as="image" />
 			</head>
 			<body
 				className={cn(

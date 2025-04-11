@@ -247,14 +247,15 @@ const BettingControls: React.FC<BettingControlsProps> = ({
 
     return (
         <div className={cn(
-            'relative flex gap-3 rounded-lg p-3 bg-black/30 backdrop-blur-md',
-            vertical ? 'flex-col' : 'flex-row items-center justify-between',
+            'relative flex gap-4 rounded-lg p-4 bg-black/30 backdrop-blur-md',
+            vertical ? 'flex-col items-center' : 'flex-row items-center justify-between',
             className
         )}>
-            {/* Available chips */}
+            {/* Available chips with improved spacing */}
             <div className={cn(
-                'flex flex-wrap gap-2',
-                vertical ? 'justify-center' : 'justify-start'
+                'flex flex-wrap gap-3', // Increased gap for better spacing
+                vertical ? 'justify-center' : 'justify-center flex-grow', // Always center chips
+                'mx-auto' // Center horizontally
             )}>
                 {availableChips.toSorted((a: ChipValue, b: ChipValue) => a - b).map((value: ChipValue) => (
                     <Chip
@@ -270,10 +271,11 @@ const BettingControls: React.FC<BettingControlsProps> = ({
                 ))}
             </div>
 
-            {/* Betting actions */}
+            {/* Betting actions with better alignment */}
             <div className={cn(
-                'flex gap-2',
-                vertical ? 'justify-center' : 'flex-shrink-0'
+                'flex gap-3', // Increased gap for better spacing
+                vertical ? 'justify-center w-full' : 'flex-shrink-0 justify-end',
+                'flex-wrap' // Allow wrapping on small screens
             )}>
                 {/* Clear button */}
                 <button
@@ -281,7 +283,7 @@ const BettingControls: React.FC<BettingControlsProps> = ({
                     disabled={currentBet === 0 || disabled}
                     onClick={handleClearBet}
                     className={cn(
-                        'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                        'px-4 py-2 rounded-md text-sm font-medium transition-colors', // Increased padding
                         'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary',
                         currentBet === 0 || disabled
                             ? 'bg-gray-600 cursor-not-allowed opacity-50'
@@ -299,7 +301,7 @@ const BettingControls: React.FC<BettingControlsProps> = ({
                         disabled={currentBet * 2 > balance || currentBet * 2 > maxBet || disabled}
                         onClick={handleDoubleBet}
                         className={cn(
-                            'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                            'px-4 py-2 rounded-md text-sm font-medium transition-colors', // Increased padding
                             'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary',
                             currentBet * 2 > balance || currentBet * 2 > maxBet || disabled
                                 ? 'bg-gray-600 cursor-not-allowed opacity-50'
@@ -317,7 +319,7 @@ const BettingControls: React.FC<BettingControlsProps> = ({
                     disabled={balance < minBet || disabled}
                     onClick={handleMaxBet}
                     className={cn(
-                        'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                        'px-4 py-2 rounded-md text-sm font-medium transition-colors', // Increased padding
                         'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary',
                         balance < minBet || disabled
                             ? 'bg-gray-600 cursor-not-allowed opacity-50'
@@ -335,11 +337,10 @@ const BettingControls: React.FC<BettingControlsProps> = ({
                         disabled={disabled}
                         onClick={onDealCards}
                         className={cn(
-                            'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                            'px-4 py-2 rounded-md text-sm font-medium transition-colors', // Increased padding
                             'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary',
-                            disabled
-                                ? 'bg-gray-600 cursor-not-allowed opacity-50'
-                                : 'bg-green-600 hover:bg-green-500'
+                            'bg-green-600 hover:bg-green-500 font-bold', // Added font-bold for emphasis
+                            disabled && 'bg-gray-600 cursor-not-allowed opacity-50'
                         )}
                         aria-label="Deal cards"
                     >
@@ -354,7 +355,7 @@ const BettingControls: React.FC<BettingControlsProps> = ({
                         disabled={currentBet < minBet || disabled}
                         onClick={handleConfirmBet}
                         className={cn(
-                            'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                            'px-4 py-2 rounded-md text-sm font-medium transition-colors', // Increased padding
                             'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary',
                             getBetButtonStyle()
                         )}
@@ -365,8 +366,8 @@ const BettingControls: React.FC<BettingControlsProps> = ({
                 )}
             </div>
 
-            {/* Current bet display */}
-            <div className="absolute top-0 px-3 py-1 text-sm text-white transform -translate-x-1/2 -translate-y-1/2 rounded-full left-1/2 bg-black/70">
+            {/* Current bet display with improved visibility */}
+            <div className="absolute top-0 px-4 py-1.5 text-sm font-bold text-white transform -translate-x-1/2 -translate-y-1/2 rounded-full left-1/2 bg-black/70 border border-amber-600/30">
                 Bet: ${currentBet.toLocaleString()} | Balance: ${balance.toLocaleString()}
             </div>
 

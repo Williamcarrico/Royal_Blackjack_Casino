@@ -1,6 +1,11 @@
 // app/api/notifications/[id]/archive/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
+import { Notification } from '@/types/notifications';
+
+// Placeholder for external notifications storage
+// In a real app, this would be imported from a shared data layer
+declare let notifications: Notification[];
 
 // PUT - Archive a notification
 export async function PUT(
@@ -9,8 +14,8 @@ export async function PUT(
 ) {
     const { id } = params;
 
-    const index = notifications.findIndex(n => n.id === id);
-    if (index === -1) {
+    const notification = notifications.find(n => n.id === id);
+    if (!notification) {
         return NextResponse.json(
             { error: 'Notification not found' },
             { status: 404 }
@@ -18,10 +23,7 @@ export async function PUT(
     }
 
     // Update status
-    notifications[index] = {
-        ...notifications[index],
-        status: 'archived'
-    };
+    notification.status = 'archived';
 
     return NextResponse.json({ success: true });
 }

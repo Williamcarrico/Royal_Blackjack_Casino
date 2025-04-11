@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/client'
 import { GameStats } from '@/types/gameState'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -100,6 +100,62 @@ export class GameService {
         } catch (error) {
             console.error('Error in getUserSessions:', error)
             return []
+        }
+    }
+
+    /**
+     * Record a completed hand
+     */
+    static async recordHand({
+        sessionId,
+        userId,
+        betAmount,
+        playerCards,
+        dealerCards,
+        actions,
+        result,
+        payout,
+        sideBets
+    }: {
+        sessionId: string,
+        userId: string,
+        betAmount: number,
+        playerCards: any[],
+        dealerCards: any[],
+        actions: string[],
+        result: string,
+        payout: number,
+        sideBets?: { type: string; amount: number; payout?: number }[]
+    }): Promise<string> {
+        try {
+            const supabase = createClient()
+            const handId = uuidv4()
+
+            const { error } = await supabase
+                .from('game_hands')
+                .insert({
+                    id: handId,
+                    session_id: sessionId,
+                    user_id: userId,
+                    bet_amount: betAmount,
+                    player_cards: playerCards,
+                    dealer_cards: dealerCards,
+                    actions: actions,
+                    result: result,
+                    payout: payout,
+                    side_bets: sideBets || [],
+                    created_at: new Date().toISOString()
+                })
+
+            if (error) {
+                console.error('Error recording hand:', error)
+                throw error
+            }
+
+            return handId
+        } catch (error) {
+            console.error('Error in recordHand:', error)
+            throw error
         }
     }
 }

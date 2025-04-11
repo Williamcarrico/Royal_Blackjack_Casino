@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { supabase } from '../../../supabaseClient'
+import { createBrowserClient } from '@/lib/supabase'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,6 +30,7 @@ type SignInFormValues = z.infer<typeof signInSchema>
 
 const SignIn = () => {
     const [isLoading, setIsLoading] = useState(false)
+    const supabase = createBrowserClient()
 
     const form = useForm<SignInFormValues>({
         resolver: zodResolver(signInSchema),

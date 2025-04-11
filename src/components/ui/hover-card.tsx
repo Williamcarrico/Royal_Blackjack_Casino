@@ -5,6 +5,55 @@ import * as HoverCardPrimitive from "@radix-ui/react-hover-card"
 
 import { cn } from "@/lib/utils/utils"
 
+// Safe context to prevent infinite renders
+const SafeHoverCardContext = React.createContext<{
+  open: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}>({
+  open: false,
+  setOpen: () => { },
+});
+
+// Safe hover card component
+function SafeHoverCard({
+  children,
+  ...props
+}: React.ComponentProps<typeof HoverCardPrimitive.Root>) {
+  const [open, setOpen] = React.useState(false);
+  const skipRender = React.useRef(false);
+
+  const contextValue = React.useMemo(
+    () => ({ open, setOpen }),
+    [open]
+  );
+
+  // Effect to prevent infinite updates - only allow one change per render cycle
+  React.useEffect(() => {
+    if (skipRender.current) return;
+    skipRender.current = true;
+    return () => {
+      skipRender.current = false;
+    };
+  }, [open]);
+
+  return (
+    <SafeHoverCardContext.Provider value={contextValue}>
+      <HoverCardPrimitive.Root
+        open={open}
+        onOpenChange={(newOpen) => {
+          if (!skipRender.current) {
+            setOpen(newOpen);
+          }
+        }}
+        data-slot="hover-card"
+        {...props}
+      >
+        {children}
+      </HoverCardPrimitive.Root>
+    </SafeHoverCardContext.Provider>
+  );
+}
+
 function HoverCard({
   ...props
 }: React.ComponentProps<typeof HoverCardPrimitive.Root>) {
@@ -17,6 +66,21 @@ function HoverCardTrigger({
   return (
     <HoverCardPrimitive.Trigger data-slot="hover-card-trigger" {...props} />
   )
+}
+
+// Safe trigger using ref-based approach
+function SafeHoverCardTrigger({
+  ...props
+}: React.ComponentProps<typeof HoverCardPrimitive.Trigger>) {
+  const triggerRef = React.useRef<React.ElementRef<typeof HoverCardPrimitive.Trigger>>(null);
+
+  const memoizedProps = React.useMemo(() => ({
+    ...props,
+    ref: triggerRef,
+    "data-slot": "hover-card-trigger"
+  }), [props]);
+
+  return <HoverCardPrimitive.Trigger {...memoizedProps} />
 }
 
 function HoverCardContent({
@@ -41,4 +105,4 @@ function HoverCardContent({
   )
 }
 
-export { HoverCard, HoverCardTrigger, HoverCardContent }
+export { HoverCard, HoverCardTrigger, HoverCardContent, SafeHoverCard, SafeHoverCardTrigger }

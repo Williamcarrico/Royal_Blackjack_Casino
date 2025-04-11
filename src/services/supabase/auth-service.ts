@@ -1,5 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/client'
 
 interface UserProfile {
     id: string
@@ -31,13 +30,13 @@ export class AuthService {
         try {
             const supabase = createClient()
             const { data, error } = await supabase
-                .from('profiles')
+                .from('user_profiles')
                 .select('*')
                 .eq('id', userId)
                 .single()
 
             if (error) {
-                console.error('Error fetching user profile:', error)
+                console.error('Error fetching user profile:', JSON.stringify(error))
                 return null
             }
 
@@ -55,11 +54,16 @@ export class AuthService {
         try {
             const supabase = createClient()
             const { error } = await supabase
-                .from('profiles')
+                .from('user_profiles')
                 .update(updates)
                 .eq('id', userId)
 
-            return !error
+            if (error) {
+                console.error('Error updating user profile:', JSON.stringify(error))
+                return false
+            }
+
+            return true
         } catch (error) {
             console.error('Error updating user profile:', error)
             return false

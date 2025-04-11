@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence, Variants } from 'framer-motion'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/layout/button'

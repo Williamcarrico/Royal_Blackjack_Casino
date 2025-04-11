@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createServerClient } from '@/lib/supabase'
 
 // Schema for profile update
 const profileSchema = z.object({
@@ -16,20 +15,7 @@ const profileSchema = z.object({
 export async function GET() {
 	try {
 		// Initialize Supabase client
-		const cookieStore = await cookies()
-		const supabase = createServerClient(
-			process.env.NEXT_PUBLIC_SUPABASE_URL!,
-			process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-			{
-				cookies: {
-					get(name) {
-						return cookieStore.get(name)?.value
-					},
-					set() { },
-					remove() { },
-				},
-			}
-		)
+		const supabase = await createServerClient()
 
 		// Get user session
 		const {
@@ -42,14 +28,14 @@ export async function GET() {
 
 		// Get user profile from the database
 		const { data: user, error } = await supabase
-			.from('users')
+			.from('user_profiles')
 			.select('*')
 			.eq('id', session.user.id)
 			.single()
 
 		if (error) {
-			console.error('Error fetching profile:', error)
-			return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 })
+			console.error('Error fetching profile:', JSON.stringify(error))
+			return NextResponse.json({ error: 'Failed to fetch profile', details: error }, { status: 500 })
 		}
 
 		// Return the user profile
@@ -76,20 +62,7 @@ export async function PUT(request: NextRequest) {
 		const updates = validation.data
 
 		// Initialize Supabase client
-		const cookieStore = await cookies()
-		const supabase = createServerClient(
-			process.env.NEXT_PUBLIC_SUPABASE_URL!,
-			process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-			{
-				cookies: {
-					get(name) {
-						return cookieStore.get(name)?.value
-					},
-					set() { },
-					remove() { },
-				},
-			}
-		)
+		const supabase = await createServerClient()
 
 		// Get user session
 		const {
@@ -102,7 +75,7 @@ export async function PUT(request: NextRequest) {
 
 		// Update user profile in the database
 		const { error } = await supabase
-			.from('users')
+			.from('user_profiles')
 			.update({
 				...updates,
 				updated_at: new Date().toISOString(),
@@ -110,8 +83,8 @@ export async function PUT(request: NextRequest) {
 			.eq('id', session.user.id)
 
 		if (error) {
-			console.error('Error updating profile:', error)
-			return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 })
+			console.error('Error updating profile:', JSON.stringify(error))
+			return NextResponse.json({ error: 'Failed to update profile', details: error }, { status: 500 })
 		}
 
 		return NextResponse.json({ message: 'Profile updated successfully' }, { status: 200 })

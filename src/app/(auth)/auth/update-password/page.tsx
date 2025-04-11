@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createBrowserClient } from '@supabase/ssr'
+import { createBrowserClient } from '@/lib/supabase'
 import { AuthCard } from '@/components/auth/auth-card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -30,10 +30,7 @@ export default function UpdatePasswordPage() {
 	const [success, setSuccess] = useState(false)
 	const [isLoading, setIsLoading] = useState(false)
 	const router = useRouter()
-	const supabase = createBrowserClient(
-		process.env.NEXT_PUBLIC_SUPABASE_URL!,
-		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-	)
+	const supabase = createBrowserClient()
 
 	// Handle form submission
 	const handleSubmit = async (e: React.FormEvent) => {

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { useAuth } from '@/lib/context/AuthContext'
+import { useAuth } from '@/contexts/auth-context'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -42,7 +42,7 @@ const profileSchema = z.object({
 	display_name: z.string().optional(),
 	avatar_url: z.string().url({ message: 'Please enter a valid URL' }).optional().or(z.literal('')),
 	bio: z.string().max(500, { message: 'Bio must be 500 characters or less' }).optional(),
-	birthdate: z
+	date_of_birth: z
 		.date({
 			required_error: 'Birthdate is required',
 		})
@@ -92,7 +92,7 @@ export default function ProfilePage() {
 			display_name: '',
 			avatar_url: '',
 			bio: '',
-			birthdate: undefined,
+			date_of_birth: undefined,
 		},
 	})
 
@@ -150,12 +150,12 @@ export default function ProfilePage() {
 				avatar_url: user.avatar_url ?? '',
 				bio: user.bio ?? '',
 				// We'll set birthdate if it exists in the user object, otherwise it remains undefined
-				birthdate: user.birthdate ? new Date(user.birthdate) : undefined,
+				date_of_birth: user.date_of_birth ? new Date(user.date_of_birth) : undefined,
 			})
 
 			// Check age verification status
-			if (user.birthdate) {
-				const birthDate = new Date(user.birthdate)
+			if (user.date_of_birth) {
+				const birthDate = new Date(user.date_of_birth)
 				const today = new Date()
 				let age = today.getFullYear() - birthDate.getFullYear()
 				const monthDiff = today.getMonth() - birthDate.getMonth()
@@ -175,9 +175,9 @@ export default function ProfilePage() {
 	useEffect(() => {
 		if (preferences) {
 			preferencesForm.reset({
-				theme: preferences.theme as 'dark' | 'light' | 'system',
+				theme: preferences.theme,
 				sound_enabled: preferences.sound_enabled,
-				animation_speed: preferences.animation_speed as 'slow' | 'normal' | 'fast',
+				animation_speed: preferences.animation_speed,
 				bet_amount: preferences.bet_amount,
 			})
 		}
@@ -191,7 +191,7 @@ export default function ProfilePage() {
 			// Convert the date to ISO string for the API
 			const formattedData = {
 				...data,
-				birthdate: data.birthdate?.toISOString(),
+				date_of_birth: data.date_of_birth?.toISOString(),
 			}
 
 			const { success, error } = await updateProfile(formattedData)
@@ -199,7 +199,7 @@ export default function ProfilePage() {
 				toast.success('Profile updated successfully')
 
 				// Update age verification status
-				const birthDate = new Date(data.birthdate)
+				const birthDate = new Date(data.date_of_birth)
 				const today = new Date()
 				let age = today.getFullYear() - birthDate.getFullYear()
 				const monthDiff = today.getMonth() - birthDate.getMonth()
@@ -354,7 +354,7 @@ export default function ProfilePage() {
 
 										<FormField
 											control={profileForm.control}
-											name="birthdate"
+											name="date_of_birth"
 											render={({ field }) => (
 												<FormItem className="flex flex-col">
 													<FormLabel>Date of Birth</FormLabel>
@@ -612,7 +612,7 @@ export default function ProfilePage() {
 										className="flex flex-col p-4 border rounded-lg shadow-sm bg-card"
 									>
 										<span className="text-sm text-muted-foreground">Total Hands</span>
-										<span className="text-2xl font-bold">{user.total_hands_played}</span>
+										<span className="text-2xl font-bold">{user.total_hands}</span>
 									</motion.div>
 
 									<motion.div
@@ -620,7 +620,7 @@ export default function ProfilePage() {
 										className="flex flex-col p-4 border rounded-lg shadow-sm bg-card"
 									>
 										<span className="text-sm text-muted-foreground">Hands Won</span>
-										<span className="text-2xl font-bold">{user.hands_won}</span>
+										<span className="text-2xl font-bold">{user.total_wins}</span>
 									</motion.div>
 
 									<motion.div
@@ -628,7 +628,7 @@ export default function ProfilePage() {
 										className="flex flex-col p-4 border rounded-lg shadow-sm bg-card"
 									>
 										<span className="text-sm text-muted-foreground">Hands Lost</span>
-										<span className="text-2xl font-bold">{user.hands_lost}</span>
+										<span className="text-2xl font-bold">{user.total_losses}</span>
 									</motion.div>
 
 									<motion.div
@@ -636,7 +636,7 @@ export default function ProfilePage() {
 										className="flex flex-col p-4 border rounded-lg shadow-sm bg-card"
 									>
 										<span className="text-sm text-muted-foreground">Hands Tied</span>
-										<span className="text-2xl font-bold">{user.hands_tied}</span>
+										<span className="text-2xl font-bold">{user.total_pushes}</span>
 									</motion.div>
 
 									<motion.div
@@ -644,7 +644,7 @@ export default function ProfilePage() {
 										className="flex flex-col p-4 border rounded-lg shadow-sm bg-card"
 									>
 										<span className="text-sm text-muted-foreground">Blackjacks Hit</span>
-										<span className="text-2xl font-bold">{user.blackjacks_hit}</span>
+										<span className="text-2xl font-bold">{user.total_blackjacks}</span>
 									</motion.div>
 
 									<motion.div
@@ -653,8 +653,8 @@ export default function ProfilePage() {
 									>
 										<span className="text-sm text-muted-foreground">Win Rate</span>
 										<span className="text-2xl font-bold">
-											{user.total_hands_played && user.hands_won
-												? ((user.hands_won / user.total_hands_played) * 100).toFixed(1) + '%'
+											{user.total_hands && user.total_wins
+												? ((user.total_wins / user.total_hands) * 100).toFixed(1) + '%'
 												: '0%'}
 										</span>
 									</motion.div>
@@ -698,7 +698,7 @@ export default function ProfilePage() {
 										<div className="flex items-center justify-between pb-2 border-b border-border">
 											<span className="font-medium">Last Login</span>
 											<span>
-												{user.last_login ? new Date(user.last_login).toLocaleString() : 'N/A'}
+												{user.updated_at ? new Date(user.updated_at).toLocaleString() : 'N/A'}
 											</span>
 										</div>
 										<div className="flex items-center justify-between">

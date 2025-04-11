@@ -1,29 +1,34 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react'
+import { createBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient, Session } from '@supabase/supabase-js'
+import type { Database } from '@/types/supabase'
+import { toast } from 'sonner'
 
 // Types for our User model
-export interface User {
+export interface UserProfile {
     id: string
     username: string
     display_name: string | null
     email: string
     avatar_url: string | null
     bio: string | null
-    birthdate: string | null
+    date_of_birth: string | null
+    country_code: string
+    chips: number
     created_at: string
-    last_login: string | null
+    updated_at: string
 
     // Game statistics
-    total_hands_played: number
-    hands_won: number
-    hands_lost: number
-    hands_tied: number
-    blackjacks_hit: number
+    total_games: number
+    total_hands: number
+    total_wins: number
+    total_losses: number
+    total_pushes: number
+    total_blackjacks: number
     current_win_streak: number
     highest_win_streak: number
-    chips: number
 }
 
 // Types for user preferences
@@ -32,6 +37,8 @@ export interface UserPreferences {
     sound_enabled: boolean
     animation_speed: 'slow' | 'normal' | 'fast'
     bet_amount: number
+    created_at: string
+    updated_at: string
 }
 
 // Profile update params
@@ -40,32 +47,42 @@ export interface ProfileUpdateParams {
     display_name?: string | null
     avatar_url?: string | null
     bio?: string | null
-    birthdate?: string | null
+    date_of_birth?: string | null
+}
+
+// Auth response
+export interface AuthResponse {
+    success: boolean
+    error: string | null
 }
 
 // Auth context type definition
 interface AuthContextType {
-    user: User | null
+    user: UserProfile | null
     preferences: UserPreferences | null
     isAuthenticated: boolean
     isLoading: boolean
     error: string | null
+    session: Session | null
 
     // Auth methods
-    signIn: (email: string, password: string) => Promise<{ success: boolean; error: string | null }>
-    signUp: (email: string, password: string, username: string) => Promise<{ success: boolean; error: string | null }>
+    signIn: (email: string, password: string) => Promise<AuthResponse>
+    signUp: (email: string, password: string, username: string, dob: string, countryCode: string) => Promise<AuthResponse>
     signOut: () => Promise<void>
-    resetPassword: (email: string) => Promise<{ success: boolean; error: string | null }>
+    resetPassword: (email: string) => Promise<AuthResponse>
 
     // Profile and preferences methods
-    updateProfile: (data: ProfileUpdateParams) => Promise<{ success: boolean; error: string | null }>
-    updatePreferences: (data: Partial<UserPreferences>) => Promise<{ success: boolean; error: string | null }>
+    updateProfile: (data: ProfileUpdateParams) => Promise<AuthResponse>
+    updatePreferences: (data: Partial<UserPreferences>) => Promise<AuthResponse>
 
     clearError: () => void
+
+    // Direct Supabase client access (use with caution)
+    supabase: SupabaseClient<Database> | null
 }
 
 // Default preferences
-const DEFAULT_PREFERENCES: UserPreferences = {
+const DEFAULT_PREFERENCES: Omit<UserPreferences, 'created_at' | 'updated_at'> = {
     theme: 'dark',
     sound_enabled: true,
     animation_speed: 'normal',
@@ -76,30 +93,101 @@ const DEFAULT_PREFERENCES: UserPreferences = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<User | null>(null)
+    const [user, setUser] = useState<UserProfile | null>(null)
     const [preferences, setPreferences] = useState<UserPreferences | null>(null)
     const [isLoading, setIsLoading] = useState<boolean>(true)
+    const [session, setSession] = useState<Session | null>(null)
     const [error, setError] = useState<string | null>(null)
+    const supabaseRef = useRef<SupabaseClient<Database> | null>(null)
 
-    const supabase = createClient()
+    // Initialize supabase client only once
+    useEffect(() => {
+        if (typeof window === 'undefined') return
+
+        try {
+            supabaseRef.current = createBrowserClient<Database>()
+        } catch (err) {
+            console.error('Failed to initialize Supabase client:', err)
+            setError('Authentication service unavailable')
+        }
+    }, [])
 
     // Function to load user data from Supabase
     const loadUserData = useCallback(async (userId: string) => {
+        if (!supabaseRef.current) return null
+
         try {
+            console.log(`Attempting to load profile data for user: ${userId}`)
+
             // Get user profile data
-            const { data: profileData, error: profileError } = await supabase
-                .from('profiles')
+            const { data: profileData, error: profileError } = await supabaseRef.current
+                .from('user_profiles')
                 .select('*')
                 .eq('id', userId)
                 .single()
 
             if (profileError) {
-                console.error('Error fetching profile:', profileError)
-                return
+                console.error('Error fetching profile:', JSON.stringify(profileError))
+
+                // Check if profile doesn't exist (PGRST116 is PostgreSQL not found error)
+                if (profileError.code === 'PGRST116') {
+                    console.log('Profile not found, creating default profile...')
+
+                    // Get user email from auth
+                    const { data: userData } = await supabaseRef.current.auth.getUser()
+                    if (!userData?.user?.email) {
+                        console.error('Cannot create profile: No user email available')
+                        return null
+                    }
+
+                    // Create initial profile
+                    const now = new Date().toISOString()
+                    const defaultProfile = {
+                        id: userId,
+                        username: `user_${userId.substring(0, 8)}`,
+                        email: userData.user.email,
+                        country_code: 'US', // Default country
+                        date_of_birth: new Date('2000-01-01').toISOString(), // Default date
+                        created_at: now,
+                        updated_at: now,
+                        chips: 1500, // Starting chips
+                        total_games: 0,
+                        total_hands: 0,
+                        total_wins: 0,
+                        total_losses: 0,
+                        total_pushes: 0,
+                        total_blackjacks: 0,
+                        current_win_streak: 0,
+                        highest_win_streak: 0,
+                    }
+
+                    const { data: newProfile, error: createError } = await supabaseRef.current
+                        .from('user_profiles')
+                        .insert(defaultProfile)
+                        .select()
+                        .single()
+
+                    if (createError) {
+                        console.error('Failed to create default profile:', JSON.stringify(createError))
+                        return null
+                    }
+
+                    console.log('Created default profile successfully')
+                    setUser(newProfile)
+                    return newProfile
+                } else {
+                    // Some other error occurred
+                    return null
+                }
             }
 
+            console.log('Profile data retrieved successfully')
+
+            // Set user profile
+            setUser(profileData)
+
             // Get user preferences
-            const { data: preferencesData, error: preferencesError } = await supabase
+            const { data: preferencesData, error: preferencesError } = await supabaseRef.current
                 .from('user_preferences')
                 .select('*')
                 .eq('user_id', userId)
@@ -109,141 +197,164 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 console.error('Error fetching preferences:', preferencesError)
             }
 
-            // Get user statistics
-            const { data: statsData, error: statsError } = await supabase
-                .from('user_statistics')
-                .select('*')
-                .eq('user_id', userId)
-                .single()
+            // Set preferences (use defaults if not found)
+            if (preferencesData) {
+                setPreferences(preferencesData)
+            } else {
+                // Create default preferences if none exist
+                try {
+                    const now = new Date().toISOString()
+                    const defaultPrefs = {
+                        user_id: userId,
+                        ...DEFAULT_PREFERENCES,
+                        created_at: now,
+                        updated_at: now,
+                    }
 
-            if (statsError && statsError.code !== 'PGRST116') { // Not found error is ok
-                console.error('Error fetching statistics:', statsError)
+                    const { data: newPreferences, error: insertError } = await supabaseRef.current
+                        .from('user_preferences')
+                        .insert(defaultPrefs)
+                        .select()
+                        .single()
+
+                    if (insertError) {
+                        console.error('Error creating default preferences:', insertError)
+                    } else if (newPreferences) {
+                        setPreferences(newPreferences)
+                    }
+                } catch (err) {
+                    console.error('Error creating default preferences:', err)
+                }
             }
 
-            // Merge the user data from different tables
-            const userData: User = {
-                id: userId,
-                username: profileData?.username || 'player',
-                display_name: profileData?.display_name,
-                email: profileData?.email,
-                avatar_url: profileData?.avatar_url,
-                bio: profileData?.bio,
-                birthdate: profileData?.birthdate,
-                created_at: profileData?.created_at || new Date().toISOString(),
-                last_login: profileData?.last_login,
-
-                // Game statistics (defaults if not found)
-                total_hands_played: statsData?.total_hands_played || 0,
-                hands_won: statsData?.hands_won || 0,
-                hands_lost: statsData?.hands_lost || 0,
-                hands_tied: statsData?.hands_tied || 0,
-                blackjacks_hit: statsData?.blackjacks_hit || 0,
-                current_win_streak: statsData?.current_win_streak || 0,
-                highest_win_streak: statsData?.highest_win_streak || 0,
-                chips: statsData?.chips || 1000, // Default starting chips
-            }
-
-            // User preferences (use defaults if not found)
-            const userPreferences: UserPreferences = preferencesData ? {
-                theme: preferencesData.theme as 'dark' | 'light' | 'system',
-                sound_enabled: preferencesData.sound_enabled,
-                animation_speed: preferencesData.animation_speed as 'slow' | 'normal' | 'fast',
-                bet_amount: preferencesData.bet_amount,
-            } : DEFAULT_PREFERENCES
-
-            setUser(userData)
-            setPreferences(userPreferences)
+            return profileData
         } catch (err) {
             console.error('Error loading user data:', err)
+            return null
         }
-    }, [supabase, setUser, setPreferences])
+    }, [])
 
     // Effect to check for existing auth on mount
     useEffect(() => {
         const checkAuthStatus = async () => {
+            if (!supabaseRef.current) return
+
             try {
                 setIsLoading(true)
 
                 // Get current session
-                const { data: { session } } = await supabase.auth.getSession()
+                const { data: { session }, error: sessionError } = await supabaseRef.current.auth.getSession()
+
+                if (sessionError) {
+                    throw sessionError
+                }
 
                 if (session) {
-                    // Update last login time
-                    await supabase.auth.updateUser({
-                        data: { last_login: new Date().toISOString() }
-                    })
+                    setSession(session)
 
                     // Load user data from database
                     await loadUserData(session.user.id)
-
-                    // Set up auth subscription
-                    const { data: authListener } = supabase.auth.onAuthStateChange(
-                        async (event, newSession) => {
-                            if (event === 'SIGNED_IN' && newSession) {
-                                await loadUserData(newSession.user.id)
-                            } else if (event === 'SIGNED_OUT') {
-                                setUser(null)
-                                setPreferences(null)
-                            }
-                        }
-                    )
-
-                    return () => {
-                        authListener.subscription.unsubscribe()
-                    }
                 }
             } catch (err) {
                 console.error('Auth check failed:', err)
-                setError('Authentication check failed. Please try again.')
+                if (err instanceof Error) {
+                    setError(err.message)
+                } else {
+                    setError('Authentication check failed')
+                }
             } finally {
                 setIsLoading(false)
             }
-
-            // Return empty cleanup function when no session exists
-            return () => { }
         }
 
-        checkAuthStatus()
-    }, [loadUserData, supabase.auth])
+        if (supabaseRef.current) {
+            checkAuthStatus()
 
-    const signIn = useCallback(async (email: string, password: string) => {
+            // Set up auth subscription
+            const { data: { subscription } } = supabaseRef.current.auth.onAuthStateChange(
+                async (event, currentSession): Promise<void> => {
+                    if (event === 'SIGNED_IN' && currentSession) {
+                        setSession(currentSession)
+                        await loadUserData(currentSession.user.id)
+                    } else if (event === 'SIGNED_OUT') {
+                        setUser(null)
+                        setPreferences(null)
+                        setSession(null)
+                    } else if (event === 'USER_UPDATED' && currentSession) {
+                        setSession(currentSession)
+                        await loadUserData(currentSession.user.id)
+                    }
+                }
+            )
+
+            return () => {
+                subscription.unsubscribe()
+            }
+        }
+    }, [loadUserData])
+
+    const handleAuthError = useCallback((error: unknown): string => {
+        if (!error) return 'An unknown error occurred'
+
+        if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as { message: string }).message === 'string') {
+            return (error as { message: string }).message
+        }
+
+        if (typeof error === 'string') {
+            return error
+        }
+
+        return 'Authentication failed'
+    }, [])
+
+    const signIn = useCallback(async (email: string, password: string): Promise<AuthResponse> => {
+        if (!supabaseRef.current) {
+            return { success: false, error: 'Authentication service unavailable' }
+        }
+
         setIsLoading(true)
         setError(null)
 
         try {
-            const { data, error } = await supabase.auth.signInWithPassword({
+            const { data: _data, error } = await supabaseRef.current.auth.signInWithPassword({
                 email,
                 password,
             })
 
             if (error) {
-                setError(error.message)
-                return { success: false, error: error.message }
+                const errorMessage = handleAuthError(error)
+                setError(errorMessage)
+                return { success: false, error: errorMessage }
             }
 
-            if (data.user) {
-                await loadUserData(data.user.id)
-                return { success: true, error: null }
-            }
-
-            return { success: false, error: 'Failed to sign in' }
+            return { success: true, error: null }
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
+            const errorMessage = handleAuthError(err)
             setError(errorMessage)
             return { success: false, error: errorMessage }
         } finally {
             setIsLoading(false)
         }
-    }, [loadUserData, supabase, setError, setIsLoading])
+    }, [handleAuthError])
 
-    const signUp = useCallback(async (email: string, password: string, username: string) => {
+    const signUp = useCallback(async (
+        email: string,
+        password: string,
+        username: string,
+        dob: string,
+        countryCode: string
+    ): Promise<AuthResponse> => {
+        if (!supabaseRef.current) {
+            return { success: false, error: 'Authentication service unavailable' }
+        }
+
         setIsLoading(true)
         setError(null)
 
         try {
             // Check if username is already taken
-            const { data: existingUsers, error: usernameError } = await supabase
-                .from('profiles')
+            const { data: existingUsers, error: usernameError } = await supabaseRef.current
+                .from('user_profiles')
                 .select('id')
                 .eq('username', username)
                 .limit(1)
@@ -257,7 +368,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
 
             // Create the user account
-            const { data, error } = await supabase.auth.signUp({
+            const { data, error } = await supabaseRef.current.auth.signUp({
                 email,
                 password,
                 options: {
@@ -268,154 +379,181 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             })
 
             if (error) {
-                setError(error.message)
-                return { success: false, error: error.message }
+                const errorMessage = handleAuthError(error)
+                setError(errorMessage)
+                return { success: false, error: errorMessage }
             }
 
             if (data.user) {
                 // Create initial profile
-                const { error: profileError } = await supabase
-                    .from('profiles')
+                const now = new Date().toISOString()
+                const { error: profileError } = await supabaseRef.current
+                    .from('user_profiles')
                     .insert({
                         id: data.user.id,
                         username,
                         email,
-                        created_at: new Date().toISOString(),
+                        date_of_birth: dob,
+                        country_code: countryCode,
+                        created_at: now,
+                        updated_at: now,
+                        chips: 1500, // Starting chips
+                        total_games: 0,
+                        total_hands: 0,
+                        total_wins: 0,
+                        total_losses: 0,
+                        total_pushes: 0,
+                        total_blackjacks: 0,
+                        current_win_streak: 0,
+                        highest_win_streak: 0,
                     })
 
                 if (profileError) {
                     console.error('Error creating profile:', profileError)
+                    // Try to sign out to clean up
+                    await supabaseRef.current.auth.signOut()
+                    return { success: false, error: profileError.message || 'Failed to create profile' }
                 }
 
                 // Set default preferences
-                const { error: prefError } = await supabase
+                const { error: prefError } = await supabaseRef.current
                     .from('user_preferences')
                     .insert({
                         user_id: data.user.id,
-                        ...DEFAULT_PREFERENCES
+                        ...DEFAULT_PREFERENCES,
+                        created_at: now,
+                        updated_at: now,
                     })
 
                 if (prefError) {
                     console.error('Error setting preferences:', prefError)
+                    // Not critical, can continue
                 }
 
-                // Initialize statistics
-                const { error: statsError } = await supabase
-                    .from('user_statistics')
-                    .insert({
-                        user_id: data.user.id,
-                        chips: 1000, // Starting chips
-                    })
-
-                if (statsError) {
-                    console.error('Error initializing statistics:', statsError)
-                }
-
-                await loadUserData(data.user.id)
                 return { success: true, error: null }
             }
 
-            return { success: false, error: 'Failed to sign up' }
+            return { success: false, error: 'Failed to create account' }
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
+            const errorMessage = handleAuthError(err)
             setError(errorMessage)
             return { success: false, error: errorMessage }
         } finally {
             setIsLoading(false)
         }
-    }, [loadUserData, supabase, setError, setIsLoading])
+    }, [handleAuthError])
 
     const signOut = useCallback(async () => {
+        if (!supabaseRef.current) return
+
         setIsLoading(true)
         try {
-            const { error } = await supabase.auth.signOut()
+            const { error } = await supabaseRef.current.auth.signOut()
             if (error) {
-                setError(error.message)
-            } else {
-                setUser(null)
-                setPreferences(null)
+                throw error
             }
+
+            // Auth change listener will handle state cleanup
         } catch (err) {
             console.error('Error signing out:', err)
-            setError('Failed to sign out. Please try again.')
+            const errorMessage = handleAuthError(err)
+            setError(errorMessage)
+            toast.error('Failed to sign out')
         } finally {
             setIsLoading(false)
         }
-    }, [supabase, setError, setIsLoading, setUser, setPreferences])
+    }, [handleAuthError])
 
-    const resetPassword = useCallback(async (email: string) => {
+    const resetPassword = useCallback(async (email: string): Promise<AuthResponse> => {
+        if (!supabaseRef.current) {
+            return { success: false, error: 'Authentication service unavailable' }
+        }
+
         setIsLoading(true)
         setError(null)
 
         try {
-            const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: `${window.location.origin}/auth/reset-password`,
+            const { error } = await supabaseRef.current.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}/auth/update-password`,
             })
 
             if (error) {
-                setError(error.message)
-                return { success: false, error: error.message }
+                const errorMessage = handleAuthError(error)
+                setError(errorMessage)
+                return { success: false, error: errorMessage }
             }
 
             return { success: true, error: null }
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
+            const errorMessage = handleAuthError(err)
             setError(errorMessage)
             return { success: false, error: errorMessage }
         } finally {
             setIsLoading(false)
         }
-    }, [supabase, setError, setIsLoading])
+    }, [handleAuthError])
 
-    const updateProfile = useCallback(async (data: ProfileUpdateParams) => {
+    const updateProfile = useCallback(async (data: ProfileUpdateParams): Promise<AuthResponse> => {
+        if (!supabaseRef.current || !user) {
+            return { success: false, error: 'Not authenticated' }
+        }
+
         setIsLoading(true)
         setError(null)
 
         try {
-            if (!user) {
-                throw new Error('You must be logged in to update your profile')
+            const updates = {
+                ...data,
+                updated_at: new Date().toISOString(),
             }
 
-            const { error } = await supabase
-                .from('profiles')
-                .update(data)
+            const { error } = await supabaseRef.current
+                .from('user_profiles')
+                .update(updates)
                 .eq('id', user.id)
 
             if (error) {
-                setError(error.message)
-                return { success: false, error: error.message }
+                const errorMessage = handleAuthError(error)
+                setError(errorMessage)
+                return { success: false, error: errorMessage }
             }
 
-            // Update local user state
+            // Update local user state with new data
             setUser(prev => prev ? { ...prev, ...data } : null)
 
             return { success: true, error: null }
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
+            const errorMessage = handleAuthError(err)
             setError(errorMessage)
             return { success: false, error: errorMessage }
         } finally {
             setIsLoading(false)
         }
-    }, [user, supabase, setError, setIsLoading, setUser])
+    }, [user, handleAuthError])
 
-    const updatePreferences = useCallback(async (data: Partial<UserPreferences>) => {
+    const updatePreferences = useCallback(async (data: Partial<UserPreferences>): Promise<AuthResponse> => {
+        if (!supabaseRef.current || !user) {
+            return { success: false, error: 'Not authenticated' }
+        }
+
         setIsLoading(true)
         setError(null)
 
         try {
-            if (!user) {
-                throw new Error('You must be logged in to update your preferences')
+            const updates = {
+                ...data,
+                updated_at: new Date().toISOString(),
             }
 
-            const { error } = await supabase
+            const { error } = await supabaseRef.current
                 .from('user_preferences')
-                .update(data)
+                .update(updates)
                 .eq('user_id', user.id)
 
             if (error) {
-                setError(error.message)
-                return { success: false, error: error.message }
+                const errorMessage = handleAuthError(error)
+                setError(errorMessage)
+                return { success: false, error: errorMessage }
             }
 
             // Update local preferences state
@@ -423,33 +561,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             return { success: true, error: null }
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
+            const errorMessage = handleAuthError(err)
             setError(errorMessage)
             return { success: false, error: errorMessage }
         } finally {
             setIsLoading(false)
         }
-    }, [user, supabase, setError, setIsLoading, setPreferences])
+    }, [user, handleAuthError])
 
     const clearError = useCallback(() => {
         setError(null)
-    }, [setError])
+    }, [])
 
     // Create context value
-    const contextValue = useMemo(() => ({
+    const contextValue = useMemo<AuthContextType>(() => ({
         user,
         preferences,
         isAuthenticated: !!user,
         isLoading,
         error,
+        session,
         signIn,
         signUp,
         signOut,
         resetPassword,
         updateProfile,
         updatePreferences,
-        clearError
-    }), [user, preferences, isLoading, error, resetPassword, signIn, signOut, signUp, updatePreferences, updateProfile, clearError]);
+        clearError,
+        supabase: supabaseRef.current
+    }), [
+        user, preferences, isLoading, error, session,
+        signIn, signUp, signOut, resetPassword, updateProfile,
+        updatePreferences, clearError
+    ])
 
     return (
         <AuthContext.Provider value={contextValue}>
@@ -458,7 +602,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     )
 }
 
-export const useAuth = () => {
+/**
+ * Hook to access the auth context
+ * @throws Error if used outside of an AuthProvider
+ */
+export const useAuth = (): AuthContextType => {
     const context = useContext(AuthContext)
 
     if (context === undefined) {

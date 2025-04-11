@@ -5,6 +5,15 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip"
 
 import { cn } from "@/lib/utils/utils"
 
+// Safe context to prevent infinite renders
+const SafeTooltipContext = React.createContext<{
+  open: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}>({
+  open: false,
+  setOpen: () => { },
+});
+
 function TooltipProvider({
   delayDuration = 0,
   ...props
@@ -18,7 +27,48 @@ function TooltipProvider({
   )
 }
 
+// The regular Tooltip component is replaced with SafeTooltip as default export
 function Tooltip({
+  children,
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Root>) {
+  const [open, setOpen] = React.useState(false);
+  const isUpdating = React.useRef(false);
+
+  const contextValue = React.useMemo(
+    () => ({ open, setOpen }),
+    [open]
+  );
+
+  const handleOpenChange = React.useCallback((newOpen: boolean) => {
+    if (!isUpdating.current) {
+      isUpdating.current = true;
+      setOpen(newOpen);
+      // Reset the flag after the update completes
+      setTimeout(() => {
+        isUpdating.current = false;
+      }, 0);
+    }
+  }, []);
+
+  return (
+    <SafeTooltipContext.Provider value={contextValue}>
+      <TooltipProvider>
+        <TooltipPrimitive.Root
+          open={open}
+          onOpenChange={handleOpenChange}
+          data-slot="tooltip"
+          {...props}
+        >
+          {children}
+        </TooltipPrimitive.Root>
+      </TooltipProvider>
+    </SafeTooltipContext.Provider>
+  );
+}
+
+// Original implementation kept for backward compatibility
+function LegacyTooltip({
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
   return (
@@ -58,4 +108,4 @@ function TooltipContent({
   )
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider, LegacyTooltip }

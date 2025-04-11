@@ -1,522 +1,221 @@
 'use client';
 
-import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useRef, forwardRef } from 'react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils/utils';
-import { motion, AnimatePresence } from 'framer-motion';
-import TableFelt from './TableFelt';
-import BettingControls from '../../betting/BettingControls';
-import ActionPanel, { GameActionState } from '../actions/ActionPanel';
-import { GameAction } from '../actions/ActionButton';
-import { ChipValue } from '../../betting/Chip';
-import Hand, { CardData } from '../hand/Hand';
-import MessageDisplay from '../status/MessageDisplay';
-import HandOutcome, { OutcomeType } from '../hand/HandOutcome';
+import { motion } from 'framer-motion';
+import useTableLighting from '@/hooks/useTableLighting';
+import BettingControls from '@/components/betting/BettingControls';
 
-// Define type aliases for repeated union types
-type GamePhase = 'betting' | 'dealing' | 'player-turn' | 'dealer-turn' | 'payout' | 'game-over';
-type HandResult = 'win' | 'lose' | 'push' | 'blackjack';
-type DealerResult = 'win' | 'lose' | 'push';
-
-export interface PlayerData {
-    id: string;
-    name: string;
-    balance: number;
-    hands: {
-        id: string;
-        cards: CardData[];
-        bet: number;
-        betChips: Array<{ value: ChipValue; count: number }>;
-        isActive?: boolean;
-        result?: HandResult;
-        insurance?: number;
-    }[];
-}
-
-export interface DealerData {
-    cards: CardData[];
-    isActive?: boolean;
-    result?: DealerResult;
-}
-
-export interface BlackjackTableProps {
-    players: PlayerData[];
-    dealer: DealerData;
-    currentPlayerId?: string;
-    activeHandId?: string;
-    gamePhase: GamePhase;
-    minBet: number;
-    maxBet: number;
-    availableActions: Partial<GameActionState>;
-    recommendedAction?: GameAction;
-    message?: string;
+interface BlackjackTableProps {
     className?: string;
-    darkMode?: boolean;
-    onPlaceBet?: (playerId: string, bet: number) => void;
-    onClearBet?: (playerId: string) => void;
-    onAction?: (action: GameAction, playerId: string, handId: string) => void;
+    variant?: 'green' | 'red' | 'blue' | 'black' | 'dark' | 'light' | 'vip';
+    playerBalance?: number;
+    currentBet?: number;
+    onPlaceBet?: (bet: number) => void;
+    onClearBet?: () => void;
+    onMaxBet?: () => void;
+    onDoubleBet?: () => void;
     onDealCards?: () => void;
-    hideControls?: boolean;
-    enableChips?: boolean;
-    showBettingControls?: boolean;
+    isBettingPhase?: boolean;
+    isActionPhase?: boolean;
+    disableBetting?: boolean;
 }
 
-// Integrated DealerPosition component (previously imported)
-const DealerPosition: React.FC<{
-    cards: CardData[];
-    isActive?: boolean;
-    gamePhase: GamePhase;
-    result?: DealerResult;
-}> = ({ cards, isActive = false, gamePhase, result }) => {
-    // Automatically hide the hole card during certain game phases
-    const shouldHideHoleCard = ['dealing', 'player-turn'].includes(gamePhase);
-
-    // Calculate if the score is soft (contains an ace counted as 11)
-    const calculateHandValues = (cards: CardData[]): number[] => {
-        let values = [0];
-        let aceCount = 0;
-
-        cards.forEach(card => {
-            if (card.rank === 'A') {
-                aceCount++;
-                values = values.map(v => v + 1);
-            } else if (['K', 'Q', 'J'].includes(card.rank)) {
-                values = values.map(v => v + 10);
-            } else {
-                values = values.map(v => v + parseInt(card.rank, 10));
-            }
-        });
-
-        const results: number[] = [];
-
-        for (const value of values) {
-            results.push(value);
-
-            for (let i = 0; i < aceCount; i++) {
-                if (value + 10 <= 21) {
-                    results.push(value + 10);
-                }
-            }
-        }
-
-        // Fix for Set iteration
-        return Array.from(new Set(results)).sort((a, b) => a - b);
-    };
-
-    const getBestValue = (values: number[]): number => {
-        const nonBustValues = values.filter(v => v <= 21);
-        return nonBustValues.length > 0 ? Math.max(...nonBustValues) : Math.min(...values);
-    };
-
-    const handValues = calculateHandValues(cards);
-    const score = getBestValue(handValues);
-    const isSoft = cards.some(card => card.rank === 'A') && score <= 21 && handValues.length > 1;
-    const isBlackjack = score === 21 && cards.length === 2;
-
-    // Animation for dealer's turn
-    const dealerActiveVariants = {
-        inactive: { scale: 1 },
-        active: {
-            scale: 1.05,
-            transition: { duration: 0.3 }
-        }
-    };
-
-    // Format outcome for display
-    const formatOutcome = (result?: DealerResult): OutcomeType => {
-        if (!result) return null;
-        if (result === 'win') return 'win';
-        if (result === 'lose') return 'lose';
-        if (result === 'push') return 'push';
-        return null;
-    };
-
-    return (
-        <div className="relative dealer-position">
-            <motion.div
-                variants={dealerActiveVariants}
-                initial="inactive"
-                animate={isActive ? "active" : "inactive"}
-                className="relative"
-            >
-                <Hand
-                    cards={cards}
-                    isDealer={true}
-                    isActive={isActive}
-                    isWinner={result === 'win' || (isBlackjack && !shouldHideHoleCard)}
-                    isLoser={result === 'lose'}
-                    isPush={result === 'push'}
-                    showValue={true}
-                    hideSecondCard={shouldHideHoleCard}
-                    animate={gamePhase === 'dealing'}
-                    handType="dealer"
-                    className={cn("dealer-hand", isBlackjack && !shouldHideHoleCard && "dealer-blackjack")}
-                />
-            </motion.div>
-
-            {/* Show dealer status during dealer's turn */}
-            {isActive && gamePhase === 'dealer-turn' && (
-                <div className="absolute mb-1 transform -translate-x-1/2 -translate-y-full -top-2 left-1/2">
-                    <div className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full whitespace-nowrap animate-pulse">
-                        Dealer&apos;s turn {!shouldHideHoleCard && `(${isSoft ? 'Soft' : 'Hard'} ${score})`}
-                    </div>
-                </div>
-            )}
-
-            {/* Show outcome at the end of the game */}
-            {result && ['payout', 'game-over'].includes(gamePhase) && (
-                <div className="absolute mb-1 transform -translate-x-1/2 -translate-y-full -top-2 left-1/2">
-                    <HandOutcome
-                        outcome={formatOutcome(result)}
-                        size="sm"
-                        animated={true}
-                        delay={0.5}
-                    />
-                </div>
-            )}
-        </div>
-    );
-};
-
-// Integrated PlayerPosition component (previously imported)
-const PlayerPosition: React.FC<{
-    player: PlayerData;
-    isCurrentPlayer: boolean;
-    gamePhase: GamePhase;
-    activeHandId?: string;
-    onBetChange?: (amount: number) => void;
-    enableChips?: boolean;
-}> = ({
-    player,
-    isCurrentPlayer,
-    gamePhase,
-    activeHandId,
-    onBetChange,
-    enableChips = true
-}) => {
-        // Animation variants
-        const spotVariants = {
-            initial: { opacity: 0, y: 20 },
-            animate: {
-                opacity: 1,
-                y: 0,
-                transition: { duration: 0.5 }
-            },
-            exit: {
-                opacity: 0,
-                y: 20,
-                transition: { duration: 0.3 }
-            }
-        };
-
-        return (
-            <motion.div
-                key={player.id}
-                variants={spotVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                className={cn(
-                    "player-position relative flex flex-col items-center",
-                    isCurrentPlayer && "current-player"
-                )}
-            >
-                {/* Player hands container */}
-                <div className="flex space-x-2 player-hands">
-                    {player.hands.map((hand) => {
-                        const isActiveHand = isCurrentPlayer && hand.id === activeHandId;
-
-                        return (
-                            <div key={hand.id} className="relative player-hand">
-                                {/* Hand component */}
-                                <Hand
-                                    cards={hand.cards}
-                                    handId={hand.id}
-                                    isActive={isActiveHand}
-                                    isWinner={hand.result === 'win' || hand.result === 'blackjack'}
-                                    isLoser={hand.result === 'lose'}
-                                    isPush={hand.result === 'push'}
-                                    showValue={true}
-                                    animate={gamePhase === 'dealing'}
-                                    handType="player"
-                                />
-
-                                {/* Bet display */}
-                                {hand.bet > 0 && (
-                                    <div className="absolute bottom-0 z-10 transform -translate-x-1/2 translate-y-3 left-1/2">
-                                        <div className="relative flex items-center justify-center">
-                                            {/* Bet chips stack */}
-                                            {enableChips && (
-                                                <div className="relative chips-stack">
-                                                    {hand.betChips?.map((chipStack, idx) => {
-                                                        // Extract chip color logic to avoid nested ternaries
-                                                        let chipColorClass = '';
-                                                        if (chipStack.value === 1) {
-                                                            chipColorClass = 'from-gray-400 to-gray-600';
-                                                        } else if (chipStack.value === 5) {
-                                                            chipColorClass = 'from-red-400 to-red-600';
-                                                        } else if (chipStack.value === 25) {
-                                                            chipColorClass = 'from-green-400 to-green-600';
-                                                        } else if (chipStack.value === 100) {
-                                                            chipColorClass = 'from-blue-400 to-blue-600';
-                                                        } else if (chipStack.value === 500) {
-                                                            chipColorClass = 'from-purple-400 to-purple-600';
-                                                        } else {
-                                                            chipColorClass = 'from-amber-400 to-amber-600';
-                                                        }
-
-                                                        return (
-                                                            <button
-                                                                key={`${chipStack.value}-${idx}`}
-                                                                className={`absolute chip-image chip-stack-item-${idx} ${idx % 2 === 0 ? 'chip-stack-even' : 'chip-stack-odd'}`}
-                                                                onClick={() => onBetChange && onBetChange(chipStack.value)}
-                                                                type="button"
-                                                                aria-label={`${chipStack.value} chip`}
-                                                            >
-                                                                <div className={`w-10 h-10 rounded-full bg-gradient-to-br shadow-md flex items-center justify-center text-white font-bold text-xs ${chipColorClass}`}>
-                                                                    ${chipStack.value}
-                                                                </div>
-                                                            </button>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
-
-                                            {/* Bet amount label */}
-                                            <div className="px-2 py-1 mt-2 text-xs font-medium text-white rounded-full bet-label bg-black/60">
-                                                ${hand.bet}
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Hand outcome */}
-                                {hand.result && ['payout', 'game-over'].includes(gamePhase) && (
-                                    <div className="absolute top-0 transform -translate-x-1/2 -translate-y-4 left-1/2">
-                                        <HandOutcome
-                                            outcome={hand.result}
-                                            amount={hand.bet}
-                                            size="sm"
-                                        />
-                                    </div>
-                                )}
-
-                                {/* Active hand indicator */}
-                                {isActiveHand && gamePhase === 'player-turn' && (
-                                    <div className="absolute transform -translate-x-1/2 -translate-y-full -top-2 left-1/2">
-                                        <div className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full whitespace-nowrap animate-pulse">
-                                            Your turn
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
-                {/* Player info */}
-                <section className="mt-12 text-center player-info">
-                    <p className="mb-1 text-sm font-medium text-white player-name">
-                        {player.name}
-                    </p>
-                    <p className="player-balance text-xs bg-black/40 text-amber-300 px-2 py-0.5 rounded-full">
-                        ${player.balance.toLocaleString()}
-                    </p>
-                </section>
-            </motion.div>
-        );
-    };
-
-const BlackjackTable = ({
-    players = [],
-    dealer,
-    currentPlayerId,
-    activeHandId,
-    gamePhase,
-    minBet,
-    maxBet,
-    availableActions,
-    recommendedAction,
-    message,
-    className = '',
-    darkMode = true,
+const BlackjackTable = forwardRef<HTMLDivElement, BlackjackTableProps>(({
+    className,
+    variant = 'green',
+    playerBalance = 1500,
+    currentBet = 0,
     onPlaceBet,
     onClearBet,
-    onAction,
+    onMaxBet,
+    onDoubleBet,
     onDealCards,
-    hideControls = false,
-    enableChips = true,
-    showBettingControls = true,
-}: BlackjackTableProps) => {
-    const [showMessage, setShowMessage] = useState(!!message);
+    isBettingPhase = true,
+    disableBetting = false,
+}, ref) => {
+    // Create local refs if no ref is provided
+    const internalTableRef = useRef<HTMLDivElement>(null);
+    const feltRef = useRef<HTMLDivElement>(null);
 
-    // Update message visibility when message changes
-    useEffect(() => {
-        if (message) {
-            setShowMessage(true);
-            const timer = setTimeout(() => {
-                setShowMessage(false);
-            }, 5000);
+    // Use either the provided ref or internal ref
+    const tableRef = ref || internalTableRef;
 
-            return () => clearTimeout(timer);
-        }
-        return undefined; // Explicitly return undefined for the falsy path
-    }, [message]);
+    // Set up lighting effect with the hook
+    useTableLighting({
+        tableRef: internalTableRef, // Always use internal ref for the hook
+        feltRef,
+        intensity: 0.15,
+        enabled: true,
+    });
 
-    // Find current player
-    const currentPlayer = players?.find(player => player.id === currentPlayerId);
-
-    // Find active hand of current player
-    const activeHand = currentPlayer?.hands.find(hand => hand.id === activeHandId);
-
-    // Handle action callback
-    const handleAction = (action: GameAction) => {
-        if (gamePhase === 'betting' && action === 'deal') {
-            onDealCards?.();
-            return;
-        }
-
-        if (currentPlayerId && activeHandId) {
-            onAction?.(action, currentPlayerId, activeHandId);
-        }
-    };
-
-    // Handle bet placement
-    const handlePlaceBet = (bet: number) => {
-        if (currentPlayerId) {
-            onPlaceBet?.(currentPlayerId, bet);
-        }
-    };
-
-    // Handle clearing bet
-    const handleClearBet = () => {
-        if (currentPlayerId) {
-            onClearBet?.(currentPlayerId);
-        }
-    };
-
-    // Determine if we should show betting controls
-    const shouldShowBettingControls = showBettingControls && gamePhase === 'betting' && currentPlayer;
-
-    // Determine if we should show action controls
-    const shouldShowActionControls = !hideControls && ['player-turn', 'dealer-turn', 'payout'].includes(gamePhase);
-
-    // Table layout variants
-    const tableVariants = {
-        initial: { opacity: 0 },
-        animate: {
-            opacity: 1,
-            transition: { duration: 0.5 }
+    // Map variant to felt image and border color
+    const variantMap = {
+        green: {
+            felt: '/pattern/table-felt-green-vip.png',
+            borderColor: 'border-amber-800/80',
+            textColor: 'text-amber-300',
         },
-        exit: { opacity: 0 }
+        red: {
+            felt: '/pattern/table-felt-red.png',
+            borderColor: 'border-amber-800/80',
+            textColor: 'text-amber-300',
+        },
+        blue: {
+            felt: '/pattern/table-felt-blue.png',
+            borderColor: 'border-amber-800/80',
+            textColor: 'text-amber-300',
+        },
+        black: {
+            felt: '/pattern/table-felt-black.png',
+            borderColor: 'border-amber-800/80',
+            textColor: 'text-amber-300',
+        },
+        dark: {
+            felt: '/pattern/table-felt-dark.png',
+            borderColor: 'border-amber-800/80',
+            textColor: 'text-amber-300',
+        },
+        light: {
+            felt: '/pattern/table-felt-light.png',
+            borderColor: 'border-amber-800/80',
+            textColor: 'text-amber-300',
+        },
+        vip: {
+            felt: '/pattern/table-felt-vip.png',
+            borderColor: 'border-amber-800/80',
+            textColor: 'text-amber-300',
+        },
     };
+
+    const { felt, borderColor, textColor } = variantMap[variant];
 
     return (
-        <motion.div
+        <div
+            ref={tableRef}
             className={cn(
-                'relative w-full max-w-6xl mx-auto overflow-hidden',
-                'rounded-3xl shadow-2xl',
-                darkMode ? 'bg-green-900' : 'bg-green-700',
+                'relative w-full h-full max-w-[1200px] max-h-[700px]',
+                'mx-auto rounded-[150px] overflow-hidden shadow-2xl',
+                'transition-all duration-300 flex items-center justify-center',
                 className
             )}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            variants={tableVariants}
         >
-            {/* Table felt background */}
-            <TableFelt
-                darkMode={darkMode}
-                pattern="custom"
-                variant={gamePhase === 'betting' ? 'default' : 'blackjack'}
-                borderRadiusClass="rounded-3xl"
-                borderWidth={30}
-            >
-                {/* Dealer position - with proper z-index for layering */}
-                <div className="absolute z-20 transform -translate-x-1/2 top-24 left-1/2">
-                    <DealerPosition
-                        cards={dealer.cards}
-                        isActive={dealer.isActive}
-                        gamePhase={gamePhase}
-                        result={dealer.result}
-                    />
-                </div>
+            {/* Wooden table base */}
+            <div className="absolute inset-0 z-0 bg-center bg-cover" style={{ backgroundImage: 'url(/texture/wooden-table.png)' }} />
 
-                {/* Player positions - increased z-index for proper layer stacking */}
-                <div className="absolute bottom-0 left-0 right-0 z-30 flex justify-center gap-8 px-4 pb-36 md:pb-28">
-                    {(players || []).map((player) => (
-                        <PlayerPosition
-                            key={player.id}
-                            player={player}
-                            isCurrentPlayer={player.id === currentPlayerId}
-                            gamePhase={gamePhase}
-                            activeHandId={activeHandId}
-                            onBetChange={onPlaceBet ? (amount) => onPlaceBet(player.id, amount) : undefined}
-                            enableChips={enableChips}
-                        />
-                    ))}
-                </div>
-
-                {/* Message display - highest z-index to appear above all elements */}
-                <AnimatePresence>
-                    {showMessage && message && (
-                        <div className="absolute z-50 transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
-                            <MessageDisplay message={message} />
-                        </div>
-                    )}
-                </AnimatePresence>
-            </TableFelt>
-
-            {/* Controls area - improved z-index for controls layer */}
-            <div className="absolute bottom-0 left-0 right-0 z-40 flex flex-col items-center gap-4 p-4 pt-16 bg-gradient-to-t from-black/50 to-transparent">
-                {/* Betting controls */}
-                {shouldShowBettingControls && currentPlayer && (
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key="betting-controls"
-                            initial={{ opacity: 0, y: 50 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 50 }}
-                            className="w-full max-w-lg"
-                        >
-                            <BettingControls
-                                balance={currentPlayer.balance}
-                                minBet={minBet}
-                                maxBet={maxBet}
-                                currentBet={currentPlayer?.hands?.[0]?.bet ?? 0}
-                                onPlaceBet={handlePlaceBet}
-                                onClearBet={handleClearBet}
-                                autoConfirm={false}
-                                availableChips={[1, 5, 25, 100, 500, 1000]}
-                            />
-                        </motion.div>
-                    </AnimatePresence>
+            {/* Felt with pattern overlay */}
+            <div
+                ref={feltRef}
+                className={cn(
+                    'absolute inset-[20px] rounded-[130px] z-10 overflow-hidden',
+                    'shadow-inner border-[10px]',
+                    borderColor
                 )}
+            >
+                {/* Base felt texture */}
+                <div className="absolute inset-0 bg-center bg-cover" style={{ backgroundImage: `url(${felt})` }} />
 
-                {/* Action controls */}
-                {shouldShowActionControls && (
-                    <AnimatePresence mode="wait">
+                {/* Pattern overlay */}
+                <div className="absolute inset-0 bg-repeat opacity-10" style={{ backgroundImage: 'url(/pattern/pattern.svg)' }} />
+
+                {/* Table markings */}
+                <div className="absolute inset-0 bg-center bg-no-repeat bg-contain opacity-90" style={{ backgroundImage: 'url(/table/blackjack-markings.svg)' }} />
+            </div>
+
+            {/* Royal logo */}
+            <div className="absolute top-[20px] left-1/2 transform -translate-x-1/2 z-20 w-[120px] h-[120px]">
+                <Image
+                    src="/logos/royal-logo.png"
+                    alt="Royal Casino"
+                    width={120}
+                    height={120}
+                    className="object-contain"
+                />
+            </div>
+
+            {/* Dealer area */}
+            <div className="absolute top-[160px] left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center">
+                <div className={cn('text-xl font-bold mb-2', textColor)}>Dealer</div>
+                <div className="w-[280px] h-[150px] rounded-lg border-2 border-amber-400/30 flex items-center justify-center">
+                    {/* Dealer's cards will be rendered here by parent component */}
+                </div>
+            </div>
+
+            {/* Insurance line */}
+            <motion.div
+                className={cn(
+                    'absolute top-[330px] left-1/2 w-4/5 transform -translate-x-1/2 z-20',
+                    'h-[40px] flex items-center justify-center',
+                    'border-2 border-amber-400/50 bg-black/20 rounded-full'
+                )}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+            >
+                <div className={cn('text-lg font-bold', textColor)}>INSURANCE PAYS 2 TO 1</div>
+            </motion.div>
+
+            {/* Player areas - 5 positions with improved spacing */}
+            <div className="absolute bottom-[180px] left-1/2 transform -translate-x-1/2 z-20 w-full flex justify-center gap-10">
+                {[1, 2, 3, 4, 5].map((position) => (
+                    <div key={`player-${position}`} className="flex flex-col items-center">
+                        <div className="w-[120px] h-[160px] rounded-lg border-2 border-amber-400/40 flex items-center justify-center bg-black/10">
+                            {/* Player's cards will be rendered here by parent component */}
+                        </div>
+
+                        {/* Betting circle */}
                         <motion.div
-                            key="action-controls"
-                            initial={{ opacity: 0, y: 50 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 50 }}
-                            className="w-full max-w-lg"
+                            className={cn(
+                                'mt-4 w-[80px] h-[80px] rounded-full',
+                                'border-2 border-amber-400/70',
+                                'flex items-center justify-center',
+                                'bg-black/40',
+                                position === 3 && 'ring-4 ring-yellow-400/30'
+                            )}
+                            whileHover={{ scale: 1.05 }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.2 + position * 0.1 }}
                         >
-                            <ActionPanel
-                                availableActions={availableActions}
-                                recommendedAction={recommendedAction}
-                                onAction={handleAction}
-                                player={currentPlayerId}
-                                handId={activeHandId}
-                                animateEntry={true}
-                                activeHandData={activeHand}
-                            />
+                            {/* Chips will be rendered here */}
+                            {position === 3 && currentBet > 0 && (
+                                <div className="text-amber-400 font-bold">${currentBet}</div>
+                            )}
                         </motion.div>
-                    </AnimatePresence>
+                    </div>
+                ))}
+            </div>
+
+            {/* Betting controls at the bottom - increased z-index and visual prominence */}
+            <div className="absolute bottom-[40px] left-1/2 transform -translate-x-1/2 z-30 w-[95%]">
+                {isBettingPhase && (
+                    <BettingControls
+                        balance={playerBalance}
+                        currentBet={currentBet}
+                        onPlaceBet={onPlaceBet}
+                        onClearBet={onClearBet}
+                        onMaxBet={onMaxBet}
+                        onDoubleBet={onDoubleBet}
+                        onDealCards={onDealCards}
+                        disabled={disableBetting}
+                        className="bg-black/50 border border-amber-800/40 p-4 rounded-xl"
+                    />
                 )}
             </div>
-        </motion.div>
+
+            {/* Decorative elements - Table railing */}
+            <div className="absolute inset-0 rounded-[150px] z-5 pointer-events-none border-[16px] border-amber-900/60" />
+
+            {/* Ambient light effect overlay */}
+            <div className="absolute inset-0 z-40 pointer-events-none">
+                <div className="absolute inset-0 opacity-50 bg-gradient-radial from-transparent to-black/40" />
+                <div className="absolute inset-0 bg-gradient-to-b from-amber-500/10 to-transparent opacity-40" />
+            </div>
+        </div>
     );
-};
+});
+
+BlackjackTable.displayName = 'BlackjackTable';
 
 export default BlackjackTable;

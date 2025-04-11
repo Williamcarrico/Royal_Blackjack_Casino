@@ -1,23 +1,34 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-import { type CookieOptions } from '@supabase/ssr'
+/**
+ * Supabase client for Server Components and Pages Router API routes
+ * This version uses the Pages Router cookie handling approach
+ */
+import { createServerClient as createSupabaseServerClient } from '@supabase/ssr'
+import type { Database } from '@/types/supabase'
+import type { NextApiRequest, NextApiResponse } from 'next'
+import type { CookieOptions } from '@supabase/ssr'
+import supabaseConfig from './config'
 
-export const createClient = () => {
-    const cookieStore = cookies()
-
-    return createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://pggcbxejytshupruhcjq.supabase.co',
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnZ2NieGVqeXRzaHVwcnVoY2pxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMwMjA2MTgsImV4cCI6MjA1ODU5NjYxOH0.Xqi99G502aTdSQuN8kFg8rlwMGBn4px9Ohq8dmbx93E',
+/**
+ * Creates a typed Supabase client for Pages Router API routes
+ * @returns Typed Supabase client for use in pages directory
+ */
+export const createClient = async <T = Database>(
+    req: NextApiRequest,
+    res: NextApiResponse
+) => {
+    return createSupabaseServerClient<T>(
+        supabaseConfig.url,
+        supabaseConfig.anonKey,
         {
             cookies: {
-                get(name: string) {
-                    return cookieStore.get(name)?.value
+                get: (name) => {
+                    return req.cookies[name]
                 },
-                set(name: string, value: string, options: CookieOptions) {
-                    cookieStore.set({ name, value, ...options })
+                set: (name, value, options: CookieOptions) => {
+                    res.setHeader('Set-Cookie', `${name}=${value}; Path=${options.path || '/'}; ${options.maxAge ? `Max-Age=${options.maxAge};` : ''} ${options.domain ? `Domain=${options.domain};` : ''} ${options.sameSite ? `SameSite=${options.sameSite};` : ''} ${options.secure ? 'Secure;' : ''}`)
                 },
-                remove(name: string, options: CookieOptions) {
-                    cookieStore.set({ name, value: '', ...options })
+                remove: (name, options: CookieOptions) => {
+                    res.setHeader('Set-Cookie', `${name}=; Path=${options.path || '/'}; Max-Age=0; ${options.domain ? `Domain=${options.domain};` : ''} ${options.sameSite ? `SameSite=${options.sameSite};` : ''} ${options.secure ? 'Secure;' : ''}`)
                 },
             },
         }

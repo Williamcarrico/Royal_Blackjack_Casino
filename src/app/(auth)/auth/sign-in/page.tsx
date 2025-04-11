@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/lib/context/AuthContext'
+import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,6 +17,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { cn } from '@/lib/utils/utils'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Separator } from '@/components/ui/separator'
+import { toast } from 'sonner'
 
 const loginSchema = z.object({
 	email: z.string().email('Please enter a valid email address'),
@@ -30,7 +31,7 @@ export default function SignInPage() {
 	const [error, setError] = useState<string | null>(null)
 	const [isLoading, setIsLoading] = useState(false)
 	const [showPassword, setShowPassword] = useState(false)
-	const { login } = useAuth()
+	const { signIn } = useAuth()
 	const router = useRouter()
 	const searchParams = useSearchParams()
 	const redirect = searchParams.get('redirect')
@@ -60,8 +61,17 @@ export default function SignInPage() {
 			setIsLoading(true)
 
 			try {
-				// Call the login method instead of signIn
-				await login(data.email, data.password)
+				// Call the signIn method
+				const result = await signIn(data.email, data.password)
+
+				if (!result.success) {
+					setError(result.error ?? 'Failed to sign in')
+					form.setFocus('email')
+					return
+				}
+
+				// Show success toast
+				toast.success('Signed in successfully')
 
 				// Redirect to the intended page or default to home
 				const redirectUrl = redirect ? decodeURIComponent(redirect) : '/'
@@ -74,23 +84,19 @@ export default function SignInPage() {
 				setIsLoading(false)
 			}
 		},
-		[login, redirect, router, form]
+		[signIn, redirect, router, form]
 	)
 
 	const handleSocialSignIn = useCallback(
 		(provider: string) => {
 			setIsLoading(true)
 			setError(null)
+
 			// Implementation would depend on your auth provider
-			console.log(`Sign in with ${provider}`)
-			// For demonstration purposes:
-			setTimeout(() => {
-				setIsLoading(false)
-				// Redirect after successful login
-				router.push('/')
-			}, 1500)
+			toast.info(`${provider} sign-in will be implemented soon`)
+			setIsLoading(false)
 		},
-		[router]
+		[]
 	)
 
 	return (

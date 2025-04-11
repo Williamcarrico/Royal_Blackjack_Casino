@@ -209,7 +209,7 @@ export const AdvancedStrategyHeatMap = ({ heatMapData, className = '' }: Advance
         if (!actionsString) return null;
 
         const actions = actionsString.split(',');
-        return actions[dealerIndex] || null;
+        return actions[dealerIndex] ?? null;
     };
 
     // Get cell background color based on win rate
@@ -315,7 +315,7 @@ export const AdvancedStrategyHeatMap = ({ heatMapData, className = '' }: Advance
                                 {dealerCards.map((dealerCard) => {
                                     const cell = aggregatedData[playerValue]?.[dealerCard];
                                     const optimalAction = getOptimalAction(playerValue, dealerCard);
-                                    const currentAction = cell?.action || '';
+                                    const currentAction = cell?.action ?? '';
                                     const isMisplay = !!(showOptimal && optimalAction &&
                                         currentAction && currentAction !== optimalAction.toLowerCase());
 

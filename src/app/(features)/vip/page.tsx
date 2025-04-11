@@ -512,8 +512,7 @@ export default function VIPPage() {
 									</div>
 									<div className="w-full h-2 overflow-hidden bg-gray-800 rounded-full">
 										<div
-											className="h-full rounded-full bg-gradient-to-r from-yellow-500 to-primary-500"
-											style={{ width: `${progressPercent}%` }}
+											className={`h-full rounded-full bg-gradient-to-r from-yellow-500 to-primary-500 progress-width-${progressPercent}`}
 										></div>
 									</div>
 									{nextTier && (

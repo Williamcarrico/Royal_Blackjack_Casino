@@ -197,7 +197,9 @@ const ClientSideCardCountingTrainer: React.FC = () => {
 		// Shuffle
 		for (let i = newDeck.length - 1; i > 0; i--) {
 			const j = Math.floor(Math.random() * (i + 1))
-				;[newDeck[i]!, newDeck[j]!] = [newDeck[j]!, newDeck[i]!]
+			const temp = newDeck[i] as Card
+			newDeck[i] = newDeck[j] as Card
+			newDeck[j] = temp
 		}
 
 		setGameState(prev => ({

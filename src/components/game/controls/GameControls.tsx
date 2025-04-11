@@ -2,311 +2,198 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils/utils';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
 import {
-    Play,
-    PauseCircle,
-    RotateCcw,
-    HelpCircle,
-    Settings,
-    BookOpen,
-    X,
-    Volume2,
-    VolumeX,
-    ChevronUp,
-    ChevronDown
-} from 'lucide-react';
+    Cog6ToothIcon,
+    QuestionMarkCircleIcon,
+    ClockIcon,
+    CurrencyDollarIcon,
+    ChatBubbleLeftRightIcon,
+    SpeakerWaveIcon,
+    SpeakerXMarkIcon
+} from '@heroicons/react/24/outline';
 
 export interface GameControlsProps {
-    gamePhase: 'idle' | 'betting' | 'dealing' | 'player-turn' | 'dealer-turn' | 'payout' | 'game-over';
-    isPlaying: boolean;
-    isMuted?: boolean;
-    isTutorialMode?: boolean;
-    isCollapsed?: boolean;
-    showTutorial?: boolean;
-    showSettings?: boolean;
-    showStatistics?: boolean;
     className?: string;
-    onStart?: () => void;
-    onStop?: () => void;
-    onReset?: () => void;
-    onNewGame?: () => void;
-    onMuteToggle?: () => void;
-    onShowTutorial?: () => void;
-    onShowSettings?: () => void;
-    onShowStatistics?: () => void;
-    onToggleCollapse?: () => void;
+    onOpenSettings?: () => void;
+    onOpenRules?: () => void;
+    onToggleSound?: () => void;
+    onOpenChat?: () => void;
+    onOpenHistory?: () => void;
+    onOpenBankroll?: () => void;
+    isSoundEnabled?: boolean;
+    vertical?: boolean;
+    showLabels?: boolean;
 }
 
-const GameControls = ({
-    gamePhase,
-    isPlaying,
-    isMuted = false,
-    isTutorialMode = false,
-    isCollapsed = false,
-    showTutorial = true,
-    showSettings = true,
-    showStatistics = true,
-    className = '',
-    onStart,
-    onStop,
-    onReset,
-    onNewGame,
-    onMuteToggle,
-    onShowTutorial,
-    onShowSettings,
-    onShowStatistics,
-    onToggleCollapse,
-}: GameControlsProps) => {
-    // Determine if the game is in progress
-    const isGameInProgress = ['betting', 'dealing', 'player-turn', 'dealer-turn', 'payout'].includes(gamePhase);
-
-    // Animation variants
-    const containerVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: {
+/**
+ * GameControls component provides buttons for controlling the game environment
+ * Includes settings, rules, chat, history, and bankroll management
+ */
+const GameControls: React.FC<GameControlsProps> = ({
+    className,
+    onOpenSettings,
+    onOpenRules,
+    onToggleSound,
+    onOpenChat,
+    onOpenHistory,
+    onOpenBankroll,
+    isSoundEnabled = true,
+    vertical = false,
+    showLabels = false,
+}) => {
+    // Button variants
+    const buttonVariants = {
+        initial: { opacity: 0, y: vertical ? 20 : 0, x: vertical ? 0 : 20 },
+        animate: (i: number) => ({
             opacity: 1,
             y: 0,
-            transition: {
-                duration: 0.3,
-                staggerChildren: 0.05
-            }
-        },
-        exit: { opacity: 0, y: 20 }
+            x: 0,
+            transition: { delay: 0.05 * i, duration: 0.3 }
+        }),
+        hover: { scale: 1.05 },
+        tap: { scale: 0.95 },
     };
-
-    const itemVariants = {
-        hidden: { opacity: 0, scale: 0.9 },
-        visible: {
-            opacity: 1,
-            scale: 1,
-            transition: { type: "spring", stiffness: 300, damping: 15 }
-        },
-        exit: { opacity: 0, scale: 0.9 }
-    };
-
-    const handleStart = () => {
-        onStart?.();
-    };
-
-    const handleStop = () => {
-        onStop?.();
-    };
-
-    const handleResetClick = () => {
-        onReset?.();
-    };
-
-    const handleNewGameClick = () => {
-        onNewGame?.();
-    };
-
-    const handleMuteToggle = () => {
-        onMuteToggle?.();
-    };
-
-    const handleShowTutorial = () => {
-        onShowTutorial?.();
-    };
-
-    const handleShowSettings = () => {
-        onShowSettings?.();
-    };
-
-    const handleShowStatistics = () => {
-        onShowStatistics?.();
-    };
-
-    const handleToggleCollapse = () => {
-        onToggleCollapse?.();
-    };
-
-    // Collapsed view
-    if (isCollapsed) {
-        return (
-            <div className={cn("fixed bottom-4 right-4 z-50", className)}>
-                <Button
-                    variant="outline"
-                    size="icon"
-                    className="text-white bg-black/50 backdrop-blur-sm border-white/20 hover:bg-black/70"
-                    onClick={handleToggleCollapse}
-                    aria-label="Expand game controls"
-                >
-                    <ChevronUp className="w-5 h-5" />
-                </Button>
-            </div>
-        );
-    }
 
     return (
-        <motion.div
+        <div
             className={cn(
-                "p-3 rounded-lg bg-black/70 backdrop-blur-sm text-white border border-white/10 shadow-xl",
+                'flex p-2 bg-black/30 backdrop-blur-sm rounded-lg',
+                vertical ? 'flex-col gap-2' : 'flex-row gap-2',
                 className
             )}
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
         >
-            <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold">Game Controls</h3>
-
-                {/* Collapse button */}
-                {onToggleCollapse && (
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="w-6 h-6 text-gray-400 hover:text-white hover:bg-transparent"
-                        onClick={handleToggleCollapse}
-                        aria-label="Collapse game controls"
-                    >
-                        <ChevronDown className="w-4 h-4" />
-                    </Button>
+            {/* Settings button */}
+            <motion.button
+                type="button"
+                onClick={onOpenSettings}
+                className={cn(
+                    'flex items-center justify-center rounded-md p-2 text-gray-200 hover:text-white',
+                    'focus:outline-none focus:ring-2 focus:ring-amber-400/50 transition-colors'
                 )}
-            </div>
+                variants={buttonVariants}
+                initial="initial"
+                animate="animate"
+                whileHover="hover"
+                whileTap="tap"
+                custom={0}
+                aria-label="Settings"
+            >
+                <Cog6ToothIcon className="w-5 h-5" />
+                {showLabels && <span className="ml-2">Settings</span>}
+            </motion.button>
 
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-                {/* Start/Stop button */}
-                <motion.div variants={itemVariants}>
-                    {isPlaying ? (
-                        <Button
-                            variant="destructive"
-                            className="flex items-center justify-center w-full gap-1"
-                            onClick={handleStop}
-                            disabled={gamePhase === 'game-over'}
-                            aria-label="Pause game"
-                        >
-                            <PauseCircle className="w-4 h-4 mr-1" /> Pause
-                        </Button>
-                    ) : (
-                        <Button
-                            variant="default"
-                            className="flex items-center justify-center w-full gap-1"
-                            onClick={handleStart}
-                            disabled={gamePhase === 'game-over'}
-                            aria-label="Start game"
-                        >
-                            <Play className="w-4 h-4 mr-1" /> {isGameInProgress ? 'Resume' : 'Start'}
-                        </Button>
+            {/* Rules button */}
+            <motion.button
+                type="button"
+                onClick={onOpenRules}
+                className={cn(
+                    'flex items-center justify-center rounded-md p-2 text-gray-200 hover:text-white',
+                    'focus:outline-none focus:ring-2 focus:ring-amber-400/50 transition-colors'
+                )}
+                variants={buttonVariants}
+                initial="initial"
+                animate="animate"
+                whileHover="hover"
+                whileTap="tap"
+                custom={1}
+                aria-label="Game Rules"
+            >
+                <QuestionMarkCircleIcon className="w-5 h-5" />
+                {showLabels && <span className="ml-2">Rules</span>}
+            </motion.button>
+
+            {/* Sound toggle button */}
+            <motion.button
+                type="button"
+                onClick={onToggleSound}
+                className={cn(
+                    'flex items-center justify-center rounded-md p-2 transition-colors',
+                    'focus:outline-none focus:ring-2 focus:ring-amber-400/50',
+                    isSoundEnabled ? 'text-amber-400 hover:text-amber-300' : 'text-gray-500 hover:text-gray-400'
+                )}
+                variants={buttonVariants}
+                initial="initial"
+                animate="animate"
+                whileHover="hover"
+                whileTap="tap"
+                custom={2}
+                aria-label={isSoundEnabled ? "Mute Sound" : "Enable Sound"}
+            >
+                {isSoundEnabled ? (
+                    <SpeakerWaveIcon className="w-5 h-5" />
+                ) : (
+                    <SpeakerXMarkIcon className="w-5 h-5" />
+                )}
+                {showLabels && <span className="ml-2">{isSoundEnabled ? 'Sound On' : 'Sound Off'}</span>}
+            </motion.button>
+
+            {/* Chat button */}
+            {onOpenChat && (
+                <motion.button
+                    type="button"
+                    onClick={onOpenChat}
+                    className={cn(
+                        'flex items-center justify-center rounded-md p-2 text-gray-200 hover:text-white',
+                        'focus:outline-none focus:ring-2 focus:ring-amber-400/50 transition-colors'
                     )}
-                </motion.div>
+                    variants={buttonVariants}
+                    initial="initial"
+                    animate="animate"
+                    whileHover="hover"
+                    whileTap="tap"
+                    custom={3}
+                    aria-label="Open Chat"
+                >
+                    <ChatBubbleLeftRightIcon className="w-5 h-5" />
+                    {showLabels && <span className="ml-2">Chat</span>}
+                </motion.button>
+            )}
 
-                {/* Reset button */}
-                <motion.div variants={itemVariants}>
-                    <Button
-                        variant="secondary"
-                        className="flex items-center justify-center w-full gap-1"
-                        onClick={handleResetClick}
-                        disabled={gamePhase === 'idle'}
-                        aria-label="Reset current game"
-                    >
-                        <RotateCcw className="w-4 h-4 mr-1" /> Reset
-                    </Button>
-                </motion.div>
+            {/* History button */}
+            {onOpenHistory && (
+                <motion.button
+                    type="button"
+                    onClick={onOpenHistory}
+                    className={cn(
+                        'flex items-center justify-center rounded-md p-2 text-gray-200 hover:text-white',
+                        'focus:outline-none focus:ring-2 focus:ring-amber-400/50 transition-colors'
+                    )}
+                    variants={buttonVariants}
+                    initial="initial"
+                    animate="animate"
+                    whileHover="hover"
+                    whileTap="tap"
+                    custom={4}
+                    aria-label="Game History"
+                >
+                    <ClockIcon className="w-5 h-5" />
+                    {showLabels && <span className="ml-2">History</span>}
+                </motion.button>
+            )}
 
-                {/* New Game button */}
-                <motion.div variants={itemVariants} className="col-span-2">
-                    <Button
-                        variant="outline"
-                        className="flex items-center justify-center w-full gap-1 text-green-400 border-green-800 bg-green-600/20 hover:bg-green-600/30"
-                        onClick={handleNewGameClick}
-                        disabled={gamePhase === 'idle' && !isGameInProgress}
-                        aria-label="Start new game"
-                    >
-                        New Game
-                    </Button>
-                </motion.div>
-            </div>
-
-            {/* Secondary controls */}
-            <motion.div className="flex items-center justify-between mt-3">
-                {/* Mute toggle */}
-                <motion.div variants={itemVariants}>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className={cn(
-                            "h-8 w-8 rounded-full",
-                            isMuted ? "text-red-400 hover:text-red-300" : "text-green-400 hover:text-green-300"
-                        )}
-                        onClick={handleMuteToggle}
-                        aria-label={isMuted ? "Unmute sounds" : "Mute sounds"}
-                    >
-                        {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                    </Button>
-                </motion.div>
-
-                {/* Tutorial button */}
-                {showTutorial && (
-                    <motion.div variants={itemVariants}>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="w-8 h-8 text-blue-400 rounded-full hover:text-blue-300"
-                            onClick={handleShowTutorial}
-                            aria-label="Show tutorial"
-                        >
-                            <HelpCircle className="w-4 h-4" />
-                        </Button>
-                    </motion.div>
-                )}
-
-                {/* Strategy guide button */}
-                {showStatistics && (
-                    <motion.div variants={itemVariants}>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="w-8 h-8 text-purple-400 rounded-full hover:text-purple-300"
-                            onClick={handleShowStatistics}
-                            aria-label="Show strategy guide"
-                        >
-                            <BookOpen className="w-4 h-4" />
-                        </Button>
-                    </motion.div>
-                )}
-
-                {/* Settings button */}
-                {showSettings && (
-                    <motion.div variants={itemVariants}>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="w-8 h-8 rounded-full text-amber-400 hover:text-amber-300"
-                            onClick={handleShowSettings}
-                            aria-label="Show settings"
-                        >
-                            <Settings className="w-4 h-4" />
-                        </Button>
-                    </motion.div>
-                )}
-            </motion.div>
-
-            {/* Tutorial mode indicator */}
-            <AnimatePresence>
-                {isTutorialMode && (
-                    <motion.div
-                        className="flex items-center justify-between p-1 mt-2 text-xs text-blue-300 border border-blue-700 rounded bg-blue-900/50"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                    >
-                        <span>Tutorial Mode Active</span>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="w-4 h-4 text-blue-400 hover:text-blue-300"
-                            onClick={handleShowTutorial}
-                            aria-label="Exit tutorial mode"
-                        >
-                            <X className="w-3 h-3" />
-                        </Button>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </motion.div>
+            {/* Bankroll button */}
+            {onOpenBankroll && (
+                <motion.button
+                    type="button"
+                    onClick={onOpenBankroll}
+                    className={cn(
+                        'flex items-center justify-center rounded-md p-2 text-gray-200 hover:text-white',
+                        'focus:outline-none focus:ring-2 focus:ring-amber-400/50 transition-colors'
+                    )}
+                    variants={buttonVariants}
+                    initial="initial"
+                    animate="animate"
+                    whileHover="hover"
+                    whileTap="tap"
+                    custom={5}
+                    aria-label="Bankroll Management"
+                >
+                    <CurrencyDollarIcon className="w-5 h-5" />
+                    {showLabels && <span className="ml-2">Bankroll</span>}
+                </motion.button>
+            )}
+        </div>
     );
 };
 

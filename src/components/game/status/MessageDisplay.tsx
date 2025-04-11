@@ -2,91 +2,110 @@
 
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+
+export type MessageType = 'info' | 'success' | 'warning' | 'error' | 'dealer' | 'player';
 
 export interface MessageDisplayProps {
-    message: string;
-    type?: 'info' | 'success' | 'warning' | 'error';
+    message?: string | null;
+    type?: MessageType;
     duration?: number;
+    autoHide?: boolean;
     className?: string;
-    showIcon?: boolean;
     size?: 'sm' | 'md' | 'lg';
+    variant?: 'solid' | 'outline' | 'ghost';
     centered?: boolean;
-    transparent?: boolean;
+    withBackground?: boolean;
 }
 
-const MessageDisplay = ({
+/**
+ * MessageDisplay component for showing game status messages and announcements
+ * Supports different message types, auto-hiding, and animation
+ */
+const MessageDisplay: React.FC<MessageDisplayProps> = ({
     message,
     type = 'info',
-    duration = 3000,
-    className = '',
-    showIcon = true,
+    duration = 5000,
+    autoHide = false,
+    className,
     size = 'md',
+    variant = 'solid',
     centered = true,
-    transparent = false,
-}: MessageDisplayProps) => {
-    const [isVisible, setIsVisible] = useState(true);
+    withBackground = true,
+}) => {
+    const [isVisible, setIsVisible] = useState(!!message);
+    const [currentMessage, setCurrentMessage] = useState(message);
 
+    // Update visibility when message changes
     useEffect(() => {
-        if (duration && duration > 0) {
-            const timer = setTimeout(() => {
-                setIsVisible(false);
-            }, duration);
+        if (message) {
+            setCurrentMessage(message);
+            setIsVisible(true);
 
-            return () => clearTimeout(timer);
+            // Auto-hide message after duration
+            if (autoHide) {
+                const timer = setTimeout(() => {
+                    setIsVisible(false);
+                }, duration);
+
+                return () => clearTimeout(timer);
+            }
+        } else {
+            setIsVisible(false);
         }
-        return undefined; // Explicit return for when duration is falsy or zero
-    }, [duration, message]);
+    }, [message, autoHide, duration]);
 
-    // Determine the background color based on the message type
-    const getBgColor = () => {
-        const colorMap = {
-            info: transparent ? 'bg-blue-500/70' : 'bg-blue-600',
-            success: transparent ? 'bg-green-500/70' : 'bg-green-600',
-            warning: transparent ? 'bg-amber-500/70' : 'bg-amber-600',
-            error: transparent ? 'bg-red-500/70' : 'bg-red-600'
+    // Map message type to style
+    const getMessageStyles = () => {
+        const baseStyles = "font-bold rounded-lg flex items-center justify-center";
+
+        // Size variations
+        const sizeStyles = {
+            sm: "text-sm py-1 px-3",
+            md: "text-base py-2 px-4",
+            lg: "text-lg py-3 px-6",
         };
 
-        return colorMap[type];
-    };
+        // Type-specific colors
+        const typeStylesMap = {
+            info: {
+                solid: "bg-blue-600 text-white",
+                outline: "border-2 border-blue-600 text-blue-600",
+                ghost: "text-blue-600",
+            },
+            success: {
+                solid: "bg-green-600 text-white",
+                outline: "border-2 border-green-600 text-green-600",
+                ghost: "text-green-600",
+            },
+            warning: {
+                solid: "bg-yellow-500 text-white",
+                outline: "border-2 border-yellow-500 text-yellow-500",
+                ghost: "text-yellow-500",
+            },
+            error: {
+                solid: "bg-red-600 text-white",
+                outline: "border-2 border-red-600 text-red-600",
+                ghost: "text-red-600",
+            },
+            dealer: {
+                solid: "bg-amber-600 text-white",
+                outline: "border-2 border-amber-600 text-amber-600",
+                ghost: "text-amber-600",
+            },
+            player: {
+                solid: "bg-purple-600 text-white",
+                outline: "border-2 border-purple-600 text-purple-600",
+                ghost: "text-purple-600",
+            },
+        };
 
-    // Get the icon for the message type
-    const getIcon = () => {
-        switch (type) {
-            case 'info':
-                return (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                );
-            case 'success':
-                return (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                );
-            case 'warning':
-                return (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                );
-            case 'error':
-                return (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                );
-            default:
-                return null;
-        }
-    };
-
-    // Determine sizing classes
-    const sizeClasses = {
-        sm: 'px-3 py-1 text-sm',
-        md: 'px-4 py-2 text-base',
-        lg: 'px-6 py-3 text-lg'
+        return cn(
+            baseStyles,
+            sizeStyles[size],
+            typeStylesMap[type][variant],
+            withBackground && variant === 'ghost' && 'bg-black/20 backdrop-blur-sm',
+        );
     };
 
     // Animation variants
@@ -94,58 +113,52 @@ const MessageDisplay = ({
         initial: {
             opacity: 0,
             y: -20,
-            scale: 0.9
+            scale: 0.95,
         },
         animate: {
             opacity: 1,
             y: 0,
             scale: 1,
             transition: {
-                type: 'spring',
-                stiffness: 300,
-                damping: 20
+                type: "spring",
+                stiffness: 500,
+                damping: 30
             }
         },
         exit: {
             opacity: 0,
-            y: -20,
-            scale: 0.9,
+            y: 20,
+            scale: 0.95,
             transition: {
                 duration: 0.2
             }
         }
     };
 
+    if (!currentMessage) return null;
+
     return (
-        <AnimatePresence mode="wait">
-            {isVisible && (
-                <motion.div
-                    key={`message-${message}`}
-                    className={cn(
-                        'rounded-lg shadow-lg backdrop-blur-sm',
-                        'flex items-center',
-                        'text-white font-medium',
-                        getBgColor(),
-                        sizeClasses[size],
-                        centered && 'justify-center',
-                        className
-                    )}
-                    variants={messageVariants}
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                    role="alert"
-                    aria-live="assertive"
-                >
-                    {showIcon && (
-                        <span className="mr-2">
-                            {getIcon()}
-                        </span>
-                    )}
-                    <span>{message}</span>
-                </motion.div>
-            )}
-        </AnimatePresence>
+        <div className={cn(
+            "relative overflow-hidden",
+            centered && "flex justify-center",
+            className
+        )}>
+            <AnimatePresence mode="wait">
+                {isVisible && (
+                    <motion.div
+                        key={`message-${currentMessage}`}
+                        className={getMessageStyles()}
+                        variants={messageVariants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        role="alert"
+                    >
+                        {currentMessage}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
     );
 };
 

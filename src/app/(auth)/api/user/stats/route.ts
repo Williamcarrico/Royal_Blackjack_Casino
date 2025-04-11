@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase'
+import { cookies } from 'next/headers'
 
 // Cache duration in milliseconds (2 minutes)
 const CACHE_DURATION = 120000
@@ -129,41 +130,45 @@ function mapAchievements(dbAchievements: unknown[]): Achievement[] {
 
     return dbAchievements.map(item => {
         const dbItem = item as DbAchievementItem;
-        let achievementData = {
-            name: '',
-            description: '',
-            badge_image_url: ''
-        };
-
-        // Handle different possible shapes of achievements data
-        if (dbItem.achievements) {
-            if (typeof dbItem.achievements === 'object') {
-                if (Array.isArray(dbItem.achievements)) {
-                    // If it's an array, use first item if available
-                    achievementData = dbItem.achievements[0] || achievementData;
-                } else {
-                    // If it's an object, use it directly but ensure required properties exist
-                    const achievements = dbItem.achievements as Record<string, unknown>;
-                    achievementData = {
-                        name: typeof achievements.name === 'string' ? achievements.name : '',
-                        description: typeof achievements.description === 'string' ? achievements.description : '',
-                        badge_image_url: typeof achievements.badge_image_url === 'string' ? achievements.badge_image_url : ''
-                    };
-                }
-            }
-        }
-
         return {
-            achievement_id: dbItem.achievement_id || '',
-            earned_at: dbItem.earned_at || '',
-            achievements: achievementData
+            achievement_id: dbItem.achievement_id ?? '',
+            earned_at: dbItem.earned_at ?? '',
+            achievements: extractAchievementData(dbItem.achievements)
         };
     });
 }
 
+// Helper function to extract achievement data from different data shapes
+function extractAchievementData(achievements: unknown) {
+    const defaultData = {
+        name: '',
+        description: '',
+        badge_image_url: ''
+    };
+
+    // Early return if achievements is falsy
+    if (!achievements) return defaultData;
+
+    // Early return if not an object
+    if (typeof achievements !== 'object') return defaultData;
+
+    // Handle array case
+    if (Array.isArray(achievements)) {
+        return achievements[0] || defaultData;
+    }
+
+    // Handle object case
+    const achievementsObj = achievements as Record<string, unknown>;
+    return {
+        name: typeof achievementsObj.name === 'string' ? achievementsObj.name : '',
+        description: typeof achievementsObj.description === 'string' ? achievementsObj.description : '',
+        badge_image_url: typeof achievementsObj.badge_image_url === 'string' ? achievementsObj.badge_image_url : ''
+    };
+}
+
 export async function GET(_request: NextRequest) {
     try {
-        const supabase = createClient()
+        const supabase = await createServerClient()
 
         // Get current authenticated user
         const { data: { session } } = await supabase.auth.getSession()
@@ -182,7 +187,7 @@ export async function GET(_request: NextRequest) {
 
         // Get user profile data with a single efficient query
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('user_profiles')
             .select(`
                 *,
                 game_sessions(
@@ -202,23 +207,23 @@ export async function GET(_request: NextRequest) {
             .single()
 
         if (profileError || !profile) {
-            console.error('Error fetching user profile:', profileError)
-            return NextResponse.json({ error: 'Failed to fetch user profile' }, { status: 500 })
+            console.error('Error fetching user profile:', JSON.stringify(profileError))
+            return NextResponse.json({ error: 'Failed to fetch user profile', details: profileError }, { status: 500 })
         }
 
         // Get user ranking data
         const { data: allUsers, error: rankError } = await supabase
-            .from('profiles')
-            .select('id, balance')
-            .order('balance', { ascending: false })
+            .from('user_profiles')
+            .select('id, chips as balance')
+            .order('chips', { ascending: false })
 
         if (rankError) {
-            console.error('Error fetching user ranks:', rankError)
-            return NextResponse.json({ error: 'Failed to fetch rank data' }, { status: 500 })
+            console.error('Error fetching user ranks:', JSON.stringify(rankError))
+            return NextResponse.json({ error: 'Failed to fetch rank data', details: rankError }, { status: 500 })
         }
 
         // Calculate rank and percentile
-        const userIndex = allUsers.findIndex(user => user.id === userId)
+        const userIndex = allUsers.findIndex((user: { id: string }) => user.id === userId)
         const rank = userIndex !== -1 ? userIndex + 1 : null
         const totalPlayers = allUsers.length
         const percentile = rank ? Math.round(((totalPlayers - rank) / totalPlayers) * 100) : null

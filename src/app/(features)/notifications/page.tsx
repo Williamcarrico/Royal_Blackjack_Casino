@@ -107,7 +107,7 @@ const NotificationItem: React.FC<{
                 transition={{ duration: 0.2 }}
                 className="relative group"
             >
-                <div
+                <button
                     className={cn(
                         'w-full text-left p-4 hover:bg-gradient-to-r hover:from-amber-900/20 hover:to-transparent focus:bg-amber-900/15 focus:outline-none transition-colors relative cursor-pointer border-b border-amber-900/20',
                         notification.isNew && 'bg-gradient-to-r from-amber-900/15 to-transparent',
@@ -119,8 +119,7 @@ const NotificationItem: React.FC<{
                     )}
                     onClick={handleClick}
                     onKeyDown={handleKeyDown}
-                    role="button"
-                    tabIndex={0}
+                    type="button"
                     aria-label={`${notification.title} notification ${notification.isNew ? ' (New)' : ''}`}
                 >
                     <div className="flex">
@@ -142,7 +141,7 @@ const NotificationItem: React.FC<{
                                 <h4 className="font-medium truncate transition-colors text-amber-300 group-hover:text-amber-200">
                                     {notification.title}
                                     {notification.isNew && <span className="sr-only"> (New)</span>}
-                                </h4>
+                            </h4>
                                 {notification.isNew && (
                                     <motion.span
                                         initial={{ scale: 1, opacity: 0.9 }}
@@ -197,7 +196,7 @@ const NotificationItem: React.FC<{
                             }}
                         />
                     )}
-                </div>
+                </button>
 
                 {/* Actions dropdown menu */}
                 {!isSelectionMode && (
@@ -332,6 +331,347 @@ const EmptyState: React.FC<{
     </div>
 );
 
+// Notification content display component
+const NotificationContent = ({
+    error,
+    isLoading,
+    filteredNotifications,
+    searchQuery,
+    noResultsMessage,
+    emptyMessage,
+    selectedIds,
+    onToggleSelect,
+    isSelectionMode,
+    markAsRead,
+    deleteNotification,
+    archiveNotification,
+    icon
+}: {
+    error: string | null;
+    isLoading: boolean;
+    filteredNotifications: EnrichedNotification[];
+    searchQuery: string;
+    noResultsMessage: string;
+    emptyMessage: string;
+    selectedIds: Set<string>;
+    onToggleSelect: (id: string) => void;
+    isSelectionMode: boolean;
+    markAsRead: (id: string) => Promise<void>;
+    deleteNotification: (id: string) => Promise<void>;
+    archiveNotification: (id: string) => Promise<void>;
+    icon?: React.ReactNode;
+}) => {
+    if (error) {
+        return (
+            <EmptyState
+                message="There was an error loading your notifications. Please try again later."
+                icon={<X className="w-12 h-12 text-red-500/30" />}
+            />
+        );
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center py-12">
+                <div className="w-12 h-12 border-t-2 border-b-2 rounded-full animate-spin border-amber-500"></div>
+            </div>
+        );
+    }
+
+    if (filteredNotifications.length === 0) {
+        return (
+            <EmptyState
+                message={searchQuery ? noResultsMessage : emptyMessage}
+                icon={icon || <Bell className="w-12 h-12 text-amber-500/30" />}
+            />
+        );
+    }
+
+    return (
+        <div className="space-y-px border-t border-amber-900/20">
+            {filteredNotifications.map((notification) => (
+                <NotificationItem
+                    key={notification.id}
+                    notification={notification}
+                    onMarkAsRead={markAsRead}
+                    onDelete={deleteNotification}
+                    onArchive={archiveNotification}
+                    selectedIds={selectedIds}
+                    onToggleSelect={onToggleSelect}
+                    isSelectionMode={isSelectionMode}
+                />
+            ))}
+        </div>
+    );
+};
+
+// Action buttons component for header
+const ActionButtons = ({
+    isSelectionMode,
+    selectedIds,
+    handleDeselectAll,
+    handleSelectAll,
+    handleMarkSelectedAsRead,
+    handleArchiveSelected,
+    handleDeleteSelected,
+    searchQuery,
+    setSearchQuery,
+    setIsSelectionMode,
+    counts,
+    handleMarkAllAsRead,
+    preferencesOpen,
+    setPreferencesOpen,
+    filterType,
+    getTypeCount,
+    setFilterType
+}: {
+    isSelectionMode: boolean;
+    selectedIds: Set<string>;
+    handleDeselectAll: () => void;
+    handleSelectAll: () => void;
+    handleMarkSelectedAsRead: () => Promise<void>;
+    handleArchiveSelected: () => Promise<void>;
+    handleDeleteSelected: () => Promise<void>;
+    searchQuery: string;
+    setSearchQuery: (query: string) => void;
+    setIsSelectionMode: (mode: boolean) => void;
+    counts: { unread: number };
+    handleMarkAllAsRead: () => Promise<void>;
+    preferencesOpen: boolean;
+    setPreferencesOpen: (open: boolean) => void;
+    filterType: NotificationType | 'all';
+    getTypeCount: (type: NotificationType | 'all') => number;
+    setFilterType: (type: NotificationType | 'all') => void;
+}) => {
+    if (isSelectionMode) {
+        return (
+            <>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDeselectAll}
+                    className="border-amber-700/50 hover:bg-amber-900/20"
+                >
+                    Cancel
+                </Button>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSelectAll}
+                    className="border-amber-700/50 hover:bg-amber-900/20"
+                >
+                    Select All
+                </Button>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleMarkSelectedAsRead}
+                                disabled={selectedIds.size === 0}
+                                className="border-amber-700/50 hover:bg-amber-900/20"
+                            >
+                                <CheckCheck className="w-4 h-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Mark as Read</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleArchiveSelected}
+                                disabled={selectedIds.size === 0}
+                                className="border-amber-700/50 hover:bg-amber-900/20"
+                            >
+                                <Archive className="w-4 h-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Archive</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleDeleteSelected}
+                                disabled={selectedIds.size === 0}
+                                className="border-amber-700/50 hover:bg-amber-900/20 hover:text-red-400"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Delete</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            </>
+        );
+    }
+
+    return (
+        <>
+            <div className="relative w-64">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+                <Input
+                    placeholder="Search notifications"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8 bg-black/20 border-amber-800/30 focus-visible:ring-amber-600"
+                />
+                {searchQuery && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute top-0 right-0 h-full px-2 text-gray-500 hover:text-gray-300"
+                        onClick={() => setSearchQuery('')}
+                    >
+                        <X className="w-4 h-4" />
+                        <span className="sr-only">Clear search</span>
+                    </Button>
+                )}
+            </div>
+
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-amber-700/50 hover:bg-amber-900/20"
+                    >
+                        <SlidersHorizontal className="w-4 h-4 mr-1" />
+                        <span className="hidden sm:inline">Filter</span>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-gradient-to-b from-[#0a0605]/95 to-[#100a0a]/98 border-amber-800/40">
+                    <div className="px-2 py-1.5 text-xs text-gray-400">Filter by type</div>
+                    <DropdownMenuSeparator className="bg-amber-900/20" />
+                    {(['all', 'bonus', 'tournament', 'promo', 'achievement', 'game', 'system', 'account', 'vip', 'reward'] as const).map((type) => {
+                        const typeInfo = getNotificationTypeInfo(type);
+                        const count = getTypeCount(type);
+                        return (
+                            <DropdownMenuItem
+                                key={type}
+                                className={cn(
+                                    "flex items-center gap-2 cursor-pointer",
+                                    filterType === type ? "text-amber-300" : "text-gray-300"
+                                )}
+                                onClick={() => setFilterType(type)}
+                            >
+                                {typeInfo.icon}
+                                {typeInfo.label}
+                                <Badge variant="outline" className="ml-auto">
+                                    {count}
+                                </Badge>
+                            </DropdownMenuItem>
+                        );
+                    })}
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button
+                variant="outline"
+                size="sm"
+                className="border-amber-700/50 hover:bg-amber-900/20"
+                onClick={() => setIsSelectionMode(true)}
+            >
+                <CheckCheck className="w-4 h-4 mr-1" />
+                <span className="hidden sm:inline">Select</span>
+            </Button>
+
+            {counts.unread > 0 && (
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleMarkAllAsRead}
+                                className="border-amber-700/50 hover:bg-amber-900/20"
+                            >
+                                <CheckCheck className="w-4 h-4" />
+                                <span className="hidden sm:inline">Mark All Read</span>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Mark All as Read</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            )}
+
+            <Dialog open={preferencesOpen} onOpenChange={setPreferencesOpen}>
+                <DialogTrigger asChild>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-amber-700/50 hover:bg-amber-900/20"
+                    >
+                        <Settings className="w-4 h-4 mr-1" />
+                        <span className="hidden sm:inline">Settings</span>
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl bg-[#0a0605] border-amber-800/40">
+                    <DialogTitle className="text-amber-300">
+                        Notification Preferences
+                    </DialogTitle>
+                    <NotificationPreferences isDialog={true} />
+                </DialogContent>
+            </Dialog>
+        </>
+    );
+};
+
+// Custom hook for notification filtering
+function useNotificationFiltering(
+    notifications: EnrichedNotification[],
+    activeTab: 'all' | 'unread' | 'read' | 'archived',
+    filterType: NotificationType | 'all',
+    searchQuery: string,
+    filterByStatus: (status: 'unread' | 'read' | 'archived') => EnrichedNotification[],
+    filterByType: (type: NotificationType | 'all') => EnrichedNotification[]
+) {
+    // Get filtered notifications
+    const getFilteredNotifications = () => {
+        let filtered = notifications;
+
+        if (activeTab !== 'all') {
+            filtered = filterByStatus(activeTab);
+        }
+
+        if (filterType !== 'all') {
+            filtered = filterByType(filterType);
+        }
+
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter(n =>
+                n.title.toLowerCase().includes(query) ||
+                n.message.toLowerCase().includes(query)
+            );
+        }
+
+        return filtered;
+    };
+
+    // Sort by creation date
+    const filteredNotifications = getFilteredNotifications()
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return { filteredNotifications };
+}
+
 /**
  * Main Notifications Page Component
  * Displays all notifications with filtering and bulk actions
@@ -350,49 +690,33 @@ export default function NotificationsPage() {
         filterByStatus
     } = useNotifications();
 
-    // State for active tab
+    // State for UI
     const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'read' | 'archived'>('all');
-
-    // State for current filter type
     const [filterType, setFilterType] = useState<NotificationType | 'all'>('all');
-
-    // State for search query
     const [searchQuery, setSearchQuery] = useState('');
-
-    // State for preferences dialog
     const [preferencesOpen, setPreferencesOpen] = useState(false);
-
-    // State for selection mode
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-    // Filtered and searched notifications
-    const getFilteredNotifications = () => {
-        // First filter by status (tab)
-        let filtered = notifications;
-
-        if (activeTab !== 'all') {
-            filtered = filterByStatus(activeTab as 'read' | 'unread' | 'archived');
+    // Create a wrapper for filterByType that handles the 'all' case
+    const handleFilterByType = (type: NotificationType | 'all') => {
+        if (type === 'all') {
+            return notifications; // Return all notifications for 'all' type
         }
-
-        // Then filter by type if not 'all'
-        if (filterType !== 'all') {
-            filtered = filterByType(filterType);
-        }
-
-        // Then filter by search query if present
-        if (searchQuery.trim()) {
-            const query = searchQuery.toLowerCase();
-            filtered = filtered.filter(n =>
-                n.title.toLowerCase().includes(query) ||
-                n.message.toLowerCase().includes(query)
-            );
-        }
-
-        return filtered;
+        return filterByType(type);
     };
 
-    // Toggle selection of a notification
+    // Get filtered notifications using custom hook
+    const { filteredNotifications } = useNotificationFiltering(
+        notifications,
+        activeTab,
+        filterType,
+        searchQuery,
+        filterByStatus,
+        handleFilterByType
+    );
+
+    // Selection handlers
     const handleToggleSelect = (id: string) => {
         setSelectedIds(prevIds => {
             const newIds = new Set(prevIds);
@@ -405,43 +729,39 @@ export default function NotificationsPage() {
         });
     };
 
-    // Select all visible notifications
     const handleSelectAll = () => {
-        const filteredIds = getFilteredNotifications().map(n => n.id);
+        const filteredIds = filteredNotifications.map(n => n.id);
         setSelectedIds(new Set(filteredIds));
     };
 
-    // Deselect all notifications
     const handleDeselectAll = () => {
         setSelectedIds(new Set());
     };
 
-    // Delete all selected notifications
-    const handleDeleteSelected = async () => {
-        // Show confirmation dialog in a real app
-        const promises = Array.from(selectedIds).map(id => deleteNotification(id));
-        await Promise.all(promises);
+    // Batch action handlers
+    const resetSelection = () => {
         setSelectedIds(new Set());
         setIsSelectionMode(false);
     };
 
-    // Archive all selected notifications
+    const handleDeleteSelected = async () => {
+        const promises = Array.from(selectedIds).map(id => deleteNotification(id));
+        await Promise.all(promises);
+        resetSelection();
+    };
+
     const handleArchiveSelected = async () => {
         const promises = Array.from(selectedIds).map(id => archiveNotification(id));
         await Promise.all(promises);
-        setSelectedIds(new Set());
-        setIsSelectionMode(false);
+        resetSelection();
     };
 
-    // Mark all selected notifications as read
     const handleMarkSelectedAsRead = async () => {
         const promises = Array.from(selectedIds).map(id => markAsRead(id));
         await Promise.all(promises);
-        setSelectedIds(new Set());
-        setIsSelectionMode(false);
+        resetSelection();
     };
 
-    // Handle mark all notifications as read
     const handleMarkAllAsRead = async () => {
         await markAllAsRead();
     };
@@ -460,457 +780,212 @@ export default function NotificationsPage() {
         return notifications.filter(n => n.type === type).length;
     };
 
-    // Get filtered notifications and sort by creation date
-    const filteredNotifications = getFilteredNotifications()
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    return (
-        <div className="container max-w-5xl px-4 pt-24 pb-8 mx-auto sm:px-6">
-            <div className="flex flex-col space-y-6">
-                {/* Header */}
-                <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+return (
+    <div className="container max-w-5xl px-4 pt-24 pb-8 mx-auto sm:px-6">
+        <div className="flex flex-col space-y-6">
+            <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+                <div className="flex flex-col items-start justify-between">
                     <div>
-                        <h1 className="mb-1 text-2xl font-semibold text-amber-300">Notifications</h1>
+                        <h1 className="font-semibold text-amber-300">Notifications</h1>
                         <p className="text-gray-400">
                             {counts.all} {counts.all === 1 ? 'notification' : 'notifications'}
                             {counts.unread > 0 && <span>, {counts.unread} unread</span>}
                         </p>
                     </div>
-
-                    {/* Action buttons */}
-                    <div className="flex items-center gap-3">
-                        {isSelectionMode ? (
-                            <>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleDeselectAll}
-                                    className="border-amber-700/50 hover:bg-amber-900/20"
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleSelectAll}
-                                    className="border-amber-700/50 hover:bg-amber-900/20"
-                                >
-                                    Select All
-                                </Button>
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={handleMarkSelectedAsRead}
-                                                disabled={selectedIds.size === 0}
-                                                className="border-amber-700/50 hover:bg-amber-900/20"
-                                            >
-                                                <CheckCheck className="w-4 h-4" />
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Mark as Read</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={handleArchiveSelected}
-                                                disabled={selectedIds.size === 0}
-                                                className="border-amber-700/50 hover:bg-amber-900/20"
-                                            >
-                                                <Archive className="w-4 h-4" />
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Archive</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={handleDeleteSelected}
-                                                disabled={selectedIds.size === 0}
-                                                className="border-amber-700/50 hover:bg-amber-900/20 hover:text-red-400"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Delete</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            </>
-                        ) : (
-                            <>
-                                <div className="relative w-64">
-                                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-                                    <Input
-                                        placeholder="Search notifications"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="pl-8 bg-black/20 border-amber-800/30 focus-visible:ring-amber-600"
-                                    />
-                                    {searchQuery && (
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="absolute top-0 right-0 h-full px-2 text-gray-500 hover:text-gray-300"
-                                            onClick={() => setSearchQuery('')}
-                                        >
-                                            <X className="w-4 h-4" />
-                                            <span className="sr-only">Clear search</span>
-                                        </Button>
-                                    )}
-                                </div>
-
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="border-amber-700/50 hover:bg-amber-900/20"
-                                        >
-                                            <SlidersHorizontal className="w-4 h-4 mr-1" />
-                                            <span className="hidden sm:inline">Filter</span>
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent className="bg-gradient-to-b from-[#0a0605]/95 to-[#100a0a]/98 border-amber-800/40">
-                                        <div className="px-2 py-1.5 text-xs text-gray-400">Filter by type</div>
-                                        <DropdownMenuSeparator className="bg-amber-900/20" />
-                                        {(['all', 'bonus', 'tournament', 'promo', 'achievement', 'game', 'system', 'account', 'vip', 'reward'] as const).map((type) => {
-                                            const typeInfo = getNotificationTypeInfo(type);
-                                            const count = getTypeCount(type);
-                                            return (
-                                                <DropdownMenuItem
-                                                    key={type}
-                                                    className={cn(
-                                                        "flex items-center gap-2 cursor-pointer",
-                                                        filterType === type ? "text-amber-300" : "text-gray-300"
-                                                    )}
-                                                    onClick={() => setFilterType(type)}
-                                                >
-                                                    {typeInfo.icon}
-                                                    {typeInfo.label}
-                                                    <Badge variant="outline" className="ml-auto">
-                                                        {count}
-                                                    </Badge>
-                                                </DropdownMenuItem>
-                                            );
-                                        })}
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="border-amber-700/50 hover:bg-amber-900/20"
-                                    onClick={() => setIsSelectionMode(true)}
-                                >
-                                    <CheckCheck className="w-4 h-4 mr-1" />
-                                    <span className="hidden sm:inline">Select</span>
-                                </Button>
-
-                                {counts.unread > 0 && (
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={handleMarkAllAsRead}
-                                                    className="border-amber-700/50 hover:bg-amber-900/20"
-                                                >
-                                                    <CheckCheck className="w-4 h-4" />
-                                                    <span className="hidden sm:inline">Mark All Read</span>
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>Mark All as Read</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                )}
-
-                                <Dialog open={preferencesOpen} onOpenChange={setPreferencesOpen}>
-                                    <DialogTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="border-amber-700/50 hover:bg-amber-900/20"
-                                        >
-                                            <Settings className="w-4 h-4 mr-1" />
-                                            <span className="hidden sm:inline">Settings</span>
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-3xl bg-[#0a0605] border-amber-800/40">
-                                        <DialogTitle className="text-amber-300">
-                                            Notification Preferences
-                                        </DialogTitle>
-                                        <NotificationPreferences isDialog={true} />
-                                    </DialogContent>
-                                </Dialog>
-                            </>
-                        )}
-                    </div>
                 </div>
 
-                {/* Current filter display */}
-                {filterType !== 'all' && (
-                    <div className="flex items-center">
-                        <span className="mr-2 text-sm text-gray-400">Filtered by:</span>
-                        <Badge className={cn("flex items-center", getNotificationTypeInfo(filterType).color)}>
-                            {getNotificationTypeInfo(filterType).icon}
-                            {getNotificationTypeInfo(filterType).label}
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-auto p-0 ml-1 hover:bg-transparent"
-                                onClick={() => setFilterType('all')}
-                            >
-                                <X className="w-3 h-3" />
-                                <span className="sr-only">Clear filter</span>
-                            </Button>
-                        </Badge>
-                    </div>
-                )}
+                {/* Action buttons */}
+                <div className="flex items-center gap-3">
+                <ActionButtons
+                    isSelectionMode={isSelectionMode}
+                    selectedIds={selectedIds}
+                    handleDeselectAll={handleDeselectAll}
+                    handleSelectAll={handleSelectAll}
+                    handleMarkSelectedAsRead={handleMarkSelectedAsRead}
+                    handleArchiveSelected={handleArchiveSelected}
+                    handleDeleteSelected={handleDeleteSelected}
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    setIsSelectionMode={setIsSelectionMode}
+                    counts={counts}
+                    handleMarkAllAsRead={handleMarkAllAsRead}
+                    preferencesOpen={preferencesOpen}
+                    setPreferencesOpen={setPreferencesOpen}
+                    filterType={filterType}
+                    getTypeCount={getTypeCount}
+                    setFilterType={setFilterType}
+                />
+            </div>
+        </div>
 
-                {/* Tabs */}
-                <Tabs
-                    value={activeTab}
-                    onValueChange={(value: string) => setActiveTab(value as 'all' | 'unread' | 'read' | 'archived')}
-                    className="w-full"
+        {/* Current filter indicator */}
+        {filterType !== 'all' && (
+            <div className="flex items-center">
+                <span className="mr-2 text-sm text-gray-400">Filtered by:</span>
+                <Badge className={cn("flex items-center", getNotificationTypeInfo(filterType).color)}>
+                    {getNotificationTypeInfo(filterType).icon}
+                    {getNotificationTypeInfo(filterType).label}
+                    <Button
+                        size="sm"
+                        className="h-auto p-0 ml-1 hover:bg-transparent"
+                        onClick={() => setFilterType('all')}
+                    >
+                        <X className="w-3 h-3" />
+                        <span className="sr-only">Clear filter</span>
+                    </Button>
+                </Badge>
+            </div>
+        )}
+
+    {/* Tabs */}
+    <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as 'all' | 'unread' | 'read' | 'archived')}
+        className="w-full border bg-black/20 border-amber-800/30"
+    >
+        <TabsList className="border bg-black/20 border-amber-800/30">
+                <TabsTrigger
+                    value="all"
+                    className="data-[state=active]:bg-amber-900/30 data-[state=active]:text-amber-300"
                 >
-                    <TabsList className="border bg-black/20 border-amber-800/30">
-                        <TabsTrigger
-                            value="all"
-                            className="data-[state=active]:bg-amber-900/30 data-[state=active]:text-amber-300"
+                    All
+                    <Badge variant="outline" className="ml-2 bg-transparent">
+                        {counts.all}
+                    </Badge>
+                </TabsTrigger>
+                <TabsTrigger
+                    value="unread"
+                    className="data-[state=active]:bg-amber-900/30 data-[state=active]:text-amber-300"
+                >
+                    Unread
+                    <Badge variant="outline" className="ml-2 bg-transparent">
+                        {counts.unread}
+                    </Badge>
+                </TabsTrigger>
+                <TabsTrigger
+                    value="read"
+                    className="data-[state=active]:bg-amber-900/30 data-[state=active]:text-amber-300"
+                >
+                    Read
+                    <Badge variant="outline" className="ml-2 bg-transparent">
+                        {counts.read}
+                    </Badge>
+                </TabsTrigger>
+                <TabsTrigger
+                    value="archived"
+                    className="data-[state=active]:bg-amber-900/30 data-[state=active]:text-amber-300"
+                >
+                    Archived
+                    <Badge variant="outline" className="ml-2 bg-transparent">
+                        {counts.archived}
+                    </Badge>
+                </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="all" className="mt-4">
+                <NotificationContent
+                    error={error}
+                    isLoading={isLoading}
+                    filteredNotifications={filteredNotifications}
+                    searchQuery={searchQuery}
+                    noResultsMessage="No notifications match your search criteria."
+                    emptyMessage="You don't have any notifications yet."
+                    selectedIds={selectedIds}
+                    onToggleSelect={handleToggleSelect}
+                    isSelectionMode={isSelectionMode}
+                    markAsRead={markAsRead}
+                    deleteNotification={deleteNotification}
+                    archiveNotification={archiveNotification}
+                />
+            </TabsContent>
+
+            <TabsContent value="unread" className="mt-4">
+                <NotificationContent
+                    error={error}
+                    isLoading={isLoading}
+                    filteredNotifications={filteredNotifications}
+                    searchQuery={searchQuery}
+                    noResultsMessage="No unread notifications match your search criteria."
+                    emptyMessage="You don't have any unread notifications."
+                    selectedIds={selectedIds}
+                    onToggleSelect={handleToggleSelect}
+                    isSelectionMode={isSelectionMode}
+                    markAsRead={markAsRead}
+                    deleteNotification={deleteNotification}
+                    archiveNotification={archiveNotification}
+                    icon={<CheckCheck className="w-12 h-12 text-amber-500/30" />}
+                />
+            </TabsContent>
+
+            <TabsContent value="read" className="mt-4">
+                <NotificationContent
+                    error={error}
+                    isLoading={isLoading}
+                    filteredNotifications={filteredNotifications}
+                    searchQuery={searchQuery}
+                    noResultsMessage="No read notifications match your search criteria."
+                    emptyMessage="You don't have any read notifications."
+                    selectedIds={selectedIds}
+                    onToggleSelect={handleToggleSelect}
+                    isSelectionMode={isSelectionMode}
+                    markAsRead={markAsRead}
+                    deleteNotification={deleteNotification}
+                    archiveNotification={archiveNotification}
+                />
+            </TabsContent>
+
+            <TabsContent value="archived" className="mt-4">
+                <NotificationContent
+                    error={error}
+                    isLoading={isLoading}
+                    filteredNotifications={filteredNotifications}
+                    searchQuery={searchQuery}
+                    noResultsMessage="No archived notifications match your search criteria."
+                    emptyMessage="You don't have any archived notifications."
+                    selectedIds={selectedIds}
+                    onToggleSelect={handleToggleSelect}
+                    isSelectionMode={isSelectionMode}
+                    markAsRead={markAsRead}
+                    deleteNotification={deleteNotification}
+                    archiveNotification={archiveNotification}
+                    icon={<Archive className="w-12 h-12 text-amber-500/30" />}
+                />
+            </TabsContent>
+        </Tabs>
+
+        {/* Bulk actions footer */}
+        {isSelectionMode && selectedIds.size > 0 && (
+            <div className="fixed bottom-0 left-0 right-0 z-50 p-4 border-t bg-black/90 border-amber-900/40">
+                <div className="container flex items-center justify-between max-w-5xl mx-auto">
+                    <div className="text-amber-300">
+                        {selectedIds.size} {selectedIds.size === 1 ? 'notification' : 'notifications'} selected
+                    </div>
+                    <div className="flex gap-3">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleMarkSelectedAsRead}
+                            className="border-amber-700/50 hover:bg-amber-900/20"
                         >
-                            All
-                            <Badge variant="outline" className="ml-2 bg-transparent">
-                                {counts.all}
-                            </Badge>
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="unread"
-                            className="data-[state=active]:bg-amber-900/30 data-[state=active]:text-amber-300"
-                        >
-                            Unread
-                            <Badge variant="outline" className="ml-2 bg-transparent">
-                                {counts.unread}
-                            </Badge>
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="read"
-                            className="data-[state=active]:bg-amber-900/30 data-[state=active]:text-amber-300"
-                        >
-                            Read
-                            <Badge variant="outline" className="ml-2 bg-transparent">
-                                {counts.read}
-                            </Badge>
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="archived"
-                            className="data-[state=active]:bg-amber-900/30 data-[state=active]:text-amber-300"
-                        >
-                            Archived
-                            <Badge variant="outline" className="ml-2 bg-transparent">
-                                {counts.archived}
-                            </Badge>
-                        </TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="all" className="mt-4">
-                        {error ? (
-                            <EmptyState
-                                message="There was an error loading your notifications. Please try again later."
-                                icon={<X className="w-12 h-12 text-red-500/30" />}
-                            />
-                        ) : isLoading ? (
-                            <div className="flex justify-center py-12">
-                                <div className="w-12 h-12 border-t-2 border-b-2 rounded-full animate-spin border-amber-500"></div>
-                            </div>
-                        ) : filteredNotifications.length === 0 ? (
-                            <EmptyState
-                                message={
-                                    searchQuery
-                                        ? "No notifications match your search criteria."
-                                        : "You don't have any notifications yet."
-                                }
-                            />
-                        ) : (
-                            <div className="space-y-px border-t border-amber-900/20">
-                                {filteredNotifications.map((notification) => (
-                                    <NotificationItem
-                                        key={notification.id}
-                                        notification={notification}
-                                        onMarkAsRead={markAsRead}
-                                        onDelete={deleteNotification}
-                                        onArchive={archiveNotification}
-                                        selectedIds={selectedIds}
-                                        onToggleSelect={handleToggleSelect}
-                                        isSelectionMode={isSelectionMode}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </TabsContent>
-
-                    <TabsContent value="unread" className="mt-4">
-                        {error ? (
-                            <EmptyState
-                                message="There was an error loading your notifications. Please try again later."
-                                icon={<X className="w-12 h-12 text-red-500/30" />}
-                            />
-                        ) : isLoading ? (
-                            <div className="flex justify-center py-12">
-                                <div className="w-12 h-12 border-t-2 border-b-2 rounded-full animate-spin border-amber-500"></div>
-                            </div>
-                        ) : filteredNotifications.length === 0 ? (
-                            <EmptyState
-                                message={
-                                    searchQuery
-                                        ? "No unread notifications match your search criteria."
-                                        : "You don't have any unread notifications."
-                                }
-                                icon={<CheckCheck className="w-12 h-12 text-amber-500/30" />}
-                            />
-                        ) : (
-                            <div className="space-y-px border-t border-amber-900/20">
-                                {filteredNotifications.map((notification) => (
-                                    <NotificationItem
-                                        key={notification.id}
-                                        notification={notification}
-                                        onMarkAsRead={markAsRead}
-                                        onDelete={deleteNotification}
-                                        onArchive={archiveNotification}
-                                        selectedIds={selectedIds}
-                                        onToggleSelect={handleToggleSelect}
-                                        isSelectionMode={isSelectionMode}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </TabsContent>
-
-                    <TabsContent value="read" className="mt-4">
-                        {error ? (
-                            <EmptyState
-                                message="There was an error loading your notifications. Please try again later."
-                                icon={<X className="w-12 h-12 text-red-500/30" />}
-                            />
-                        ) : isLoading ? (
-                            <div className="flex justify-center py-12">
-                                <div className="w-12 h-12 border-t-2 border-b-2 rounded-full animate-spin border-amber-500"></div>
-                            </div>
-                        ) : filteredNotifications.length === 0 ? (
-                            <EmptyState
-                                message={
-                                    searchQuery
-                                        ? "No read notifications match your search criteria."
-                                        : "You don't have any read notifications."
-                                }
-                            />
-                        ) : (
-                            <div className="space-y-px border-t border-amber-900/20">
-                                {filteredNotifications.map((notification) => (
-                                    <NotificationItem
-                                        key={notification.id}
-                                        notification={notification}
-                                        onMarkAsRead={markAsRead}
-                                        onDelete={deleteNotification}
-                                        onArchive={archiveNotification}
-                                        selectedIds={selectedIds}
-                                        onToggleSelect={handleToggleSelect}
-                                        isSelectionMode={isSelectionMode}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </TabsContent>
-
-                    <TabsContent value="archived" className="mt-4">
-                        {error ? (
-                            <EmptyState
-                                message="There was an error loading your notifications. Please try again later."
-                                icon={<X className="w-12 h-12 text-red-500/30" />}
-                            />
-                        ) : isLoading ? (
-                            <div className="flex justify-center py-12">
-                                <div className="w-12 h-12 border-t-2 border-b-2 rounded-full animate-spin border-amber-500"></div>
-                            </div>
-                        ) : filteredNotifications.length === 0 ? (
-                            <EmptyState
-                                message={
-                                    searchQuery
-                                        ? "No archived notifications match your search criteria."
-                                        : "You don't have any archived notifications."
-                                }
-                                icon={<Archive className="w-12 h-12 text-amber-500/30" />}
-                            />
-                        ) : (
-                            <div className="space-y-px border-t border-amber-900/20">
-                                {filteredNotifications.map((notification) => (
-                                    <NotificationItem
-                                        key={notification.id}
-                                        notification={notification}
-                                        onMarkAsRead={markAsRead}
-                                        onDelete={deleteNotification}
-                                        onArchive={archiveNotification}
-                                        selectedIds={selectedIds}
-                                        onToggleSelect={handleToggleSelect}
-                                        isSelectionMode={isSelectionMode}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </TabsContent>
-                </Tabs>
-
-                {/* Bulk actions footer */}
-                {isSelectionMode && selectedIds.size > 0 && (
-                    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 border-t bg-black/90 border-amber-900/40">
-                        <div className="container flex items-center justify-between max-w-5xl mx-auto">
-                            <div className="text-amber-300">
-                                {selectedIds.size} {selectedIds.size === 1 ? 'notification' : 'notifications'} selected
-                            </div>
-                            <div className="flex gap-3">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleMarkSelectedAsRead}
-                                    className="border-amber-700/50 hover:bg-amber-900/20"
-                                >
-                                    <CheckCheck className="w-4 h-4 mr-2" />
-                                    Mark as Read
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleArchiveSelected}
-                                    className="border-amber-700/50 hover:bg-amber-900/20"
-                                >
-                                    <Archive className="w-4 h-4 mr-2" />
-                                    Archive
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleDeleteSelected}
-                                    className="border-amber-700/50 hover:bg-amber-900/20 hover:text-red-400"
-                                >
-                                    <Trash2 className="w-4 h-4 mr-2" />
+                            <CheckCheck className="w-4 h-4 mr-2" />
+                            Mark as Read
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleArchiveSelected}
+                        className="border-amber-700/50 hover:bg-amber-900/20"
+                    >
+                        <Archive className="w-4 h-4 mr-2" />
+                            Archive
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDeleteSelected}
+                        className="border-amber-700/50 hover:bg-amber-900/20 hover:text-red-400"
+                    >
+                        <Trash2 className="w-4 h-4 mr-2" />
                                     Delete
                                 </Button>
                             </div>

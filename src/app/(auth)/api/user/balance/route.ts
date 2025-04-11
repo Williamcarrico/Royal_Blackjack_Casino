@@ -5,7 +5,7 @@ import { TransactionType } from '@/types/authTypes'
 
 export async function POST(request: NextRequest) {
     try {
-        const supabase = createClient()
+        const supabase = await createClient()
 
         // Get current authenticated user
         const { data: { session } } = await supabase.auth.getSession()
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
 // Allow users to view their current balance
 export async function GET(_request: NextRequest) {
     try {
-        const supabase = createClient()
+        const supabase = await createClient()
 
         // Get current authenticated user
         const { data: { session } } = await supabase.auth.getSession()

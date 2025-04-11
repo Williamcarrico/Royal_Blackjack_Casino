@@ -8,15 +8,17 @@ import { Button } from '@/components/ui/layout/button'
 import { cn } from '@/lib/utils/utils'
 import Link from 'next/link'
 import { useOnClickOutside } from '@/hooks/useOnClickOutside'
-import {
-	GiDiamonds,
-	GiCoins,
-	GiBallGlow,
-	GiInfo,
-	GiPerson,
-	GiCrown,
-	GiMoneyStack
-} from 'react-icons/gi'
+import dynamic from 'next/dynamic'
+
+// Dynamically import specific icons only when needed
+const GiDiamonds = dynamic(() => import('react-icons/gi').then(mod => mod.GiDiamonds))
+const GiCoins = dynamic(() => import('react-icons/gi').then(mod => mod.GiCoins))
+const GiBallGlow = dynamic(() => import('react-icons/gi').then(mod => mod.GiBallGlow))
+const GiInfo = dynamic(() => import('react-icons/gi').then(mod => mod.GiInfo))
+const GiPerson = dynamic(() => import('react-icons/gi').then(mod => mod.GiPerson))
+const GiCrown = dynamic(() => import('react-icons/gi').then(mod => mod.GiCrown))
+const GiMoneyStack = dynamic(() => import('react-icons/gi').then(mod => mod.GiMoneyStack))
+
 import { useNotifications } from '@/hooks/services/useNotifications'
 import type { EnrichedNotification, NotificationType } from '@/types/notifications'
 import {
@@ -496,7 +498,7 @@ export function NotificationsPanel() {
 						open
 					>
 						{/* Ambient texture overlay */}
-						<div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] pointer-events-none mix-blend-overlay"></div>
+						<div className="absolute inset-0 bg-[url('/public/noise.png')] opacity-[0.03] pointer-events-none mix-blend-overlay"></div>
 
 						{/* Header with glow effect */}
 						<div className="relative p-4 border-b border-amber-900/30 bg-gradient-to-r from-amber-900/10 to-transparent">

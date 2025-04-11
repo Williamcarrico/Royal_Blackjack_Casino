@@ -33,7 +33,7 @@ export const DEFAULT_MAX_BET = 1000;
 /**
  * Default starting chips
  */
-export const DEFAULT_STARTING_CHIPS = 1000;
+export const DEFAULT_STARTING_CHIPS = 1500;
 
 /**
  * Card values for blackjack

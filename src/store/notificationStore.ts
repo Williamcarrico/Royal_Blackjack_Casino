@@ -43,6 +43,9 @@ const initialState: NotificationState = {
     preferences: DEFAULT_PREFERENCES,
 };
 
+// Add a singleton Audio instance outside of the store
+let notificationSound: HTMLAudioElement | null = null;
+
 // Create notification store with persistence
 export const useNotificationStore = create<NotificationState & NotificationActions>()(
     persist(
@@ -204,8 +207,27 @@ export const useNotificationStore = create<NotificationState & NotificationActio
 
                     // Trigger sound effect if enabled
                     if (get().preferences.soundEnabled) {
-                        const audio = new Audio('/sounds/notification.mp3');
-                        audio.play().catch(e => console.log('Error playing notification sound:', e));
+                        try {
+                            // Create singleton audio instance if it doesn't exist
+                            if (!notificationSound) {
+                                notificationSound = new Audio('/sounds/notification.mp3');
+                                notificationSound.preload = 'auto';
+                            }
+
+                            // Reset the audio to allow replaying
+                            notificationSound.currentTime = 0;
+
+                            // Play the sound and handle errors properly
+                            notificationSound.play().catch(e => {
+                                console.warn('Error playing notification sound:', e);
+                                // Clear the instance if there was a fatal error
+                                if (e.name === 'NotSupportedError' || e.name === 'NotAllowedError') {
+                                    notificationSound = null;
+                                }
+                            });
+                        } catch (e) {
+                            console.warn('Error with notification sound:', e);
+                        }
                     }
                 } catch (error) {
                     console.error('Failed to add notification:', error);
@@ -286,8 +308,16 @@ export const useNotificationStore = create<NotificationState & NotificationActio
 
                     // Play sound if enabled
                     if (preferences.soundEnabled) {
-                        const audio = new Audio('/sounds/notification.mp3');
-                        audio.play().catch(e => console.log('Error playing notification sound:', e));
+                        try {
+                            const audio = new Audio('/sounds/notification.mp3');
+                            // Add event listener for error to handle missing file
+                            audio.addEventListener('error', (e) => {
+                                console.warn('Failed to load notification sound:', e);
+                            });
+                            audio.play().catch(e => console.warn('Error playing notification sound:', e));
+                        } catch (e) {
+                            console.warn('Error creating audio object:', e);
+                        }
                     }
                 });
             },

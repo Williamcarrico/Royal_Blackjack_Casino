@@ -1,7 +1,9 @@
+/**
+ * Supabase client for server environments (server components and API routes)
+ */
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createServerClient } from '@/lib/supabase'
 
 // Schema for preferences update
 const preferencesSchema = z.object({
@@ -14,10 +16,7 @@ const preferencesSchema = z.object({
 export async function GET() {
 	try {
 		// Initialize Supabase client
-		const cookieStore = cookies()
-		const supabase = createRouteHandlerClient({
-			cookies: () => cookieStore,
-		})
+		const supabase = await createServerClient()
 
 		// Get user session
 		const {
@@ -88,10 +87,7 @@ export async function PUT(request: NextRequest) {
 		const updates = validation.data
 
 		// Initialize Supabase client
-		const cookieStore = cookies()
-		const supabase = createRouteHandlerClient({
-			cookies: () => cookieStore,
-		})
+		const supabase = await createServerClient()
 
 		// Get user session
 		const {

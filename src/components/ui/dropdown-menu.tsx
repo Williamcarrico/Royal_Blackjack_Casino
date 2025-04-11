@@ -5,26 +5,153 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
 
-function DropdownMenu({
+// Wrapper for safely providing context without infinite render loops
+const SafeDropdownMenuContext = React.createContext<{
+  open: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}>({
+  open: false,
+  setOpen: () => { },
+});
+
+// Safe dropdown menu component
+function SafeDropdownMenu({
+  children,
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
+}: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.Root>>) {
+  const [open, setOpen] = React.useState(false);
+  const isUpdating = React.useRef(false);
+
+  // Use useMemo to create a stable context value that doesn't change on every render
+  const contextValue = React.useMemo(
+    () => ({ open, setOpen }),
+    [open]
+  );
+
+  // Use a stable callback that doesn't recreate on every render
+  const handleOpenChange = React.useCallback((newOpen: boolean) => {
+    if (!isUpdating.current) {
+      isUpdating.current = true;
+
+      // Use functional updates to avoid stale state references
+      setOpen(prevOpen => {
+        if (prevOpen !== newOpen) {
+          return newOpen;
+        }
+        return prevOpen;
+      });
+
+      // Reset the flag after the update completes
+      setTimeout(() => {
+        isUpdating.current = false;
+      }, 0);
+    }
+  }, []);
+
+  return (
+    <SafeDropdownMenuContext.Provider value={contextValue}>
+      <DropdownMenuPrimitive.Root
+        open={open}
+        onOpenChange={handleOpenChange}
+        data-slot="dropdown-menu"
+        {...props}
+      >
+        {children}
+      </DropdownMenuPrimitive.Root>
+    </SafeDropdownMenuContext.Provider>
+  );
+}
+
+// Safe trigger that doesn't cause infinite renders
+function SafeDropdownMenuTrigger({
+  ...props
+}: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.Trigger>>) {
+  return (
+    <DropdownMenuPrimitive.Trigger
+      data-slot="dropdown-menu-trigger"
+      {...props}
+    />
+  )
+}
+
+// Using the SafeDropdownMenu implementation as the default
+function DropdownMenu({
+  children,
+  ...props
+}: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.Root>>) {
+  const [open, setOpen] = React.useState(props.open || false);
+  const isUpdating = React.useRef(false);
+  const prevOpenRef = React.useRef(open);
+
+  // Sync with controlled prop if provided
+  React.useEffect(() => {
+    if (props.open !== undefined && props.open !== open && !isUpdating.current) {
+      setOpen(props.open);
+    }
+  }, [props.open, open]);
+
+  const contextValue = React.useMemo(
+    () => ({ open, setOpen }),
+    [open]
+  );
+
+  const handleOpenChange = React.useCallback((newOpen: boolean) => {
+    if (!isUpdating.current) {
+      isUpdating.current = true;
+
+      // Only update if the state is actually changing
+      if (prevOpenRef.current !== newOpen) {
+        setOpen(newOpen);
+        prevOpenRef.current = newOpen;
+
+        // Call the original handler if provided
+        props.onOpenChange?.(newOpen);
+      }
+
+      // Reset the flag after the update completes
+      setTimeout(() => {
+        isUpdating.current = false;
+      }, 0);
+    }
+  }, [props.onOpenChange]);
+
+  return (
+    <SafeDropdownMenuContext.Provider value={contextValue}>
+      <DropdownMenuPrimitive.Root
+        {...props}
+        open={open}
+        onOpenChange={handleOpenChange}
+        data-slot="dropdown-menu"
+      >
+        {children}
+      </DropdownMenuPrimitive.Root>
+    </SafeDropdownMenuContext.Provider>
+  );
+}
+
+// Legacy implementation for backward compatibility
+function LegacyDropdownMenu({
+  ...props
+}: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.Root>>) {
   return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
 }
 
 function DropdownMenuPortal({
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.Portal>) {
+}: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.Portal>>) {
   return (
     <DropdownMenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />
   )
 }
 
 function DropdownMenuTrigger({
+  className,
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.Trigger>) {
+}: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.Trigger>>) {
   return (
     <DropdownMenuPrimitive.Trigger
       data-slot="dropdown-menu-trigger"
+      className={cn("outline-none", className)}
       {...props}
     />
   )
@@ -34,7 +161,7 @@ function DropdownMenuContent({
   className,
   sideOffset = 4,
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
+}: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.Content>>) {
   return (
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
@@ -44,6 +171,12 @@ function DropdownMenuContent({
           "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border p-1 shadow-md",
           className
         )}
+        onFocusOutside={(event) => {
+          // Help prevent focus issues with nested components
+          if (props.onFocusOutside) {
+            props.onFocusOutside(event);
+          }
+        }}
         {...props}
       />
     </DropdownMenuPrimitive.Portal>
@@ -52,7 +185,7 @@ function DropdownMenuContent({
 
 function DropdownMenuGroup({
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.Group>) {
+}: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.Group>>) {
   return (
     <DropdownMenuPrimitive.Group data-slot="dropdown-menu-group" {...props} />
   )
@@ -63,10 +196,10 @@ function DropdownMenuItem({
   inset,
   variant = "default",
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.Item> & {
+}: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.Item> & {
   inset?: boolean
   variant?: "default" | "destructive"
-}) {
+}>) {
   return (
     <DropdownMenuPrimitive.Item
       data-slot="dropdown-menu-item"
@@ -86,7 +219,7 @@ function DropdownMenuCheckboxItem({
   children,
   checked,
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.CheckboxItem>) {
+}: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.CheckboxItem>>) {
   return (
     <DropdownMenuPrimitive.CheckboxItem
       data-slot="dropdown-menu-checkbox-item"
@@ -109,7 +242,7 @@ function DropdownMenuCheckboxItem({
 
 function DropdownMenuRadioGroup({
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.RadioGroup>) {
+}: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.RadioGroup>>) {
   return (
     <DropdownMenuPrimitive.RadioGroup
       data-slot="dropdown-menu-radio-group"
@@ -122,7 +255,7 @@ function DropdownMenuRadioItem({
   className,
   children,
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.RadioItem>) {
+}: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.RadioItem>>) {
   return (
     <DropdownMenuPrimitive.RadioItem
       data-slot="dropdown-menu-radio-item"
@@ -146,9 +279,9 @@ function DropdownMenuLabel({
   className,
   inset,
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.Label> & {
+}: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.Label> & {
   inset?: boolean
-}) {
+}>) {
   return (
     <DropdownMenuPrimitive.Label
       data-slot="dropdown-menu-label"
@@ -165,7 +298,7 @@ function DropdownMenuLabel({
 function DropdownMenuSeparator({
   className,
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.Separator>) {
+}: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.Separator>>) {
   return (
     <DropdownMenuPrimitive.Separator
       data-slot="dropdown-menu-separator"
@@ -178,7 +311,7 @@ function DropdownMenuSeparator({
 function DropdownMenuShortcut({
   className,
   ...props
-}: React.ComponentProps<"span">) {
+}: Readonly<React.ComponentProps<"span">>) {
   return (
     <span
       data-slot="dropdown-menu-shortcut"
@@ -193,7 +326,7 @@ function DropdownMenuShortcut({
 
 function DropdownMenuSub({
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.Sub>) {
+}: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.Sub>>) {
   return <DropdownMenuPrimitive.Sub data-slot="dropdown-menu-sub" {...props} />
 }
 
@@ -202,9 +335,9 @@ function DropdownMenuSubTrigger({
   inset,
   children,
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.SubTrigger> & {
+}: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.SubTrigger> & {
   inset?: boolean
-}) {
+}>) {
   return (
     <DropdownMenuPrimitive.SubTrigger
       data-slot="dropdown-menu-sub-trigger"
@@ -224,7 +357,7 @@ function DropdownMenuSubTrigger({
 function DropdownMenuSubContent({
   className,
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.SubContent>) {
+}: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.SubContent>>) {
   return (
     <DropdownMenuPrimitive.SubContent
       data-slot="dropdown-menu-sub-content"
@@ -239,18 +372,21 @@ function DropdownMenuSubContent({
 
 export {
   DropdownMenu,
-  DropdownMenuPortal,
-  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
-  DropdownMenuLabel,
   DropdownMenuItem,
-  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuSub,
-  DropdownMenuSubTrigger,
   DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+  LegacyDropdownMenu,
+  SafeDropdownMenu,
+  SafeDropdownMenuTrigger,
 }

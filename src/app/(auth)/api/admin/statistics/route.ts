@@ -1,9 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase'
+
+// Define interfaces for type safety
+interface UserRecord {
+    id: string
+    username: string
+    email: string
+    created_at: string
+    total_games: number
+    total_hands: number
+    total_wins: number
+    total_losses: number
+    total_pushes: number
+    total_blackjacks: number
+    balance: number
+}
+
+interface SessionRecord {
+    id: string
+    user_id: string
+    session_start: string
+    session_end: string | null
+}
 
 export async function GET(request: NextRequest) {
     try {
-        const supabase = createClient()
+        const supabase = await createServerClient()
 
         // Get current authenticated user to check admin status
         const { data: { session } } = await supabase.auth.getSession()
@@ -31,8 +53,8 @@ export async function GET(request: NextRequest) {
 
         // Get query parameters
         const { searchParams } = new URL(request.url)
-        const period = searchParams.get('period') || 'all'
-        const format = searchParams.get('format') || 'json'
+        const period = searchParams.get('period') ?? 'all'
+        const format = searchParams.get('format') ?? 'json'
 
         // Define time period for filtering
         let startDate: Date | null = null
@@ -75,7 +97,7 @@ export async function GET(request: NextRequest) {
 
         // 2. Get user statistics
         const userQuery = supabase
-            .from('profiles')
+            .from('user_profiles')
             .select('id, username, email, created_at, total_games, total_hands, total_wins, total_losses, total_pushes, total_blackjacks, balance')
             .order('balance', { ascending: false })
 
@@ -120,12 +142,12 @@ export async function GET(request: NextRequest) {
                 totalPushes: tableStats.total_pushes,
                 totalBlackjacks: tableStats.total_blackjacks,
                 houseEdge: tableStats.house_edge,
-                activeSessions: sessionsResult.data.filter(s => !s.session_end).length,
+                activeSessions: sessionsResult.data.filter((s: SessionRecord) => !s.session_end).length,
                 totalSessions: sessionsResult.data.length,
-                averageBalance: usersResult.data.reduce((sum, user) => sum + user.balance, 0) / usersResult.data.length
+                averageBalance: usersResult.data.reduce((sum: number, user: UserRecord) => sum + user.balance, 0) / usersResult.data.length
             },
             // Include detailed data (redacted for security in a real application)
-            users: usersResult.data.map(user => ({
+            users: usersResult.data.map((user: UserRecord) => ({
                 id: user.id,
                 username: user.username,
                 created: user.created_at,
@@ -136,7 +158,7 @@ export async function GET(request: NextRequest) {
                 winRate: user.total_hands > 0 ? (user.total_wins / user.total_hands) * 100 : 0,
                 balance: user.balance
             })),
-            sessions: sessionsResult.data.map(session => ({
+            sessions: sessionsResult.data.map((session: SessionRecord) => ({
                 id: session.id,
                 userId: session.user_id,
                 start: session.session_start,

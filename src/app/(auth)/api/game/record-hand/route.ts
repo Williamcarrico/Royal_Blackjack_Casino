@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { GameService, SideBet } from '@/services/supabase/game-service'
+import { GameService } from '@/services/supabase/game-service'
 import { AuthService } from '@/services/supabase/auth-service'
 import { UserService } from '@/services/supabase/user-service'
 import { Card } from '@/types/cardTypes'
 import { HandResult as RoundResult } from '@/types/handTypes'
+
+// Define SideBet type locally
+type SideBet = {
+	type: string;
+	amount: number;
+	payout?: number;
+};
 
 /**
  * API route for recording a completed hand

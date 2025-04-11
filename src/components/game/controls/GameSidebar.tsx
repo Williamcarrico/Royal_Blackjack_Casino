@@ -1,17 +1,15 @@
+'use client';
+
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Award, HelpCircle, ChevronUp, ChevronDown } from 'lucide-react';
-import { GameStore, EnhancedSettingsStore } from '@/types/storeTypes';
-import MessageDisplay from '@/components/game/status/MessageDisplay';
-import { AutoStrategyPlayer } from '@/components/analytics/AutoStrategyPlayer';
-import ProbabilityDisplay from '@/components/strategy/ProbabilityDisplay';
-import GameStats from '@/components/analytics/GameStats';
+import { cn } from '@/lib/utils/utils';
+import GameControls from './GameControls';
+import Image from 'next/image';
+import { GameStore } from '@/types/storeTypes';
 import { SideBet } from '@/types/betTypes';
 
 // Define interfaces for extended GameState properties
-interface ExtendedGameState {
+interface _ExtendedGameState {
   sideBets?: {
     totalAmount: number;
     active?: SideBet[];
@@ -26,7 +24,7 @@ interface ExtendedGameState {
 }
 
 // Type guard to check if gameState has ExtendedGameState properties
-function hasExtendedProperties(state: unknown): state is ExtendedGameState {
+function _hasExtendedProperties(state: unknown): state is _ExtendedGameState {
   return state !== undefined &&
     typeof state === 'object' &&
     state !== null && (
@@ -36,208 +34,221 @@ function hasExtendedProperties(state: unknown): state is ExtendedGameState {
     );
 }
 
-// Define GameStats interface
-interface GameStatsData {
-  handsPlayed: number;
-  handsWon: number;
-  handsLost: number;
-  handsPushed: number;
-  blackjacks: number;
-  netProfit: number;
-  winRate?: number;
-}
-
 // Add this interface to define the Hand structure
-interface Hand {
+interface _Hand {
   cards: string[];
   value?: number;
   isSoft?: boolean;
   status?: string;
 }
 
-// Update the ExtendedGameStore interface
-interface ExtendedGameStore extends GameStore {
-  entities?: {
-    hands?: Record<string, Hand>;
-  };
-  gamePhase?: string;
-}
-
 // Update the GameSidebarProps interface
 interface GameSidebarProps {
-  gameStore: ExtendedGameStore;
-  enhancedSettings: EnhancedSettingsStore;
-  analytics: {
-    gameStats?: GameStatsData;
-    [key: string]: unknown;
-  };
-  setShowRulesDialog: (show: boolean) => void;
-  setShowBasicStrategyDialog: (show: boolean) => void;
+  className?: string;
+  playerName?: string;
+  playerBalance?: number;
+  playerWinStreak?: number;
+  currentBet?: number;
+  handCount?: number;
+  onOpenSettings?: () => void;
+  onOpenRules?: () => void;
+  onToggleSound?: () => void;
+  onOpenChat?: () => void;
+  onOpenHistory?: () => void;
+  onOpenBankroll?: () => void;
+  isSoundEnabled?: boolean;
+  showControlLabels?: boolean;
+  variant?: 'light' | 'dark';
+  gameStore?: GameStore;
 }
 
-export const GameSidebar: React.FC<GameSidebarProps> = ({
-  gameStore,
-  enhancedSettings,
-  analytics,
-  setShowRulesDialog,
-  setShowBasicStrategyDialog
+/**
+ * GameSidebar component provides game information and additional controls
+ * Displays player stats, current hand information, and game control options
+ */
+const GameSidebar: React.FC<GameSidebarProps> = ({
+  className,
+  playerName = 'Player',
+  playerBalance = 1000,
+  playerWinStreak = 0,
+  currentBet = 0,
+  handCount = 0,
+  onOpenSettings,
+  onOpenRules,
+  onToggleSound,
+  onOpenChat,
+  onOpenHistory,
+  onOpenBankroll,
+  isSoundEnabled = true,
+  showControlLabels = false,
+  variant = 'dark',
 }) => {
-  const [isTableRotated, setIsTableRotated] = React.useState(false);
+  const [_isTableRotated, _setIsTableRotated] = React.useState(false);
   const [isCollapsed, setIsCollapsed] = React.useState(false);
 
-  // Use the type guard with a fallback for missing gameState
-  const gameState = gameStore.gameState || {};
-  const extendedGameState = hasExtendedProperties(gameState) ? gameState : undefined;
-
-  // Add console log for debugging
-  React.useEffect(() => {
-    console.log('GameSidebar mounted with gameStore:', {
-      hasGameState: !!gameStore.gameState,
-      hasEntities: !!gameStore.entities,
-      gamePhase: gameStore.gamePhase
-    });
-  }, [gameStore]);
-
-  // Helper functions to extract nested ternary operations
-  const getCountTextColor = (count: number | undefined): string => {
-    const value = count ?? 0;
-    if (value > 0) return 'text-green-400';
-    if (value < 0) return 'text-red-400';
-    return 'text-white';
-  };
-
-  const getTrueCountTextColor = (count: number | undefined): string => {
-    const value = count ?? 0;
-    if (value > 1.5) return 'text-green-400';
-    if (value < -1.5) return 'text-red-400';
-    return 'text-white';
-  };
-
-  const formatRunningCount = (count: number | undefined): string => {
-    const value = count ?? 0;
-    return value > 0 ? `+${value}` : `${value}`;
-  };
-
   // Toggle sidebar collapse state
-  const toggleCollapse = () => {
+  const _toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
+  };
+
+  // Animation variants
+  const sidebarVariants = {
+    hidden: { opacity: 0, x: 100 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 0.3,
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: 20 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: { duration: 0.3 }
+    },
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: 0.4, duration: 0.8 }}
-      className="space-y-4 z-20 relative"
+      className={cn(
+        'flex flex-col h-full w-[240px] rounded-lg shadow-lg py-4 px-3',
+        variant === 'dark'
+          ? 'bg-black/70 backdrop-blur-md border border-white/10 text-white'
+          : 'bg-white/70 backdrop-blur-md border border-black/10 text-black',
+        className
+      )}
+      variants={sidebarVariants}
+      initial="hidden"
+      animate="visible"
     >
-      {/* Collapse/Expand button for mobile */}
-      <div className="md:hidden flex justify-end">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={toggleCollapse}
-          className="bg-black/40 backdrop-blur-sm border-slate-700"
-        >
-          {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-          {isCollapsed ? "Show" : "Hide"} Sidebar
-        </Button>
-      </div>
-
-      {/* Sidebar content - conditionally shown based on collapse state */}
-      <div className={`space-y-4 ${isCollapsed ? 'hidden' : 'block'} md:block`}>
-        {/* Game message */}
-        <div className="overflow-hidden">
-          <MessageDisplay message={gameStore.lastAction ?? ''} />
-        </div>
-
-        {/* Auto Strategy component - only render when game is fully initialized */}
-        {gameStore?.entities?.hands && (
-          <AutoStrategyPlayer className="p-4 border rounded-lg bg-black/30 backdrop-blur-sm border-slate-700" />
-        )}
-
-        {/* Probability display */}
-        {enhancedSettings.showProbabilities && gameStore.gameState?.currentPhase !== 'betting' && (
-          <ProbabilityDisplay
-            compact
-            className="p-4 border rounded-lg bg-black/30 backdrop-blur-sm border-slate-700"
+      {/* Header with logo */}
+      <motion.div
+        className="flex items-center justify-center mb-6"
+        variants={itemVariants}
+      >
+        <div className="relative w-full h-16">
+          <Image
+            src="/logos/royal-logo.png"
+            alt="Royal Casino"
+            fill
+            className="object-contain"
           />
-        )}
-
-        {/* Quick buttons for additional features */}
-        <div className="grid grid-cols-2 gap-3">
-          <Button
-            variant="outline"
-            className="bg-black/30 backdrop-blur-sm border-slate-700 hover:bg-slate-800"
-            onClick={() => setShowBasicStrategyDialog(true)}
-          >
-            <Award className="w-4 h-4 mr-2" /> Strategy
-          </Button>
-
-          <Button
-            variant="outline"
-            className="bg-black/30 backdrop-blur-sm border-slate-700 hover:bg-slate-800"
-            onClick={() => setShowRulesDialog(true)}
-          >
-            <HelpCircle className="w-4 h-4 mr-2" /> Rules
-          </Button>
-
-          <Button
-            variant="outline"
-            className="bg-black/30 backdrop-blur-sm border-slate-700 hover:bg-slate-800"
-            onClick={() => setIsTableRotated(!isTableRotated)}
-          >
-            {isTableRotated ?
-              <><ChevronDown className="w-4 h-4 mr-2" /> View</> :
-              <><ChevronUp className="w-4 h-4 mr-2" /> View</>
-            }
-          </Button>
         </div>
+      </motion.div>
 
-        {/* Game stats */}
-        <GameStats stats={analytics.gameStats} />
-
-        {/* Display active side bets when they exist */}
-        {(extendedGameState?.sideBets?.totalAmount ?? 0) > 0 && (
-          <Card className="p-4 border rounded-lg bg-black/30 backdrop-blur-sm border-slate-700">
-            <h3 className="mb-3 text-lg font-semibold text-white">Active Side Bets</h3>
-            <div className="space-y-2">
-              {extendedGameState?.sideBets?.active?.map((bet: SideBet) => (
-                bet.amount > 0 && (
-                  <div key={bet.id} className="flex justify-between">
-                    <span className="text-gray-300">{bet.type}:</span>
-                    <span className="font-semibold text-amber-400">${bet.amount}</span>
-                  </div>
-                )
-              ))}
-            </div>
-          </Card>
+      {/* Player info section */}
+      <motion.div
+        className={cn(
+          'mb-6 p-3 rounded-lg',
+          variant === 'dark' ? 'bg-gray-900/60' : 'bg-gray-100/60'
         )}
+        variants={itemVariants}
+      >
+        <h3 className={cn(
+          'text-lg font-bold mb-2 border-b pb-2',
+          variant === 'dark' ? 'border-gray-700' : 'border-gray-300'
+        )}>
+          Player Info
+        </h3>
 
-        {/* Card counting information */}
-        {enhancedSettings.countingSystem !== 'none' && (
-          <Card className="p-4 border bg-black/30 backdrop-blur-sm border-slate-700">
-            <h3 className="mb-2 text-sm font-semibold text-white">Card Counting</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-300">Running Count:</span>
-                <span className={`font-semibold ${getCountTextColor(extendedGameState?.count?.running)}`}>
-                  {formatRunningCount(extendedGameState?.count?.running)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-300">True Count:</span>
-                <span className={`font-semibold ${getTrueCountTextColor(extendedGameState?.count?.true)}`}>
-                  {(extendedGameState?.count?.true ?? 0).toFixed(2)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-300">Cards Remaining:</span>
-                <span className="font-semibold text-white">{extendedGameState?.deck?.remainingCards ?? 0}</span>
-              </div>
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span>Name:</span>
+            <span className="font-medium">{playerName}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Balance:</span>
+            <span className={cn(
+              'font-medium',
+              playerBalance > 0 ? 'text-green-400' : 'text-red-400'
+            )}>
+              ${playerBalance.toLocaleString()}
+            </span>
+          </div>
+
+          {playerWinStreak > 0 && (
+            <div className="flex justify-between">
+              <span>Win Streak:</span>
+              <span className="font-medium text-amber-400">{playerWinStreak}</span>
             </div>
-          </Card>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Current hand info */}
+      <motion.div
+        className={cn(
+          'mb-6 p-3 rounded-lg',
+          variant === 'dark' ? 'bg-gray-900/60' : 'bg-gray-100/60'
         )}
-      </div>
+        variants={itemVariants}
+      >
+        <h3 className={cn(
+          'text-lg font-bold mb-2 border-b pb-2',
+          variant === 'dark' ? 'border-gray-700' : 'border-gray-300'
+        )}>
+          Current Hand
+        </h3>
+
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span>Hand #:</span>
+            <span className="font-medium">{handCount}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Current Bet:</span>
+            <span className={cn(
+              'font-medium',
+              currentBet > 0 ? 'text-amber-400' : 'text-gray-400'
+            )}>
+              ${currentBet.toLocaleString()}
+            </span>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Game controls */}
+      <motion.div className="mt-auto" variants={itemVariants}>
+        <h3 className={cn(
+          'text-sm font-bold mb-2',
+          variant === 'dark' ? 'text-gray-400' : 'text-gray-600'
+        )}>
+          Game Controls
+        </h3>
+
+        <GameControls
+          onOpenSettings={onOpenSettings}
+          onOpenRules={onOpenRules}
+          onToggleSound={onToggleSound}
+          onOpenChat={onOpenChat}
+          onOpenHistory={onOpenHistory}
+          onOpenBankroll={onOpenBankroll}
+          isSoundEnabled={isSoundEnabled}
+          vertical={true}
+          showLabels={showControlLabels}
+        />
+      </motion.div>
+
+      {/* Footer with version */}
+      <motion.div
+        className={cn(
+          'mt-4 text-center text-xs',
+          variant === 'dark' ? 'text-gray-500' : 'text-gray-500'
+        )}
+        variants={itemVariants}
+      >
+        Royal Blackjack v1.0
+      </motion.div>
     </motion.div>
   );
 };
+
+export default GameSidebar;

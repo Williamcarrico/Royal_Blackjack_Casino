@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AuthService } from '@/services/supabase/auth-service'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
 	try {
@@ -30,9 +30,26 @@ export async function POST(request: NextRequest) {
 		}
 
 		// Manually create the user profile using the server client
-		const supabase = createClient()
+		const supabase = await createServerClient()
 
-		const { error: insertError } = await supabase.from('profiles').insert({
+		// Check if username is already taken
+		const { data: existingUsers, error: usernameError } = await supabase
+			.from('user_profiles')
+			.select('id')
+			.eq('username', username)
+			.limit(1)
+
+		if (usernameError) {
+			console.error('Error checking username:', JSON.stringify(usernameError))
+			return NextResponse.json({ error: 'Failed to verify username availability' }, { status: 500 })
+		}
+
+		if (existingUsers && existingUsers.length > 0) {
+			return NextResponse.json({ error: 'Username is already taken' }, { status: 400 })
+		}
+
+		// Manually create the user profile using the server client
+		const { error: insertError } = await supabase.from('user_profiles').insert({
 			id: user.id,
 			username,
 			email,

@@ -455,7 +455,7 @@ const showcaseFeatures = [
 
 export default function ContactUs() {
 	const [formStatus, setFormStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
-	const [, setActiveTab] = useState('contact')
+	const [_activeTab, setActiveTab] = useState('contact')
 	const [chatInput, setChatInput] = useState('')
 	const [enableTilt, setEnableTilt] = useState(true)
 	const [showAIAssistant, setShowAIAssistant] = useState(false)
@@ -789,6 +789,7 @@ export default function ContactUs() {
 							<TabsTrigger value="live-chat" className="py-3">
 								<span className="relative flex w-3 h-3 mr-2">
 									<span className="absolute inline-flex w-full h-full bg-green-400 rounded-full opacity-75 animate-ping"></span>
+									{" "}
 									<span className="relative inline-flex w-3 h-3 bg-green-500 rounded-full"></span>
 								</span>
 								Live Chat

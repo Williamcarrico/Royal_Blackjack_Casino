@@ -18,15 +18,17 @@ import {
 	MessageCircle,
 	Diamond,
 } from 'lucide-react'
-import {
-	GiCardAceSpades,
-	GiCardAceHearts,
-	GiCardAceDiamonds,
-	GiCardAceClubs,
-	GiPokerHand,
-	GiCrownedSkull,
-	GiCardRandom,
-} from 'react-icons/gi'
+import dynamic from 'next/dynamic'
+
+// Dynamically import specific icons only when needed
+const GiCardAceSpades = dynamic(() => import('react-icons/gi').then(mod => mod.GiCardAceSpades))
+const GiCardAceHearts = dynamic(() => import('react-icons/gi').then(mod => mod.GiCardAceHearts))
+const GiCardAceDiamonds = dynamic(() => import('react-icons/gi').then(mod => mod.GiCardAceDiamonds))
+const GiCardAceClubs = dynamic(() => import('react-icons/gi').then(mod => mod.GiCardAceClubs))
+const GiPokerHand = dynamic(() => import('react-icons/gi').then(mod => mod.GiPokerHand))
+const GiCrownedSkull = dynamic(() => import('react-icons/gi').then(mod => mod.GiCrownedSkull))
+const GiCardRandom = dynamic(() => import('react-icons/gi').then(mod => mod.GiCardRandom))
+
 import { Button } from '@/components/ui/layout/button'
 import { cn } from '@/lib/utils/utils'
 import { z } from 'zod'
@@ -546,7 +548,7 @@ const FooterLogo = memo(() => (
 				alt="Royal Blackjack Casino Logo"
 				width={64}
 				height={64}
-				className="object-contain"
+				className="object-contain w-auto h-auto"
 				style={{ width: 'auto', height: 'auto' }}
 				priority
 			/>

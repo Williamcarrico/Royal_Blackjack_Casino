@@ -15,34 +15,35 @@ import {
 	KeyRound,
 	UserPlus,
 } from 'lucide-react'
-import {
-	GiDiamonds,
-	GiCardAceClubs,
-	GiPokerHand,
-	GiPaperClip,
-	GiDatabase,
-	GiWorld,
-	GiBookPile,
-	GiTeacher,
-	GiBallGlow,
-	GiBrain,
-	GiStigmata,
-	GiComputing,
-	GiRuleBook,
-	GiInfo,
-	GiRelationshipBounds,
-	GiPerson,
-	GiPhone,
-	GiBookmark,
-	GiCrown,
-	GiSettingsKnobs,
-	GiMoneyStack,
-	GiPadlock,
-} from 'react-icons/gi'
 import { cn } from '@/lib/utils/utils'
 import { Button } from '@/components/ui/layout/button'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { NotificationsPanel } from './NotificationsPanel'
+import dynamic from 'next/dynamic'
+
+// Dynamically import specific icons only when needed
+const GiDiamonds = dynamic(() => import('react-icons/gi').then(mod => mod.GiDiamonds))
+const GiCardAceClubs = dynamic(() => import('react-icons/gi').then(mod => mod.GiCardAceClubs))
+const GiPokerHand = dynamic(() => import('react-icons/gi').then(mod => mod.GiPokerHand))
+const GiPaperClip = dynamic(() => import('react-icons/gi').then(mod => mod.GiPaperClip))
+const GiDatabase = dynamic(() => import('react-icons/gi').then(mod => mod.GiDatabase))
+const GiWorld = dynamic(() => import('react-icons/gi').then(mod => mod.GiWorld))
+const GiBookPile = dynamic(() => import('react-icons/gi').then(mod => mod.GiBookPile))
+const GiTeacher = dynamic(() => import('react-icons/gi').then(mod => mod.GiTeacher))
+const GiBallGlow = dynamic(() => import('react-icons/gi').then(mod => mod.GiBallGlow))
+const GiBrain = dynamic(() => import('react-icons/gi').then(mod => mod.GiBrain))
+const GiStigmata = dynamic(() => import('react-icons/gi').then(mod => mod.GiStigmata))
+const GiComputing = dynamic(() => import('react-icons/gi').then(mod => mod.GiComputing))
+const GiRuleBook = dynamic(() => import('react-icons/gi').then(mod => mod.GiRuleBook))
+const GiInfo = dynamic(() => import('react-icons/gi').then(mod => mod.GiInfo))
+const GiRelationshipBounds = dynamic(() => import('react-icons/gi').then(mod => mod.GiRelationshipBounds))
+const GiPerson = dynamic(() => import('react-icons/gi').then(mod => mod.GiPerson))
+const GiPhone = dynamic(() => import('react-icons/gi').then(mod => mod.GiPhone))
+const GiBookmark = dynamic(() => import('react-icons/gi').then(mod => mod.GiBookmark))
+const GiCrown = dynamic(() => import('react-icons/gi').then(mod => mod.GiCrown))
+const GiSettingsKnobs = dynamic(() => import('react-icons/gi').then(mod => mod.GiSettingsKnobs))
+const GiMoneyStack = dynamic(() => import('react-icons/gi').then(mod => mod.GiMoneyStack))
+const GiPadlock = dynamic(() => import('react-icons/gi').then(mod => mod.GiPadlock))
 
 // Types
 interface NavChildLink {
@@ -280,7 +281,7 @@ const Logo = memo(() => {
 						width={76}
 						height={76}
 						priority // Prioritize loading the logo
-						className="object-contain" // Maintain aspect ratio
+						className="object-contain w-auto h-auto" // Maintain aspect ratio
 						style={{ width: 'auto', height: 'auto' }}
 					/>
 
@@ -975,7 +976,7 @@ const MobileMenu = memo(
 						className="absolute top-full left-0 right-0 lg:hidden bg-gradient-to-b from-black/98 via-[#0a0707]/98 to-[#100a0a]/98 backdrop-blur-xl border-t border-b border-amber-800/40 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.5)] z-40"
 					>
 						{/* Ambient texture overlay */}
-						<div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.02] pointer-events-none mix-blend-soft-light"></div>
+						<div className="absolute inset-0 bg-[url('/public/noise.png')] opacity-[0.02] pointer-events-none mix-blend-soft-light"></div>
 
 						{/* Top Accent */}
 						<div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-500/40 to-transparent opacity-80"></div>

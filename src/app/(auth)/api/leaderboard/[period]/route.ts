@@ -1,5 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase'
+
+// Define interfaces for our data types
+interface GameResult {
+    user_id: string;
+    session_start: string;
+}
+
+interface Profile {
+    id: string;
+    username: string;
+    avatar_url: string | null;
+    total_games: number;
+    total_wins: number;
+    total_hands: number;
+    balance: number;
+}
 
 export async function GET(
     request: NextRequest,
@@ -17,7 +33,7 @@ export async function GET(
             )
         }
 
-        const supabase = createClient()
+        const supabase = await createServerClient()
 
         // Calculate date range based on period
         const now = new Date()
@@ -53,7 +69,7 @@ export async function GET(
         // In a production app, we would use SQL aggregation with proper time filtering
         const { data: activeUsers, error } = await supabase
             .from('game_sessions')
-            .select('user_id')
+            .select('user_id, session_start')
             .gte('session_start', startDateString)
             .order('session_start', { ascending: false })
 
@@ -66,7 +82,7 @@ export async function GET(
         }
 
         // Get unique active user IDs
-        const activeUserIds = Array.from(new Set(activeUsers.map(user => user.user_id)))
+        const activeUserIds = Array.from(new Set(activeUsers.map((user: GameResult) => user.user_id)))
 
         if (activeUserIds.length === 0) {
             return NextResponse.json({ leaderboard: [] })
@@ -74,7 +90,7 @@ export async function GET(
 
         // Get profiles of active users
         const { data: profiles, error: profilesError } = await supabase
-            .from('profiles')
+            .from('user_profiles')
             .select('id, username, avatar_url, total_games, total_wins, total_hands, balance')
             .in('id', activeUserIds)
             .order('balance', { ascending: false })
@@ -89,7 +105,7 @@ export async function GET(
         }
 
         // Process profiles to calculate win rates and form the leaderboard
-        const leaderboard = profiles.map((profile, index) => {
+        const leaderboard = profiles.map((profile: Profile, index: number) => {
             const winRate = profile.total_hands > 0
                 ? (profile.total_wins / profile.total_hands) * 100
                 : 0
@@ -98,7 +114,7 @@ export async function GET(
                 id: profile.id,
                 rank: index + 1,
                 username: profile.username,
-                avatar: profile.avatar_url || '/avatars/default.jpg',
+                avatar: profile.avatar_url ?? '/avatars/default.jpg',
                 winnings: profile.balance,
                 winRate: parseFloat(winRate.toFixed(1)),
                 gamesPlayed: profile.total_games,

@@ -5,8 +5,8 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { supabase } from '@/supabaseClient'
 import { format } from 'date-fns'
+import { createBrowserClient } from '@/lib/supabase'
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
@@ -84,7 +84,7 @@ const SignUp = () => {
 		const fetchCountries = async () => {
 			try {
 				setLoadingCountries(true);
-				const { data, error } = await supabase
+				const { data, error } = await createBrowserClient()
 					.from('countries')
 					.select('*')
 					.order('name', { ascending: true })
@@ -111,12 +111,83 @@ const SignUp = () => {
 		fetchCountries()
 	}, [])
 
+	const validateFormValues = (values: SignUpFormValues): boolean => {
+		if (!values.email || !values.username || !values.password || !values.dateOfBirth || !values.country) {
+			toast.error('Please fill in all required fields');
+			return false;
+		}
+		return true;
+	}
+
+	const createUserAuth = async (email: string, password: string) => {
+		const { data, error } = await createBrowserClient().auth.signUp({
+			email,
+			password,
+		})
+
+		if (error) {
+			throw new Error(error.message);
+		}
+
+		return data;
+	}
+
+	const createUserProfile = async (userId: string, values: SignUpFormValues) => {
+		const { error } = await createBrowserClient()
+			.from('user_profiles')
+			.insert({
+				id: userId,
+				username: values.username,
+				email: values.email,
+				country_code: values.country,
+				date_of_birth: format(values.dateOfBirth, 'yyyy-MM-dd'),
+			})
+			.select()
+
+		if (error) {
+			// Log more details about the error
+			console.error('Error creating profile - full details:', JSON.stringify(error))
+
+			let errorMessage = 'Error creating your profile';
+
+			// Check for specific error types
+			if (error.code === '23505') {
+				// Unique violation error code
+				if (error.message?.includes('username')) {
+					errorMessage = 'Username already exists. Please choose another username.';
+				} else if (error.message?.includes('email')) {
+					errorMessage = 'Email already exists. Please use another email or sign in.';
+				}
+			} else if (error.code === '23503') {
+				// Foreign key violation
+				errorMessage = 'Invalid country selected. Please try again.';
+			} else if (error.code === '42P01') {
+				errorMessage = 'Database configuration issue. Please contact support.';
+			}
+
+			throw new Error(errorMessage);
+		}
+	}
+
+	const createUserPreferences = async (userId: string) => {
+		const { error } = await createBrowserClient()
+			.from('user_preferences')
+			.insert({
+				user_id: userId,
+			})
+			.select()
+
+		if (error) {
+			console.error('Error creating preferences - full details:', JSON.stringify(error))
+			// We don't throw here as preferences failure shouldn't break signup
+		}
+	}
+
 	const handleSignUp = async (values: SignUpFormValues) => {
 		setIsLoading(true)
 		try {
-			// Validate form values again before submission
-			if (!values.email || !values.username || !values.password || !values.dateOfBirth || !values.country) {
-				toast.error('Please fill in all required fields');
+			// Validate form values
+			if (!validateFormValues(values)) {
 				return;
 			}
 
@@ -126,81 +197,32 @@ const SignUp = () => {
 				password: '[REDACTED]'
 			});
 
-			// First, register the user with Supabase Auth
-			const { data: authData, error: authError } = await supabase.auth.signUp({
-				email: values.email,
-				password: values.password,
-			})
+			// Register user with Supabase Auth
+			const authData = await createUserAuth(values.email, values.password);
 
-			if (authError) {
-				toast.error(authError.message)
-				console.error('Error signing up:', authError.message)
-				return
+			// If no user was created, exit early
+			if (!authData.user) {
+				toast.error('Failed to create account');
+				return;
 			}
 
-			// If auth signup was successful, create the user profile
-			if (authData.user) {
-				console.log('Auth successful, creating user profile');
+			console.log('Auth successful, creating user profile');
 
-				// Create user profile with more detailed error handling
-				const { data: profileData, error: profileError } = await supabase
-					.from('user_profiles')
-					.insert({
-						id: authData.user.id,
-						username: values.username,
-						email: values.email,
-						country_code: values.country,
-						date_of_birth: format(values.dateOfBirth, 'yyyy-MM-dd'),
-					})
-					.select()
-
-				if (profileError) {
-					// Log more details about the error
-					console.error('Error creating profile - full details:', JSON.stringify(profileError))
-
-					let errorMessage = 'Error creating your profile';
-
-					// Check for specific error types
-					if (profileError.code === '23505') {
-						// Unique violation error code
-						if (profileError.message?.includes('username')) {
-							errorMessage = 'Username already exists. Please choose another username.';
-						} else if (profileError.message?.includes('email')) {
-							errorMessage = 'Email already exists. Please use another email or sign in.';
-						}
-					} else if (profileError.code === '23503') {
-						// Foreign key violation
-						errorMessage = 'Invalid country selected. Please try again.';
-					} else if (profileError.code === '42P01') {
-						errorMessage = 'Database configuration issue. Please contact support.';
-					}
-
-					// Clean up the auth user since profile creation failed
-					console.log('Cleaning up auth user after profile creation failure');
-					await supabase.auth.signOut()
-					toast.error(errorMessage)
-					return
-				}
-
-				console.log('Profile created successfully:', profileData);
+			try {
+				// Create user profile
+				await createUserProfile(authData.user.id, values);
+				console.log('Profile created successfully');
 
 				// Create default user preferences
-				console.log('Creating user preferences');
-				const { error: preferencesError } = await supabase
-					.from('user_preferences')
-					.insert({
-						user_id: authData.user.id,
-					})
-					.select()
-
-				if (preferencesError) {
-					console.error('Error creating preferences - full details:', JSON.stringify(preferencesError))
-					// We don't need to fail the whole sign-up if just the preferences creation fails
-					// but we should log it
-				}
+				await createUserPreferences(authData.user.id);
 
 				toast.success('Sign up successful! Please check your email for verification.')
 				form.reset()
+			} catch (profileError) {
+				// Clean up the auth user since profile creation failed
+				console.log('Cleaning up auth user after profile creation failure');
+				await createBrowserClient().auth.signOut()
+				throw profileError;
 			}
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';

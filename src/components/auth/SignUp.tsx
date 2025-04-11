@@ -5,8 +5,10 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { supabase } from '../../../supabaseClient'
 import { format } from 'date-fns'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/auth-context'
+import { createBrowserClient } from '@/lib/supabase'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -69,6 +71,9 @@ const SignUp = () => {
     const [isLoading, setIsLoading] = useState(false)
     const [countries, setCountries] = useState<Country[]>([])
     const [loadingCountries, setLoadingCountries] = useState(true)
+    const { signUp } = useAuth()
+    const router = useRouter()
+    const supabase = createBrowserClient()
 
     const form = useForm<SignUpFormValues>({
         resolver: zodResolver(signUpSchema),
@@ -82,6 +87,7 @@ const SignUp = () => {
     useEffect(() => {
         const fetchCountries = async () => {
             try {
+                setLoadingCountries(true);
                 const { data, error } = await supabase
                     .from('countries')
                     .select('*')
@@ -89,6 +95,11 @@ const SignUp = () => {
 
                 if (error) {
                     throw error
+                }
+
+                if (!data || data.length === 0) {
+                    console.warn('No countries returned from database');
+                    toast.error('Failed to load countries data');
                 }
 
                 setCountries(data || [])
@@ -101,60 +112,44 @@ const SignUp = () => {
         }
 
         fetchCountries()
-    }, [])
+    }, [supabase])
 
     const handleSignUp = async (values: SignUpFormValues) => {
         setIsLoading(true)
         try {
-            // First, register the user with Supabase Auth
-            const { data: authData, error: authError } = await supabase.auth.signUp({
-                email: values.email,
-                password: values.password,
-            })
+            // Validate form values again before submission
+            if (!values.email || !values.username || !values.password || !values.dateOfBirth || !values.country) {
+                toast.error('Please fill in all required fields');
+                return;
+            }
 
-            if (authError) {
-                toast.error(authError.message)
-                console.error('Error signing up:', authError.message)
+            // Format the date of birth
+            const dateOfBirth = format(values.dateOfBirth, 'yyyy-MM-dd')
+
+            // Use the auth context signUp method
+            const result = await signUp(
+                values.email,
+                values.password,
+                values.username,
+                dateOfBirth,
+                values.country
+            )
+
+            if (!result.success) {
+                toast.error(result.error ?? 'Failed to create account')
                 return
             }
 
-            // If auth signup was successful, create the user profile
-            if (authData.user) {
-                const { error: profileError } = await supabase
-                    .from('user_profiles')
-                    .insert({
-                        id: authData.user.id,
-                        username: values.username,
-                        email: values.email,
-                        country_code: values.country,
-                        date_of_birth: format(values.dateOfBirth, 'yyyy-MM-dd'),
-                    })
+            // Success
+            toast.success('Account created successfully! Please check your email for verification.')
+            form.reset()
 
-                if (profileError) {
-                    console.error('Error creating profile:', profileError)
-                    // Attempt to clean up the auth user if profile creation fails
-                    // Note: This is a best effort and might not always succeed
-                    await supabase.auth.signOut()
-                    toast.error('Error creating your profile')
-                    return
-                }
-
-                // Create default user preferences
-                await supabase
-                    .from('user_preferences')
-                    .insert({
-                        user_id: authData.user.id,
-                    })
-                    .then(({ error }) => {
-                        if (error) console.error('Error creating preferences:', error)
-                    })
-
-                toast.success('Sign up successful! Please check your email for verification.')
-                form.reset()
-            }
+            // Redirect to sign-in page
+            router.push('/auth/sign-in')
         } catch (error) {
-            toast.error('An unexpected error occurred')
-            console.error('Error signing up:', error)
+            const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+            toast.error(errorMessage)
+            console.error('Error in sign up process:', error)
         } finally {
             setIsLoading(false)
         }
@@ -250,6 +245,12 @@ const SignUp = () => {
                                                 fromYear={1900}
                                                 toYear={new Date().getFullYear()}
                                                 initialFocus
+                                                className="border rounded-md shadow-md bg-card"
+                                                classNames={{
+                                                    day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                                                    day_today: "bg-accent text-accent-foreground",
+                                                    day: "text-foreground hover:bg-accent hover:text-accent-foreground"
+                                                }}
                                             />
                                         </PopoverContent>
                                     </Popover>
@@ -326,7 +327,7 @@ const SignUp = () => {
 
                         <Button
                             type="submit"
-                            className="w-full mt-6"
+                            className="w-full mt-6 font-medium bg-primary hover:bg-primary/90 text-primary-foreground"
                             disabled={isLoading}
                         >
                             {isLoading ? (
@@ -344,7 +345,7 @@ const SignUp = () => {
             <CardFooter className="flex justify-center p-4 border-t">
                 <p className="text-sm text-muted-foreground">
                     Already have an account?{" "}
-                    <Button variant="link" className="h-auto p-0">Sign In</Button>
+                    <Button variant="link" className="h-auto p-0" onClick={() => router.push('/auth/sign-in')}>Sign In</Button>
                 </p>
             </CardFooter>
         </Card>

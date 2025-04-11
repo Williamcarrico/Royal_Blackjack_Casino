@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase'
 
 // Type for query parameters
 type LeaderboardPeriod = 'daily' | 'weekly' | 'monthly' | 'allTime'
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
         const period = (searchParams.get('period') as LeaderboardPeriod) || 'weekly'
         const metric = (searchParams.get('metric') as LeaderboardMetric) || 'balance'
         const limit = Number(searchParams.get('limit')) || 10
-        const search = searchParams.get('search') || ''
+        const search = searchParams.get('search') ?? ''
 
         // Check if we have a valid cache
         if (cachedLeaderboard && Date.now() - cachedLeaderboard.timestamp < CACHE_DURATION) {
@@ -59,9 +59,6 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ leaderboard: cachedLeaderboard.leaderboard })
         }
 
-        const supabase = createClient()
-
-        // Time period calculations
         const now = new Date()
         let startDate: Date | null = null
 
@@ -83,9 +80,12 @@ export async function GET(request: NextRequest) {
         }
 
         // Base query for profiles with games data
+        const supabase = await createServerClient()
         let query = supabase
-            .from('profiles')
-            .select('id, username, avatar_url, total_games, total_wins, total_losses, total_hands, total_blackjacks, balance, created_at, biggest_win, last_played_at')
+            .from('user_profiles')
+            .select('id, username, avatar_url, chips, total_games, total_wins, total_hands')
+            .order('chips', { ascending: false })
+            .limit(limit)
 
         // Apply search filter if provided
         if (search) {
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
         // Apply sorting based on metric (with optimized indexes)
         switch (metric) {
             case 'balance':
-                query = query.order('balance', { ascending: false })
+                query = query.order('chips', { ascending: false })
                 break
             case 'winRate':
                 // Using a computed column or function for win rate would be more efficient
@@ -122,11 +122,11 @@ export async function GET(request: NextRequest) {
                 query = query.order('biggest_win', { ascending: false })
                 break
             default:
-                query = query.order('balance', { ascending: false })
+                query = query.order('chips', { ascending: false })
         }
 
         // Limit the number of results
-        const { data, error } = await query.limit(limit)
+        const { data, error } = await query
 
         if (error) {
             console.error('Error fetching leaderboard:', error)
@@ -134,7 +134,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Process data to calculate win rates and add ranks
-        const leaderboard = data.map((player: ProfileData, index) => {
+        const leaderboard = data.map((player: ProfileData, index: number) => {
             const winRate = player.total_hands > 0 ? (player.total_wins / player.total_hands) * 100 : 0
 
             return {
@@ -142,20 +142,20 @@ export async function GET(request: NextRequest) {
                 rank: index + 1,
                 username: player.username,
                 avatar: player.avatar_url || '/avatars/default.jpg',
-                winnings: player.balance,
+                winnings: player.chips || 0,
                 winRate: parseFloat(winRate.toFixed(1)),
                 gamesPlayed: player.total_games,
                 biggestWin: player.biggest_win || player.total_blackjacks * 150, // Fallback calculation
-                isVIP: player.balance > 10000, // Example VIP threshold
+                isVIP: player.chips > 10000, // Example VIP threshold
                 lastActive: player.last_played_at || player.created_at,
             }
         })
 
         // For win rate sorting, we need to re-sort after calculation
         if (metric === 'winRate') {
-            leaderboard.sort((a, b) => b.winRate - a.winRate)
+            leaderboard.sort((a: LeaderboardPlayer, b: LeaderboardPlayer) => b.winRate - a.winRate)
             // Reassign ranks after sorting
-            leaderboard.forEach((player, index) => {
+            leaderboard.forEach((player: LeaderboardPlayer, index: number) => {
                 player.rank = index + 1
             })
         }

@@ -1,260 +1,203 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { cn } from '@/lib/utils/utils';
-import { motion, AnimatePresence } from 'framer-motion';
-import ActionButton, { GameAction } from './ActionButton';
-
-// Import types to replace 'any'
-import { CardData } from '../hand/Hand';
-import { ChipValue } from '../../betting/Chip';
-
-export interface GameActionState {
-    hit: boolean;
-    stand: boolean;
-    double: boolean;
-    split: boolean;
-    surrender: boolean;
-    insurance: boolean;
-    evenMoney: boolean;
-    deal: boolean;
-    rebet: boolean;
-}
+import { motion } from 'framer-motion';
 
 export interface ActionPanelProps {
-    availableActions: Partial<GameActionState>;
-    recommendedAction?: GameAction;
-    onAction?: (action: GameAction) => void;
     className?: string;
+    onHit?: () => void;
+    onStand?: () => void;
+    onDouble?: () => void;
+    onSplit?: () => void;
+    onSurrender?: () => void;
+    canHit?: boolean;
+    canStand?: boolean;
+    canDouble?: boolean;
+    canSplit?: boolean;
+    canSurrender?: boolean;
+    isPlayerTurn?: boolean;
+    isAnimating?: boolean;
     compact?: boolean;
-    vertical?: boolean;
-    showShortcuts?: boolean;
-    disabled?: boolean;
-    animateEntry?: boolean;
-    player?: string;
-    handId?: string;
-    activeHandData?: {
-        id: string;
-        cards: CardData[];
-        bet: number;
-        betChips: Array<{ value: ChipValue; count: number }>;
-        isActive?: boolean;
-        result?: 'win' | 'lose' | 'push' | 'blackjack';
-        insurance?: number;
-    };
 }
 
-const ActionPanel = ({
-    availableActions,
-    recommendedAction,
-    onAction,
-    className = '',
+/**
+ * ActionPanel component provides buttons for blackjack gameplay actions
+ * Displays hit, stand, double, split, and surrender options based on game state
+ */
+const ActionPanel: React.FC<ActionPanelProps> = ({
+    className,
+    onHit,
+    onStand,
+    onDouble,
+    onSplit,
+    onSurrender,
+    canHit = true,
+    canStand = true,
+    canDouble = false,
+    canSplit = false,
+    canSurrender = false,
+    isPlayerTurn = true,
+    isAnimating = false,
     compact = false,
-    vertical = false,
-    showShortcuts = true,
-    disabled = false,
-    animateEntry = true,
-    player,
-    handId,
-    activeHandData,
-}: ActionPanelProps) => {
-    // Handle keyboard shortcuts
-    useEffect(() => {
-        if (disabled) return;
+}) => {
+    // Button variants based on state
+    const getButtonStyles = (isEnabled: boolean) => cn(
+        'px-4 py-2.5 rounded-lg text-sm font-bold tracking-wide shadow-md transition-all',
+        'flex items-center justify-center',
+        'focus:outline-none focus:ring-2 focus:ring-offset-2',
+        isEnabled && !isAnimating
+            ? 'cursor-pointer'
+            : 'cursor-not-allowed opacity-50',
+        compact ? 'text-xs px-3 py-2' : ''
+    );
 
-        const handleKeyDown = (e: KeyboardEvent) => {
-            // Skip if user is typing in an input
-            if (
-                document.activeElement?.tagName === 'INPUT' ||
-                document.activeElement?.tagName === 'TEXTAREA'
-            ) {
-                return;
-            }
-
-            // If the active hand has a result (game over), only allow deal/rebet actions
-            if (activeHandData?.result && !(availableActions.deal || availableActions.rebet)) {
-                return;
-            }
-
-            const key = e.key.toLowerCase();
-
-            // Handle special case for space and enter
-            if (key === ' ' || key === 'enter') {
-                if (availableActions.deal) {
-                    e.preventDefault();
-                    onAction?.('deal');
-                } else if (recommendedAction) {
-                    e.preventDefault();
-                    onAction?.(recommendedAction);
-                }
-                return;
-            }
-
-            // Map keys to actions
-            const actionMap: Record<string, [keyof GameActionState, GameAction]> = {
-                'h': ['hit', 'hit'],
-                's': ['stand', 'stand'],
-                'd': ['double', 'double'],
-                'p': ['split', 'split'],
-                'r': ['surrender', 'surrender'],
-                'i': ['insurance', 'insurance'],
-                'e': ['evenMoney', 'even-money']
-            };
-
-            const actionConfig = actionMap[key];
-            if (actionConfig) {
-                const [actionCheck, actionToExecute] = actionConfig;
-                if (availableActions[actionCheck]) {
-                    onAction?.(actionToExecute);
-                }
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [availableActions, recommendedAction, onAction, disabled, activeHandData]);
-
-    // Animation variants for action panel
-    const panelVariants = {
-        hidden: {
-            opacity: 0,
-            y: 20,
-        },
-        visible: {
-            opacity: 1,
-            y: 0,
-            transition: {
-                duration: 0.3,
-                staggerChildren: 0.05,
-                when: 'beforeChildren'
-            }
-        },
-        exit: {
-            opacity: 0,
-            y: 20,
-            transition: {
-                duration: 0.2,
-            }
-        }
-    };
-
-    // Animation variants for each button
+    // Animation variants
     const buttonVariants = {
-        hidden: { opacity: 0, y: 10 },
-        visible: {
+        initial: { opacity: 0, y: 20 },
+        animate: (i: number) => ({
             opacity: 1,
             y: 0,
-            transition: {
-                type: 'spring',
-                stiffness: 300,
-                damping: 30
-            }
-        },
-        exit: { opacity: 0, y: 10 }
+            transition: { delay: 0.1 * i, duration: 0.3 }
+        }),
+        hover: { scale: 1.05 },
+        tap: { scale: 0.95 },
     };
 
-    // Map to keep button order consistent
-    const actionOrder: GameAction[] = [
-        'hit',
-        'stand',
-        'double',
-        'split',
-        'surrender',
-        'insurance',
-        'even-money',
-        'deal',
-        'rebet'
-    ];
-
-    // Shortcut key mappings
-    const actionShortcuts: Record<GameAction, string> = {
-        hit: 'H',
-        stand: 'S',
-        double: 'D',
-        split: 'P',
-        surrender: 'R',
-        insurance: 'I',
-        'even-money': 'E',
-        deal: '⏎',
-        rebet: 'B',
-        continue: '⏎',
-        custom: ''
-    };
-
-    // Get action variant based on action type
-    const getActionVariant = (action: GameAction) => {
-        // If we have a blackjack result and it's an even-money action, highlight it
-        if (action === 'even-money' && activeHandData?.result === 'blackjack') {
-            return 'success';
-        }
-
-        // If a hand has a bet and it's a double action, make it more prominent
-        if (action === 'double' && activeHandData?.bet && activeHandData.bet > 0) {
-            return 'success';
-        }
-
-        // Default action styling
-        switch (action) {
-            case 'stand': return 'primary';
-            case 'hit': return 'secondary';
-            case 'double': return 'success';
-            case 'split': return 'warning';
-            case 'surrender': return 'danger';
-            case 'deal': return 'success';
-            default: return 'default';
-        }
-    };
-
-    // Active actions list based on availableActions
-    const activeActions = actionOrder.filter(action => {
-        const key = action === 'even-money' ? 'evenMoney' : action;
-        return availableActions[key as keyof GameActionState];
-    });
-
-    // Render a single action button
-    const renderActionButton = (action: GameAction) => {
-        return (
-            <motion.div
-                key={action}
-                variants={buttonVariants}
-                className={compact ? 'scale-90' : ''}
-            >
-                <ActionButton
-                    action={action}
-                    disabled={disabled}
-                    recommended={recommendedAction === action}
-                    size={compact ? 'sm' : 'md'}
-                    variant={getActionVariant(action)}
-                    onClick={() => onAction?.(action)}
-                    shortcut={showShortcuts ? actionShortcuts[action] : undefined}
-                />
-            </motion.div>
-        );
-    };
-
-    // No actions available
-    if (activeActions.length === 0) {
+    if (!isPlayerTurn) {
         return null;
     }
 
     return (
-        <AnimatePresence mode="wait">
-            <motion.div
-                key={`action-panel-${player}-${handId}-${activeHandData?.bet}-${activeHandData?.result}`}
+        <div
+            className={cn(
+                'flex gap-2 p-3 rounded-lg backdrop-blur-md bg-black/40',
+                compact ? 'flex-col' : 'flex-row',
+                className
+            )}
+        >
+            {/* Hit button */}
+            <motion.button
+                type="button"
+                onClick={canHit && !isAnimating ? onHit : undefined}
                 className={cn(
-                    'flex justify-center gap-2 p-2 rounded-lg bg-black/30 backdrop-blur-sm',
-                    vertical ? 'flex-col' : 'flex-row',
-                    className
+                    getButtonStyles(canHit),
+                    'bg-green-600 hover:bg-green-500 focus:ring-green-500',
                 )}
-                initial={animateEntry ? 'hidden' : false}
-                animate="visible"
-                exit="exit"
-                variants={panelVariants}
-                aria-label="Game action controls"
+                disabled={!canHit || isAnimating}
+                variants={buttonVariants}
+                initial="initial"
+                animate="animate"
+                whileHover={canHit && !isAnimating ? "hover" : undefined}
+                whileTap={canHit && !isAnimating ? "tap" : undefined}
+                custom={0}
+                aria-label="Hit"
             >
-                {activeActions.map(renderActionButton)}
-            </motion.div>
-        </AnimatePresence>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+                </svg>
+                Hit
+            </motion.button>
+
+            {/* Stand button */}
+            <motion.button
+                type="button"
+                onClick={canStand && !isAnimating ? onStand : undefined}
+                className={cn(
+                    getButtonStyles(canStand),
+                    'bg-red-600 hover:bg-red-500 focus:ring-red-500',
+                )}
+                disabled={!canStand || isAnimating}
+                variants={buttonVariants}
+                initial="initial"
+                animate="animate"
+                whileHover={canStand && !isAnimating ? "hover" : undefined}
+                whileTap={canStand && !isAnimating ? "tap" : undefined}
+                custom={1}
+                aria-label="Stand"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
+                </svg>
+                Stand
+            </motion.button>
+
+            {/* Double button */}
+            {canDouble && (
+                <motion.button
+                    type="button"
+                    onClick={!isAnimating ? onDouble : undefined}
+                    className={cn(
+                        getButtonStyles(true),
+                        'bg-yellow-600 hover:bg-yellow-500 focus:ring-yellow-500',
+                    )}
+                    disabled={isAnimating}
+                    variants={buttonVariants}
+                    initial="initial"
+                    animate="animate"
+                    whileHover={!isAnimating ? "hover" : undefined}
+                    whileTap={!isAnimating ? "tap" : undefined}
+                    custom={2}
+                    aria-label="Double"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
+                        <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
+                    </svg>
+                    Double
+                </motion.button>
+            )}
+
+            {/* Split button */}
+            {canSplit && (
+                <motion.button
+                    type="button"
+                    onClick={!isAnimating ? onSplit : undefined}
+                    className={cn(
+                        getButtonStyles(true),
+                        'bg-blue-600 hover:bg-blue-500 focus:ring-blue-500',
+                    )}
+                    disabled={isAnimating}
+                    variants={buttonVariants}
+                    initial="initial"
+                    animate="animate"
+                    whileHover={!isAnimating ? "hover" : undefined}
+                    whileTap={!isAnimating ? "tap" : undefined}
+                    custom={3}
+                    aria-label="Split"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z" />
+                    </svg>
+                    Split
+                </motion.button>
+            )}
+
+            {/* Surrender button */}
+            {canSurrender && (
+                <motion.button
+                    type="button"
+                    onClick={!isAnimating ? onSurrender : undefined}
+                    className={cn(
+                        getButtonStyles(true),
+                        'bg-gray-600 hover:bg-gray-500 focus:ring-gray-500',
+                    )}
+                    disabled={isAnimating}
+                    variants={buttonVariants}
+                    initial="initial"
+                    animate="animate"
+                    whileHover={!isAnimating ? "hover" : undefined}
+                    whileTap={!isAnimating ? "tap" : undefined}
+                    custom={4}
+                    aria-label="Surrender"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                    </svg>
+                    Surrender
+                </motion.button>
+            )}
+        </div>
     );
 };
 

@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -12,6 +11,7 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { ChevronRight, Crown, DollarSign, Zap } from "lucide-react";
+
 
 // Create custom motion components
 const MotionDiv = motion.div;
@@ -53,6 +53,9 @@ export default function LandingPage() {
       author: "Michael R.",
     },
   ];
+
+  // Sample dealer and player data for the showcase tables
+
 
   return (
     <div className="min-h-screen overflow-hidden text-white bg-gradient-to-b from-black via-zinc-900 to-black">
