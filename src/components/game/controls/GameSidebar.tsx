@@ -5,43 +5,6 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils/utils';
 import GameControls from './GameControls';
 import Image from 'next/image';
-import { GameStore } from '@/types/storeTypes';
-import { SideBet } from '@/types/betTypes';
-
-// Define interfaces for extended GameState properties
-interface _ExtendedGameState {
-  sideBets?: {
-    totalAmount: number;
-    active?: SideBet[];
-  };
-  count?: {
-    running: number;
-    true: number;
-  };
-  deck?: {
-    remainingCards: number;
-  };
-}
-
-// Type guard to check if gameState has ExtendedGameState properties
-function _hasExtendedProperties(state: unknown): state is _ExtendedGameState {
-  return state !== undefined &&
-    typeof state === 'object' &&
-    state !== null && (
-      ('sideBets' in state) ||
-      ('count' in state) ||
-      ('deck' in state)
-    );
-}
-
-// Add this interface to define the Hand structure
-interface _Hand {
-  cards: string[];
-  value?: number;
-  isSoft?: boolean;
-  status?: string;
-}
-
 // Update the GameSidebarProps interface
 interface GameSidebarProps {
   className?: string;
@@ -59,7 +22,6 @@ interface GameSidebarProps {
   isSoundEnabled?: boolean;
   showControlLabels?: boolean;
   variant?: 'light' | 'dark';
-  gameStore?: GameStore;
 }
 
 /**
@@ -83,14 +45,6 @@ const GameSidebar: React.FC<GameSidebarProps> = ({
   showControlLabels = false,
   variant = 'dark',
 }) => {
-  const [_isTableRotated, _setIsTableRotated] = React.useState(false);
-  const [isCollapsed, setIsCollapsed] = React.useState(false);
-
-  // Toggle sidebar collapse state
-  const _toggleCollapse = () => {
-    setIsCollapsed(!isCollapsed);
-  };
-
   // Animation variants
   const sidebarVariants = {
     hidden: { opacity: 0, x: 100 },
@@ -241,7 +195,7 @@ const GameSidebar: React.FC<GameSidebarProps> = ({
       <motion.div
         className={cn(
           'mt-4 text-center text-xs',
-          variant === 'dark' ? 'text-gray-500' : 'text-gray-500'
+          variant === 'dark' ? 'text-gray-500' : 'text-gray-400'
         )}
         variants={itemVariants}
       >
