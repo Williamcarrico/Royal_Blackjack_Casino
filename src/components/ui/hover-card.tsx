@@ -18,7 +18,7 @@ const SafeHoverCardContext = React.createContext<{
 function SafeHoverCard({
   children,
   ...props
-}: React.ComponentProps<typeof HoverCardPrimitive.Root>) {
+}: Readonly<React.ComponentProps<typeof HoverCardPrimitive.Root>>) {
   const [open, setOpen] = React.useState(false);
   const skipRender = React.useRef(false);
 
@@ -56,7 +56,7 @@ function SafeHoverCard({
 
 function HoverCard({
   ...props
-}: React.ComponentProps<typeof HoverCardPrimitive.Root>) {
+}: Readonly<React.ComponentProps<typeof HoverCardPrimitive.Root>>) {
   return <HoverCardPrimitive.Root data-slot="hover-card" {...props} />
 }
 
@@ -72,7 +72,7 @@ function HoverCardTrigger({
 function SafeHoverCardTrigger({
   ...props
 }: React.ComponentProps<typeof HoverCardPrimitive.Trigger>) {
-  const triggerRef = React.useRef<React.ElementRef<typeof HoverCardPrimitive.Trigger>>(null);
+  const triggerRef = React.useRef<React.ComponentRef<typeof HoverCardPrimitive.Trigger>>(null);
 
   const memoizedProps = React.useMemo(() => ({
     ...props,
