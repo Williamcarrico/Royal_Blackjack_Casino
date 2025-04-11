@@ -66,20 +66,6 @@ const BlackjackPage = () => {
     // Get the transitionTo function to handle phase transitions
     const setGamePhase = useGameStore(state => state.setGamePhase);
 
-    // Map UI game phase to store game phase
-    const mapUIPhaseToStorePhase = (uiPhase: UIGamePhase): GamePhase => {
-        const phaseMap: Record<UIGamePhase, GamePhase> = {
-            'idle': 'betting',
-            'betting': 'betting',
-            'dealing': 'dealing',
-            'player-turn': 'playerTurn',
-            'dealer-turn': 'dealerTurn',
-            'payout': 'settlement',
-            'game-over': 'cleanup'
-        };
-        return phaseMap[uiPhase];
-    };
-
     // Map store game phase to UI game phase
     const mapStorePhaseToUIPhase = (storePhase: GamePhase): UIGamePhase => {
         const phaseMap: Record<GamePhase, UIGamePhase> = {
@@ -96,10 +82,24 @@ const BlackjackPage = () => {
     // Handle phase change from UI components
     const handlePhaseChange = useCallback((uiPhase: UIGamePhase) => {
         if (setGamePhase) {
+            // Map UI game phase to store game phase (moved inside useCallback)
+            const mapUIPhaseToStorePhase = (uiPhase: UIGamePhase): GamePhase => {
+                const phaseMap: Record<UIGamePhase, GamePhase> = {
+                    'idle': 'betting',
+                    'betting': 'betting',
+                    'dealing': 'dealing',
+                    'player-turn': 'playerTurn',
+                    'dealer-turn': 'dealerTurn',
+                    'payout': 'settlement',
+                    'game-over': 'cleanup'
+                };
+                return phaseMap[uiPhase];
+            };
+
             const storePhase = mapUIPhaseToStorePhase(uiPhase);
             setGamePhase(storePhase);
         }
-    }, [setGamePhase, mapUIPhaseToStorePhase]);
+    }, [setGamePhase]);
 
     const {
         tableColor,
