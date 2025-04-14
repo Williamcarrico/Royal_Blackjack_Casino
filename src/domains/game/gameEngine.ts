@@ -579,11 +579,69 @@ export class GameEngine {
 
         const player = this.gameState.players[playerIndex];
 
-        if (player && amount > player.balance) {
-            throw new Error('Insufficient balance');
+        // Check if we're in betting phase
+        if (this.gameState.currentPhase !== LocalGamePhase.BETTING) {
+            throw new Error('Cannot place bets outside of betting phase');
         }
 
-        if (player) {
+        // Handle negative amounts as clearing the current bet
+        if (amount < 0) {
+            // This is a request to clear/adjust bets
+            // Calculate actual amount to return to player's balance
+            const amountToReturn = Math.min(Math.abs(amount), player.currentBet);
+
+            // Update player's bet and balance
+            this.gameState.players[playerIndex] = {
+                ...player,
+                currentBet: player.currentBet - amountToReturn,
+                totalBet: player.totalBet - amountToReturn,
+                balance: player.balance + amountToReturn
+            };
+
+            // Track the bet clearing action
+            this.gameState.history.push({
+                id: uuidv4(),
+                roundNumber: this.gameState.roundNumber,
+                playerHands: [],
+                dealerHand: this.gameState.dealer.hand,
+                bets: [],
+                results: {},
+                startTime: new Date(),
+                actions: [{
+                    type: 'clearBet',
+                    playerId,
+                    amount: amountToReturn,
+                    timestamp: new Date()
+                }],
+                originalDecks: [],
+                shuffledDuringRound: false
+            });
+
+            return;
+        }
+
+        // For positive amounts, check betting limits and player balance
+        if (amount > 0) {
+            // Check table limits if available
+            if (this.gameState.options?.tableLimits) {
+                const { minimumBet, maximumBet } = this.gameState.options.tableLimits;
+
+                const newTotalBet = player.currentBet + amount;
+
+                if (minimumBet && newTotalBet < minimumBet) {
+                    throw new Error(`Bet must be at least ${minimumBet}`);
+                }
+
+                if (maximumBet && newTotalBet > maximumBet) {
+                    throw new Error(`Bet cannot exceed ${maximumBet}`);
+                }
+            }
+
+            // Check if player has sufficient balance
+            if (amount > player.balance) {
+                throw new Error('Insufficient balance');
+            }
+
             // Create a Bet object
             const bet: Bet = {
                 id: uuidv4(),
@@ -596,11 +654,9 @@ export class GameEngine {
             // Update player's bet and balance
             this.gameState.players[playerIndex] = {
                 ...player,
-                currentBet: amount,
-                totalBet: amount,
+                currentBet: player.currentBet + amount,
+                totalBet: player.totalBet + amount,
                 balance: player.balance - amount,
-                // We need to store bets elsewhere since Player doesn't have a bets property
-                // This is temporary until Player interface is updated
             };
 
             // Store the bet in game state history
@@ -628,8 +684,84 @@ export class GameEngine {
      * Deal initial cards to all players and dealer
      */
     dealInitialCards(): void {
-        // Implementation would deal 2 cards to each player and dealer
-        // For now, this is a placeholder
+        // Ensure we're in betting phase
+        if (this.gameState.currentPhase !== LocalGamePhase.BETTING) {
+            throw new Error('Cannot deal cards outside of betting phase');
+        }
+
+        // Check if any player has placed a bet
+        const anyPlayerHasBet = this.gameState.players.some(player => player.currentBet > 0);
+        if (!anyPlayerHasBet) {
+            throw new Error('At least one player must place a bet before dealing');
+        }
+
+        // Initialize dealer's hand
+        this.gameState.dealer.hand = {
+            id: uuidv4(),
+            cards: [],
+            values: [],
+            status: 'active',
+            actions: []
+        };
+
+        // Initialize hands for players who have placed bets
+        this.gameState.players.forEach((player, index) => {
+            if (player.currentBet > 0) {
+                const handId = uuidv4();
+
+                // Create hand for player
+                const playerHand: Hand = {
+                    id: handId,
+                    cards: [],
+                    values: [],
+                    bet: player.currentBet,
+                    status: 'active',
+                    actions: []
+                };
+
+                // Add hand to player
+                this.gameState.players[index].hands = [playerHand];
+
+                // Set player as active
+                this.gameState.players[index].isActive = true;
+            }
+        });
+
+        // Deal two cards to each player with a bet
+        for (let i = 0; i < 2; i++) {
+            this.gameState.players.forEach((player, playerIndex) => {
+                if (player.hands.length > 0) {
+                    const card = this.gameState.shoe.drawCard();
+                    if (card) {
+                        this.gameState.players[playerIndex].hands[0].cards.push(card);
+                        this.gameState.players[playerIndex].hands[0].values =
+                            calculateHandValues(this.gameState.players[playerIndex].hands[0].cards);
+                    }
+                }
+            });
+
+            // Deal to dealer
+            const card = this.gameState.shoe.drawCard();
+            if (card) {
+                this.gameState.dealer.hand.cards.push(card);
+                this.gameState.dealer.hand.values =
+                    calculateHandValues(this.gameState.dealer.hand.cards);
+            }
+        }
+
+        // Set active player and hand
+        this.gameState.activePlayerIndex = this.gameState.players.findIndex(player => player.hands.length > 0);
+        this.gameState.activeHandIndex = 0;
+
+        // Add available actions to each player hand
+        this.gameState.players.forEach((player, playerIndex) => {
+            player.hands.forEach((hand, handIndex) => {
+                this.gameState.players[playerIndex].hands[handIndex].actions =
+                    getAvailableActions(hand, this.gameState.dealer.hand.cards[0], this.gameState.options);
+            });
+        });
+
+        // Move to player turn phase
         this.gameState.currentPhase = LocalGamePhase.PLAYER_TURN;
     }
 

@@ -9,6 +9,51 @@ import type { CookieOptions } from '@supabase/ssr'
 import supabaseConfig from './config'
 
 /**
+ * Helper function to enhance CookieOptions with sensible defaults
+ * @param options Base cookie options
+ * @returns Enhanced cookie options with defaults applied
+ */
+const enhanceCookieOptions = (options?: CookieOptions): CookieOptions => {
+    // Create a new object or start with an empty one if no options provided
+    const enhancedOptions = options ? { ...options } : {};
+
+    // Set sensible defaults if not provided
+    if (enhancedOptions.path === undefined) enhancedOptions.path = '/';
+
+    // In production, cookies should be secure by default
+    if (process.env.NODE_ENV === 'production' && enhancedOptions.secure === undefined) {
+        enhancedOptions.secure = true;
+    }
+
+    // Apply SameSite=Lax as a sensible default if not specified
+    if (enhancedOptions.sameSite === undefined) enhancedOptions.sameSite = 'lax';
+
+    return enhancedOptions;
+};
+
+/**
+ * Converts CookieOptions to a formatted cookie string
+ * @param name Cookie name
+ * @param value Cookie value
+ * @param options Cookie options (path, maxAge, domain, etc.)
+ * @returns Properly formatted cookie string
+ */
+const stringifyCookieOptions = (name: string, value: string, options?: CookieOptions): string => {
+    const enhancedOptions = enhanceCookieOptions(options);
+    const cookieParts: string[] = [`${name}=${value}`];
+
+    if (enhancedOptions.path) cookieParts.push(`Path=${enhancedOptions.path}`);
+    if (enhancedOptions.maxAge) cookieParts.push(`Max-Age=${enhancedOptions.maxAge}`);
+    if (enhancedOptions.domain) cookieParts.push(`Domain=${enhancedOptions.domain}`);
+    if (enhancedOptions.expires) cookieParts.push(`Expires=${enhancedOptions.expires.toUTCString()}`);
+    if (enhancedOptions.httpOnly) cookieParts.push('HttpOnly');
+    if (enhancedOptions.secure) cookieParts.push('Secure');
+    if (enhancedOptions.sameSite) cookieParts.push(`SameSite=${enhancedOptions.sameSite}`);
+
+    return cookieParts.join('; ');
+};
+
+/**
  * Creates a typed Supabase client for Pages Router API routes
  * @returns Typed Supabase client for use in pages directory
  */
@@ -21,14 +66,17 @@ export const createClient = async <T = Database>(
         supabaseConfig.anonKey,
         {
             cookies: {
-                get: (name) => {
-                    return req.cookies[name]
+                getAll: () => {
+                    return Object.entries(req.cookies).map(([name, value]) => ({
+                        name,
+                        value: value ?? '',
+                    }))
                 },
-                set: (name, value, options: CookieOptions) => {
-                    res.setHeader('Set-Cookie', `${name}=${value}; Path=${options.path || '/'}; ${options.maxAge ? `Max-Age=${options.maxAge};` : ''} ${options.domain ? `Domain=${options.domain};` : ''} ${options.sameSite ? `SameSite=${options.sameSite};` : ''} ${options.secure ? 'Secure;' : ''}`)
-                },
-                remove: (name, options: CookieOptions) => {
-                    res.setHeader('Set-Cookie', `${name}=; Path=${options.path || '/'}; Max-Age=0; ${options.domain ? `Domain=${options.domain};` : ''} ${options.sameSite ? `SameSite=${options.sameSite};` : ''} ${options.secure ? 'Secure;' : ''}`)
+                setAll: (cookies) => {
+                    const cookieStrings = cookies.map((cookie) =>
+                        stringifyCookieOptions(cookie.name, cookie.value, cookie.options)
+                    );
+                    res.setHeader('Set-Cookie', cookieStrings);
                 },
             },
         }

@@ -55,7 +55,7 @@ const BettingControls: React.FC<BettingControlsProps> = ({
     onDoubleBet,
     onDealCards,
     disabled = false,
-    autoConfirm = false,
+    autoConfirm = true,
     confirmEnabled = true,
     className = '',
     vertical = false,
@@ -147,8 +147,10 @@ const BettingControls: React.FC<BettingControlsProps> = ({
             setSelectedChip(value);
 
             // If auto confirm is enabled, immediately add the chip to bet
-            if (autoConfirm) {
-                addChipToBet(value);
+            if (autoConfirm && onPlaceBet) {
+                // Calculate the new bet amount
+                const newBet = value;
+                onPlaceBet(newBet);
             }
         } else {
             // Set an appropriate error message based on the constraint violation
@@ -162,7 +164,7 @@ const BettingControls: React.FC<BettingControlsProps> = ({
 
             setErrorMessage(errorMsg);
         }
-    }, [disabled, canSelectChip, autoConfirm, addChipToBet, balance, currentBet, maxBet]);
+    }, [disabled, canSelectChip, autoConfirm, onPlaceBet, balance, currentBet, maxBet]);
 
     /**
      * Handles confirmation of bet

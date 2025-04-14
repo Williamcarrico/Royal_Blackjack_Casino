@@ -58,27 +58,27 @@ const StatisticsPanel = () => {
                 <h3 className="text-lg font-medium">Game Statistics</h3>
 
                 <div className="space-y-2">
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                         <span className="text-sm">Hands Played</span>
                         <span className="font-medium">{stats.handsPlayed}</span>
                     </div>
 
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                         <span className="text-sm">Wins</span>
                         <span className="font-medium text-emerald-500">{stats.handsWon}</span>
                     </div>
 
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                         <span className="text-sm">Losses</span>
                         <span className="font-medium text-red-500">{stats.handsLost}</span>
                     </div>
 
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                         <span className="text-sm">Pushes</span>
                         <span className="font-medium">{stats.pushes}</span>
                     </div>
 
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                         <span className="text-sm">Blackjacks</span>
                         <span className="font-medium text-amber-500">{stats.blackjacks}</span>
                     </div>
@@ -91,24 +91,24 @@ const StatisticsPanel = () => {
                 <h3 className="text-lg font-medium">Performance</h3>
 
                 <div className="space-y-2">
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                         <span className="text-sm">Current Streak</span>
-                        <Badge variant={stats.currentStreak > 0 ? "success" : "destructive"}>
+                        <Badge variant={stats.currentStreak > 0 ? "secondary" : "destructive"}>
                             {stats.currentStreak > 0 ? `+${stats.currentStreak}` : stats.currentStreak}
                         </Badge>
                     </div>
 
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                         <span className="text-sm">Longest Win Streak</span>
                         <span className="font-medium">{stats.longestWinStreak}</span>
                     </div>
 
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                         <span className="text-sm">Biggest Win</span>
                         <span className="font-medium text-emerald-500">${stats.biggestWin}</span>
                     </div>
 
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                         <span className="text-sm">Biggest Loss</span>
                         <span className="font-medium text-red-500">${stats.biggestLoss}</span>
                     </div>

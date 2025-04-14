@@ -26,7 +26,7 @@ import {
 	GiGoldBar,
 	GiCardRandom,
 	GiBrain,
-} from 'react-icons/gi'
+} from '@/components/ui/icons/CommonIcons'
 
 export function MainNav() {
 	const pathname = usePathname()

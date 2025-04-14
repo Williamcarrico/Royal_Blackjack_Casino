@@ -223,7 +223,7 @@ export async function GET(_request: NextRequest) {
         }
 
         // Calculate rank and percentile
-        const userIndex = allUsers.findIndex((user: { id: string }) => user.id === userId)
+        const userIndex = Array.isArray(allUsers) ? allUsers.findIndex(user => user && typeof user === 'object' && 'id' in user && user.id === userId) : -1
         const rank = userIndex !== -1 ? userIndex + 1 : null
         const totalPlayers = allUsers.length
         const percentile = rank ? Math.round(((totalPlayers - rank) / totalPlayers) * 100) : null

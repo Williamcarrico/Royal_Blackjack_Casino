@@ -1,5 +1,6 @@
 'use client';
 
+/** @jsxImportSource react */
 import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils/utils';
@@ -61,6 +62,8 @@ const TutorialOverlay = ({
     const [highlightElements, setHighlightElements] = useState<Array<{ target: TutorialHighlightTarget, element: Element, rect: DOMRect }>>([]);
     const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
     const overlayRef = useRef<HTMLButtonElement>(null);
+    const hasMeasuredRef = useRef<boolean>(false);
+    const isMountedRef = useRef<boolean>(false);
 
     // Sort targets by order if available
     const sortedTargets = [...targets].sort((a, b) => {
@@ -91,8 +94,14 @@ const TutorialOverlay = ({
 
     // Find and measure target elements
     useEffect(() => {
+        isMountedRef.current = true;
+
         if (!isActive) {
             setHighlightElements([]);
+            return;
+        }
+
+        if (hasMeasuredRef.current) {
             return;
         }
 
@@ -106,20 +115,34 @@ const TutorialOverlay = ({
             })
             .filter((item): item is HighlightElement => item !== null);
 
-        setHighlightElements(foundElements);
+        if (isMountedRef.current) {
+            hasMeasuredRef.current = true;
+            setHighlightElements(foundElements);
+        }
 
-        // Add resize listener to update positions
         const handleResize = () => {
+            if (!isMountedRef.current) return;
+
             const updatedElements = foundElements.map(({ target, element }) => {
                 const rect = element.getBoundingClientRect();
                 return { target, element, rect };
             });
+
             setHighlightElements(updatedElements);
         };
 
         window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+
+        return () => {
+            isMountedRef.current = false;
+            window.removeEventListener('resize', handleResize);
+        };
     }, [isActive, sortedTargets]);
+
+    // Reset the hasMeasured ref when dependencies change
+    useEffect(() => {
+        hasMeasuredRef.current = false;
+    }, [isActive, targets]);
 
     // Filter elements to show based on sequential mode
     let visibleElements: HighlightElement[] = [];
@@ -238,7 +261,7 @@ const TutorialOverlay = ({
             data-overlay-z-index={zIndex}
             data-overlay-clip-path={createClipPath()}
             onClick={handleOverlayClick}
-            onKeyDown={(e) => {
+            onKeyDown={(e: React.KeyboardEvent) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     if (onOverlayClick) onOverlayClick();
@@ -308,7 +331,7 @@ const TutorialOverlay = ({
                                 <button
                                     className="absolute inset-0 w-full h-full p-0 m-0 bg-transparent border-none cursor-pointer"
                                     aria-label={`Highlight for ${target.label ?? target.selector}`}
-                                    onClick={(e) => {
+                                    onClick={(e: React.MouseEvent) => {
                                         e.stopPropagation();
                                         handleTargetClick(index, highlight);
                                     }}

@@ -36,7 +36,7 @@ class AudioManager extends BaseService {
     private constructor(config: AudioManagerConfig = {}) {
         super(config);
 
-        this.storageKey = config.storageKey || 'blackjack_audio_options';
+        this.storageKey = config.storageKey ?? 'blackjack_audio_options';
 
         // Default options
         this.audioOptions = {
@@ -143,11 +143,11 @@ class AudioManager extends BaseService {
             const source = this.audioContext.createBufferSource();
             source.buffer = buffer;
             source.loop = options.loop || false;
-            source.playbackRate.value = options.playbackRate || 1.0;
+            source.playbackRate.value = options.playbackRate ?? 1.0;
 
             // Create a gain node for this sound
             const gainNode = this.audioContext.createGain();
-            const volumeScale = (options.volume !== undefined ? options.volume : 1) *
+            const volumeScale = (options.volume ?? 1) *
                 this.audioOptions.soundsVolume;
             gainNode.gain.value = volumeScale;
 
@@ -244,7 +244,7 @@ class AudioManager extends BaseService {
 
                 // Create a gain node for fade-in if needed
                 const fadeGain = this.audioContext.createGain();
-                const volumeScale = (options.volume !== undefined ? options.volume : 1) *
+                const volumeScale = (options.volume ?? 1) *
                     this.audioOptions.musicVolume;
 
                 if (options.fadeIn) {

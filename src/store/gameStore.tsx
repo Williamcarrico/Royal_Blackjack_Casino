@@ -113,6 +113,10 @@ interface GameState {
     resetGame: () => boolean;
     clearError: () => void;
     calculateNextBet: () => number;
+
+    // User authentication state
+    userId: string | null;
+    setUserId: (userId: string | null) => void;
 }
 
 // Define a comprehensive game store type
@@ -156,6 +160,13 @@ export const useGameStore = create<ExtendedGameStore>()(
                     ...createAudioSlice(set, get),
                     ...createSettingsSlice(set, get),
                     /* eslint-enable @typescript-eslint/no-explicit-any */
+
+                    // User authentication state
+                    userId: null,
+                    setUserId: (userId: string | null) => {
+                        set({ userId });
+                        console.log('User ID set:', userId);
+                    },
 
                     /**
                      * Initialize the game with default settings or custom rules
@@ -1172,6 +1183,26 @@ export const useGameStore = create<ExtendedGameStore>()(
                      */
                     getEntities: () => {
                         return get().entities;
+                    },
+
+                    // Add setGamePhase compatibility function that calls transitionTo
+                    setGamePhase: (phase: string) => {
+                        const { transitionTo } = get();
+                        const currentPhase = get().gamePhase;
+
+                        // Skip transition if already in the target phase to avoid validation errors
+                        if (phase === currentPhase) {
+                            console.log(`Already in ${phase} phase, skipping transition`);
+                            return;
+                        }
+
+                        if (transitionTo) {
+                            transitionTo(phase as GamePhase, 'manual_transition');
+                        } else {
+                            console.error('transitionTo function is not available');
+                            // Fallback: Directly set the phase if transitionTo isn't available
+                            set({ gamePhase: phase });
+                        }
                     }
                 } as unknown as ExtendedGameStore;
             }),

@@ -2,14 +2,8 @@
 
 import { FC, useState, useEffect } from 'react'
 
-// DO NOT import entire libraries directly
-// import * as GiIcons from 'react-icons/gi'
-// import * as RiIcons from 'react-icons/ri'
-// import * as FaIcons from 'react-icons/fa'
-// import * as IoIcons from 'react-icons/io5'
-// import * as BiIcons from 'react-icons/bi'
-// import * as HiIcons from 'react-icons/hi'
-// import * as SiIcons from 'react-icons/si'
+// IMPORTANT: Use specific imports when needed directly in components
+// DO NOT import entire libraries directly or rely on dynamic imports with string templates
 
 interface DynamicIconProps {
     icon: string
@@ -31,50 +25,54 @@ export const DynamicIcon: FC<DynamicIconProps> = ({
 }) => {
     const [IconComponent, setIconComponent] = useState<React.ComponentType<React.SVGProps<SVGSVGElement>> | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
 
     useEffect(() => {
         // Reset state when inputs change
         setLoading(true);
         setIconComponent(null);
+        setError(false);
 
         const importIcon = async () => {
             try {
-                // Dynamically import only the specific icon needed
+                // Use separate import statements for each library to avoid template literals
+                // which can cause issues with code splitting
                 let importedIcon;
-                switch (library) {
-                    case 'gi':
-                        importedIcon = await import(`react-icons/gi`).then(module => module[icon as keyof typeof module]);
-                        break;
-                    case 'ri':
-                        importedIcon = await import(`react-icons/ri`).then(module => module[icon as keyof typeof module]);
-                        break;
-                    case 'fa':
-                        importedIcon = await import(`react-icons/fa`).then(module => module[icon as keyof typeof module]);
-                        break;
-                    case 'io':
-                        importedIcon = await import(`react-icons/io5`).then(module => module[icon as keyof typeof module]);
-                        break;
-                    case 'bi':
-                        importedIcon = await import(`react-icons/bi`).then(module => module[icon as keyof typeof module]);
-                        break;
-                    case 'hi':
-                        importedIcon = await import(`react-icons/hi`).then(module => module[icon as keyof typeof module]);
-                        break;
-                    case 'si':
-                        importedIcon = await import(`react-icons/si`).then(module => module[icon as keyof typeof module]);
-                        break;
-                    default:
-                        console.warn(`Library ${library} not supported`);
-                        break;
+
+                if (library === 'gi') {
+                    const module = await import('react-icons/gi');
+                    importedIcon = module[icon as keyof typeof module];
+                } else if (library === 'ri') {
+                    const module = await import('react-icons/ri');
+                    importedIcon = module[icon as keyof typeof module];
+                } else if (library === 'fa') {
+                    const module = await import('react-icons/fa');
+                    importedIcon = module[icon as keyof typeof module];
+                } else if (library === 'io') {
+                    const module = await import('react-icons/io5');
+                    importedIcon = module[icon as keyof typeof module];
+                } else if (library === 'bi') {
+                    const module = await import('react-icons/bi');
+                    importedIcon = module[icon as keyof typeof module];
+                } else if (library === 'hi') {
+                    const module = await import('react-icons/hi');
+                    importedIcon = module[icon as keyof typeof module];
+                } else if (library === 'si') {
+                    const module = await import('react-icons/si');
+                    importedIcon = module[icon as keyof typeof module];
+                } else {
+                    console.warn(`Library ${library} not supported`);
                 }
 
                 if (importedIcon) {
                     setIconComponent(() => importedIcon);
                 } else {
                     console.warn(`Icon ${icon} not found in library ${library}`);
+                    setError(true);
                 }
             } catch (error) {
                 console.error(`Error loading icon ${icon} from ${library}:`, error);
+                setError(true);
             } finally {
                 setLoading(false);
             }

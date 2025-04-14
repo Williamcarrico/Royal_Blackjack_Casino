@@ -1,5 +1,10 @@
 /**
  * Service Registry for managing services and their dependencies
+ *
+ * This module implements a service registry pattern that manages the lifecycle
+ * of all application services, their dependencies, and initialization order.
+ *
+ * @module ServiceRegistry
  */
 import { BaseService, ServiceOptions, ServiceError } from './serviceInterface';
 
@@ -19,35 +24,82 @@ import AudioManager from './audio/audioManager';
 // Analytics services
 import EventTracker from './analytics/eventTracker';
 
-// Define a more specific service class interface
+/**
+ * Interface for service classes that can be instantiated by the registry
+ * @interface ServiceClassType
+ */
 interface ServiceClassType {
+    /**
+     * Get a singleton instance of the service
+     * @param {ServiceOptions} [config] - Optional configuration for the service
+     * @returns {BaseService} The service instance
+     */
     getInstance(config?: ServiceOptions): BaseService;
 }
 
+/**
+ * Type alias for service class
+ */
 type ServiceType = ServiceClassType;
+
+/**
+ * Type alias for service instance
+ */
 type ServiceInstance = BaseService;
+
+/**
+ * Type alias for service configuration
+ */
 type ServiceConfig = ServiceOptions;
 
+/**
+ * Registry mapping service names to their metadata
+ * @interface ServiceRegistry
+ */
 interface ServiceRegistry {
     [key: string]: {
+        /** The service class/constructor */
         service: ServiceType;
+        /** The service instance (if created) */
         instance?: ServiceInstance;
+        /** Service configuration options */
         config?: ServiceConfig;
+        /** Names of other services this service depends on */
         dependencies?: string[];
     };
 }
 
+/**
+ * Central manager for all application services
+ *
+ * Implements the Singleton pattern to ensure a single registry exists
+ * for the application lifecycle.
+ *
+ * @class ServiceManager
+ */
 class ServiceManager {
+    /** Singleton instance of the service manager */
     private static instance: ServiceManager;
+    /** Registry containing all registered services */
     private registry: ServiceRegistry = {};
+    /** Set of services that have been initialized */
     private readonly initializedServices: Set<string> = new Set();
+    /** Set of services currently being initialized (used for cycle detection) */
     private initializationInProgress: Set<string> = new Set();
 
+    /**
+     * Private constructor to enforce singleton pattern
+     * Registers all default services
+     */
     private constructor() {
         // Register all services with their dependencies
         this.registerDefaultServices();
     }
 
+    /**
+     * Get the singleton instance of the service manager
+     * @returns {ServiceManager} The service manager instance
+     */
     public static getInstance(): ServiceManager {
         if (!ServiceManager.instance) {
             ServiceManager.instance = new ServiceManager();
@@ -57,6 +109,12 @@ class ServiceManager {
 
     /**
      * Register a service with the registry
+     *
+     * @template T - Type of the service class
+     * @param {string} name - Unique name for the service
+     * @param {T} serviceClass - The service class to register
+     * @param {ServiceConfig} [config] - Optional configuration for the service
+     * @param {string[]} [dependencies] - Names of other services this service depends on
      */
     public register<T>(
         name: string,
@@ -72,7 +130,12 @@ class ServiceManager {
     }
 
     /**
-     * Get a service instance, initializing it if needed
+     * Get a service instance, initializing it and its dependencies if needed
+     *
+     * @template T - Type of the service instance
+     * @param {string} name - Name of the service to get
+     * @returns {Promise<T>} Promise resolving to the service instance
+     * @throws {ServiceError} If the service is not registered or if there's a circular dependency
      */
     public async getService<T extends ServiceInstance>(name: string): Promise<T> {
         // Check if the service is registered
@@ -102,6 +165,8 @@ class ServiceManager {
 
     /**
      * Initialize all registered services
+     *
+     * @returns {Promise<void>} Promise that resolves when all services are initialized
      */
     public async initializeAll(): Promise<void> {
         const serviceNames = Object.keys(this.registry);
@@ -114,7 +179,11 @@ class ServiceManager {
     }
 
     /**
-     * Reset a specific service
+     * Reset a specific service to its initial state
+     *
+     * @param {string} name - Name of the service to reset
+     * @returns {Promise<void>} Promise that resolves when the service is reset
+     * @throws {ServiceError} If the service is not registered
      */
     public async resetService(name: string): Promise<void> {
         if (!this.registry[name]) {
@@ -132,7 +201,9 @@ class ServiceManager {
     }
 
     /**
-     * Reset all services
+     * Reset all initialized services
+     *
+     * @returns {Promise<void>} Promise that resolves when all services are reset
      */
     public async resetAll(): Promise<void> {
         const serviceNames = Array.from(this.initializedServices);
@@ -144,6 +215,9 @@ class ServiceManager {
 
     /**
      * Check if a service is initialized
+     *
+     * @param {string} name - Name of the service to check
+     * @returns {boolean} True if the service is initialized, false otherwise
      */
     public isInitialized(name: string): boolean {
         return this.initializedServices.has(name);
@@ -151,6 +225,8 @@ class ServiceManager {
 
     /**
      * Get names of all registered services
+     *
+     * @returns {string[]} Array of service names
      */
     public getRegisteredServices(): string[] {
         return Object.keys(this.registry);
@@ -158,13 +234,20 @@ class ServiceManager {
 
     /**
      * Get names of all initialized services
+     *
+     * @returns {string[]} Array of initialized service names
      */
     public getInitializedServices(): string[] {
         return Array.from(this.initializedServices);
     }
 
     /**
-     * Add a custom service configuration
+     * Add or update configuration for a service
+     * If the service is already initialized, it will be reset
+     *
+     * @param {string} name - Name of the service to configure
+     * @param {ServiceConfig} config - Configuration to apply
+     * @throws {ServiceError} If the service is not registered
      */
     public configure(name: string, config: ServiceConfig): void {
         if (!this.registry[name]) {
@@ -187,6 +270,15 @@ class ServiceManager {
         };
     }
 
+    /**
+     * Initialize a service and its dependencies
+     *
+     * @private
+     * @template T - Type of the service instance
+     * @param {string} name - Name of the service to initialize
+     * @returns {Promise<T>} Promise resolving to the initialized service
+     * @throws {ServiceError} If initialization fails or there's a circular dependency
+     */
     private async initializeService<T extends ServiceInstance>(name: string): Promise<T> {
         // Mark the service as being initialized
         this.initializationInProgress.add(name);
@@ -248,6 +340,11 @@ class ServiceManager {
         }
     }
 
+    /**
+     * Register all default services with their dependencies
+     *
+     * @private
+     */
     private registerDefaultServices(): void {
         // Register API services
         this.register('auth', AuthService);

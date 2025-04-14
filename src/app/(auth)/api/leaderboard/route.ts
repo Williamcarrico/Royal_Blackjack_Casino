@@ -19,6 +19,7 @@ interface ProfileData {
     created_at: string;
     biggest_win?: number;
     last_played_at?: string;
+    chips?: number;
 }
 
 interface LeaderboardPlayer {
@@ -76,11 +77,11 @@ export async function GET(request: NextRequest) {
                 startDate.setMonth(now.getMonth() - 1)
                 break
             default:
-                startDate = null // All time
+                // All time - startDate remains null
         }
 
         // Base query for profiles with games data
-        const supabase = await createServerClient()
+        const supabase = await createServerClient(request, new NextResponse())
         let query = supabase
             .from('user_profiles')
             .select('id, username, avatar_url, chips, total_games, total_wins, total_hands')
@@ -141,13 +142,13 @@ export async function GET(request: NextRequest) {
                 id: player.id,
                 rank: index + 1,
                 username: player.username,
-                avatar: player.avatar_url || '/avatars/default.jpg',
-                winnings: player.chips || 0,
+                avatar: player.avatar_url ?? '/avatars/default.jpg',
+                winnings: player.chips ?? 0,
                 winRate: parseFloat(winRate.toFixed(1)),
                 gamesPlayed: player.total_games,
-                biggestWin: player.biggest_win || player.total_blackjacks * 150, // Fallback calculation
-                isVIP: player.chips > 10000, // Example VIP threshold
-                lastActive: player.last_played_at || player.created_at,
+                biggestWin: player.biggest_win ?? player.total_blackjacks * 150, // Fallback calculation
+                isVIP: (player.chips ?? 0) > 10000, // Example VIP threshold
+                lastActive: player.last_played_at ?? player.created_at,
             }
         })
 

@@ -16,11 +16,9 @@ import {
     GameAction
 } from '../../types/gameTypes';
 import {
-    createInitialGameState,
-    LocalGameStatus,
-    LocalGamePhase
+    createInitialGameState
 } from '../../domains/game/gameEngine';
-import { Card } from '../../types/cardTypes';
+
 import { Hand, HandAction, HandResult } from '../../types/handTypes';
 import { Bet } from '../../types/betTypes';
 
@@ -29,11 +27,15 @@ import { Bet } from '../../types/betTypes';
  */
 export function useGame(initialOptions?: Partial<GameOptions>) {
     // Initialize game state
-    const [gameState, setGameState] = useState(createInitialGameState(initialOptions || {} as GameOptions));
+    const [gameState, setGameState] = useState(createInitialGameState({
+        variant: 'CLASSIC' as GameVariant,
+        ...initialOptions
+    } as GameOptions));
     const [activeHandId, setActiveHandId] = useState<string | null>(null);
     const [isAutoPlay, setIsAutoPlay] = useState(false);
     const [autoPlayDelay, setAutoPlayDelay] = useState(1000);
     const [history, setHistory] = useState<Record<string, unknown>[]>([]);
+    const [gameActions, setGameActions] = useState<GameAction[]>([]);
 
     // Import game hooks
     const { rules, availableVariants, changeVariant, updateOptions } = useGameRules();
@@ -51,9 +53,16 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
         players, activePlayer, addNewPlayer, removePlayerById,
         updateBalance, recordHandResult, resetPlayers
     } = usePlayer();
+
+    // Define the useBetting hook return type to include placeBet and clearBets
+    type BettingHookReturn = ReturnType<typeof useBetting> & {
+        placeBet?: (playerId: string, amount: number) => Bet;
+        clearBets?: () => void;
+    };
+
     const {
-        bets, placeActiveSideBet, settle
-    } = useBetting();
+        bets, placeActiveSideBet, settle, placeBet: hookPlaceBet, clearBets: hookClearBets
+    } = useBetting() as BettingHookReturn;
 
     // We need to mock these methods if they don't exist in useBetting
     const mockPlaceBet = (playerId: string, amount: number): Bet => {
@@ -71,8 +80,15 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
     };
 
     // Use real or mock implementations
-    const placeBet = (useBetting as any).placeBet || mockPlaceBet;
-    const clearBets = (useBetting as any).clearBets || mockClearBets;
+    const placeBet = hookPlaceBet || mockPlaceBet;
+    const clearBets = hookClearBets || mockClearBets;
+
+    /**
+     * Track game actions
+     */
+    const trackGameAction = useCallback((action: GameAction) => {
+        setGameActions(prev => [...prev, action]);
+    }, []);
 
     /**
      * Initialize the game engine when all hooks are ready
@@ -85,7 +101,7 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
             }
             updateOptions(initialOptions);
         }
-    }, []);
+    }, [changeVariant, initialOptions, updateOptions]);
 
     /**
      * Start a new game
@@ -94,8 +110,8 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
         // Reset game state
         setGameState(prevState => ({
             ...prevState,
-            status: LocalGameStatus.ACTIVE,
-            currentPhase: LocalGamePhase.BETTING,
+            status: 'running' as GameStatus,
+            currentPhase: 'betting' as GamePhase,
             roundNumber: 1
         }));
 
@@ -110,9 +126,17 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
         // Clear bets
         clearBets();
 
-        // Reset history
+        // Reset history and actions
         setHistory([]);
-    }, [needsReshuffle, shoe, resetAndCreateNewShoe, resetHands, clearBets]);
+        setGameActions([]);
+
+        // Track this action
+        trackGameAction({
+            type: 'deal',
+            playerId: 'system',
+            timestamp: new Date()
+        });
+    }, [needsReshuffle, shoe, resetAndCreateNewShoe, resetHands, clearBets, trackGameAction]);
 
     /**
      * End the current game
@@ -121,8 +145,8 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
         // Update game state
         setGameState(prevState => ({
             ...prevState,
-            status: LocalGameStatus.COMPLETED,
-            currentPhase: LocalGamePhase.CLEANUP
+            status: 'completed' as GameStatus,
+            currentPhase: 'cleanup' as GamePhase
         }));
 
         // Store final game state in history
@@ -135,13 +159,32 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
         };
 
         setHistory(prevHistory => [...prevHistory, finalState]);
-    }, [gameState, players, dealerHand, playerHands, bets]);
+
+        // Track this action
+        trackGameAction({
+            type: 'shuffle',
+            playerId: 'system',
+            timestamp: new Date()
+        });
+    }, [gameState, players, dealerHand, playerHands, bets, trackGameAction]);
+
+    // Forward declarations using let to allow for recursive definitions
+    // eslint-disable-next-line prefer-const
+    let startNextRound: () => void;
+    // eslint-disable-next-line prefer-const
+    let advanceToNextHand: () => void;
+    // eslint-disable-next-line prefer-const
+    let playDealerHand: () => void;
+    // eslint-disable-next-line prefer-const
+    let settleBets: () => void;
+    // eslint-disable-next-line prefer-const
+    let processSideBets: () => void;
 
     /**
      * Deal cards to start a round
      */
     const dealRound = useCallback((): void => {
-        if (gameState.currentPhase !== LocalGamePhase.BETTING) {
+        if (gameState.currentPhase !== 'betting') {
             return;
         }
 
@@ -199,7 +242,7 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
         // Update game phase
         setGameState({
             ...gameState,
-            currentPhase: LocalGamePhase.PLAYER_TURN
+            currentPhase: 'playerTurn' as GamePhase
         });
 
         // Set the first player hand as active
@@ -207,6 +250,13 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
         if (firstHandId) {
             setActiveHandId(firstHandId);
         }
+
+        // Track deal action
+        trackGameAction({
+            type: 'deal',
+            playerId: 'dealer',
+            timestamp: new Date()
+        });
 
         // Check for dealer blackjack
         if (dealerFirstCard && dealerSecondCard &&
@@ -219,7 +269,7 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
             for (const hand of playerHands) {
                 // Check if player has blackjack too (push)
                 const isPlayerBlackjack = hand.cards.length === 2 &&
-                    rules.isBlackjack(hand);
+                    rules.isBlackjack?.(hand);
 
                 if (isPlayerBlackjack) {
                     resolveHand(hand.id, 'push');
@@ -233,14 +283,14 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
             // Move to dealer phase
             setGameState({
                 ...gameState,
-                currentPhase: LocalGamePhase.DEALER_TURN
+                currentPhase: 'dealerTurn' as GamePhase
             });
 
             // Then immediately to settlement
             setTimeout(() => {
                 setGameState({
                     ...gameState,
-                    currentPhase: LocalGamePhase.SETTLEMENT
+                    currentPhase: 'settlement' as GamePhase
                 });
 
                 // Then to next round
@@ -249,9 +299,10 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
                 }, 2000);
             }, 1000);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [gameState, bets, players, initializeDealerHand, initializeHand,
         drawCardFromShoe, drawHoleCard, dealCard, revealHoleCard,
-        playerHands, rules, resolveHand, settle, startNextRound]);
+        playerHands, rules, resolveHand, settle, trackGameAction]);
 
     /**
      * Handle player action (hit, stand, double, split, surrender)
@@ -260,7 +311,7 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
         handId: string,
         action: HandAction
     ): void => {
-        if (gameState.currentPhase !== LocalGamePhase.PLAYER_TURN || activeHandId !== handId) {
+        if (gameState.currentPhase !== 'playerTurn' || activeHandId !== handId) {
             return;
         }
 
@@ -269,6 +320,17 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
             return;
         }
 
+        // Get player ID from hand ID
+        const playerId = hand.id.split('-')[0] || 'unknown';
+
+        // Track this action
+        trackGameAction({
+            type: action,
+            playerId,
+            handId,
+            timestamp: new Date()
+        });
+
         // Apply the action
         switch (action) {
             case 'hit':
@@ -276,6 +338,14 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
                     const card = drawCardFromShoe(true);
                     if (card) {
                         performHit(handId, card);
+                        // Track the card
+                        trackGameAction({
+                            type: 'hit',
+                            playerId,
+                            handId,
+                            card,
+                            timestamp: new Date()
+                        });
                     }
                 }
                 break;
@@ -307,6 +377,15 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
                             const card = drawCardFromShoe(true);
                             if (card) {
                                 performDoubleDown(handId, card);
+                                // Track the card and amount
+                                trackGameAction({
+                                    type: 'double',
+                                    playerId,
+                                    handId,
+                                    amount: bet.amount,
+                                    card,
+                                    timestamp: new Date()
+                                });
                             }
 
                             // Advance to next hand since doubling ends the turn
@@ -343,6 +422,14 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
                             if (firstCard && secondCard) {
                                 // Perform the split
                                 performSplit(handId, newBetId, firstCard, secondCard);
+                                // Track the split action
+                                trackGameAction({
+                                    type: 'split',
+                                    playerId,
+                                    handId,
+                                    amount: bet.amount,
+                                    timestamp: new Date()
+                                });
                             }
                         }
                     }
@@ -364,6 +451,14 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
                         const halfAmount = bet.amount / 2;
                         updateBalance(playerId, halfAmount);
                         settle(bet.id, 'surrender');
+                        // Track the surrender action
+                        trackGameAction({
+                            type: 'surrender',
+                            playerId,
+                            handId,
+                            amount: halfAmount,
+                            timestamp: new Date()
+                        });
                     }
 
                     advanceToNextHand();
@@ -394,6 +489,14 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
 
                             // Record the insurance bet
                             performInsurance(handId, insuranceBetId);
+                            // Track the insurance action
+                            trackGameAction({
+                                type: 'insurance',
+                                playerId,
+                                handId,
+                                amount: insuranceAmount,
+                                timestamp: new Date()
+                            });
                         }
                     }
                 }
@@ -409,24 +512,25 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
             // Move to dealer phase
             setGameState({
                 ...gameState,
-                currentPhase: LocalGamePhase.DEALER_TURN
+                currentPhase: 'dealerTurn' as GamePhase
             });
 
             // Deal dealer cards
             playDealerHand();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
         gameState, activeHandId, playerHands, isActionAvailable,
         drawCardFromShoe, performHit, performStand, players,
         bets, updateBalance, performDoubleDown, placeBet,
         performSplit, performSurrender, settle, placeActiveSideBet,
-        performInsurance, advanceToNextHand, playDealerHand
+        performInsurance, trackGameAction
     ]);
 
     /**
      * Advance to the next active hand
      */
-    const advanceToNextHand = useCallback((): void => {
+    advanceToNextHand = useCallback((): void => {
         // Find the current hand index
         const currentIndex = playerHands.findIndex(h => h.id === activeHandId);
 
@@ -437,7 +541,7 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
         // Find the next active hand
         for (let i = currentIndex + 1; i < playerHands.length; i++) {
             if (playerHands[i]?.status === 'active') {
-                setActiveHandId(playerHands[i]?.id || null);
+                setActiveHandId(playerHands[i]?.id ?? null);
                 return;
             }
         }
@@ -445,17 +549,18 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
         // No more active hands, move to dealer phase
         setGameState({
             ...gameState,
-            currentPhase: LocalGamePhase.DEALER_TURN
+            currentPhase: 'dealerTurn' as GamePhase
         });
 
         // Deal dealer cards
         playDealerHand();
-    }, [playerHands, activeHandId, gameState, playDealerHand]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [playerHands, activeHandId, gameState]);
 
     /**
      * Play the dealer's hand according to rules
      */
-    const playDealerHand = useCallback((): void => {
+    playDealerHand = useCallback((): void => {
         // Reveal dealer's hole card
         revealHoleCard();
 
@@ -472,11 +577,11 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
 
         // Play dealer hand according to rules
         const dealerCards = dealerHand?.cards || [];
-        const hitSoft17 = rules.options.dealerHitsSoft17 || false;
+        const hitSoft17 = rules.options?.dealerHitsSoft17 || false;
 
         // Calculate initial values
         let values = dealerCards.map(card => Array.isArray(card.value) ? card.value[0] : card.value);
-        let total = values.reduce((sum, value) => sum + Number(value), 0);
+        let total = values.reduce((sum: number, value) => sum + Number(value), 0);
         let hasAce = dealerCards.some(card => card.rank === 'A');
 
         // Keep hitting until reaching required value
@@ -489,16 +594,25 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
             if (card && dealerHand) {
                 dealCard(dealerHand.id, card, false);
 
+                // Track dealer card
+                trackGameAction({
+                    type: 'hit',
+                    playerId: 'dealer',
+                    handId: dealerHand.id,
+                    card,
+                    timestamp: new Date()
+                });
+
                 // Update values
                 dealerCards.push(card);
                 values = dealerCards.map(card => Array.isArray(card.value) ? card.value[0] : card.value);
-                total = values.reduce((sum, value) => sum + Number(value), 0);
+                total = values.reduce((sum: number, value) => sum + Number(value), 0);
 
                 // If over 21 and has an Ace counted as 11, count it as 1
                 if (total > 21 && hasAce && values.includes(11)) {
                     const aceIndex = values.indexOf(11);
                     values[aceIndex] = 1;
-                    total = values.reduce((sum, value) => sum + Number(value), 0);
+                    total = values.reduce((sum: number, value) => sum + Number(value), 0);
                 }
 
                 hasAce = dealerCards.some(card => card.rank === 'A');
@@ -508,17 +622,18 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
         // Move to settlement phase
         setGameState({
             ...gameState,
-            currentPhase: LocalGamePhase.SETTLEMENT
+            currentPhase: 'settlement' as GamePhase
         });
 
         // Settle all bets
         settleBets();
-    }, [dealerHand, revealHoleCard, playerHands, rules, drawCardFromShoe, dealCard, gameState, settleBets]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dealerHand, revealHoleCard, playerHands, rules, drawCardFromShoe, dealCard, gameState, trackGameAction]);
 
     /**
      * Settle all bets based on hand results
      */
-    const settleBets = useCallback((): void => {
+    settleBets = useCallback((): void => {
         // Compare each player hand with the dealer
         for (const hand of playerHands) {
             // Skip hands that are already settled (surrendered, busted)
@@ -527,16 +642,16 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
             }
 
             // Get the bet for this hand
-            const bet = bets.find(b => b.id === hand.bet);
+            const bet = bets.find(b => String(b.id) === String(hand.bet));
             if (!bet) continue;
 
             // Compare hands and determine result
             let result: HandResult;
 
             // Check for blackjack
-            const playerBlackjack = rules.isBlackjack(hand);
+            const playerBlackjack = rules.isBlackjack ? rules.isBlackjack(hand) : false;
             const dealerBlackjack = dealerHand?.cards.length === 2 &&
-                dealerHand && rules.isBlackjack(dealerHand as unknown as Hand);
+                dealerHand && rules.isBlackjack ? rules.isBlackjack(dealerHand as unknown as Hand) : false;
 
             if (playerBlackjack && !dealerBlackjack) {
                 // Player has blackjack, dealer doesn't
@@ -550,10 +665,10 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
             } else {
                 // Compare hand values
                 const playerValues = hand.cards.map(card => Array.isArray(card.value) ? card.value[0] : card.value);
-                const playerTotal = playerValues.reduce((sum, value) => sum + Number(value), 0);
+                const playerTotal = playerValues.reduce((sum: number, value) => sum + Number(value), 0);
 
                 const dealerValues = dealerHand?.cards.map(card => Array.isArray(card.value) ? card.value[0] : card.value) || [];
-                const dealerTotal = dealerValues.reduce((sum, value) => sum + Number(value), 0);
+                const dealerTotal = dealerValues.reduce((sum: number, value) => sum + Number(value), 0);
 
                 // Determine result
                 if (dealerTotal > 21) {
@@ -607,23 +722,24 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
         setTimeout(() => {
             startNextRound();
         }, 3000);
-    }, [playerHands, bets, rules, dealerHand, resolveHand, settle, updateBalance, players, recordHandResult, processSideBets, startNextRound]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [playerHands, bets, rules, dealerHand, resolveHand, settle, updateBalance, players, recordHandResult]);
 
     /**
      * Process side bets (insurance, etc.)
      */
-    const processSideBets = useCallback((): void => {
+    processSideBets = useCallback((): void => {
         // Process insurance bets - using a type guard to check for insurance bets
         const insuranceBets = bets.filter(b =>
             // Check if bet has type property and it's 'insurance'
-            (b as any).type === 'insurance' &&
+            (b as { type?: string }).type === 'insurance' &&
             b.status !== 'won' &&
             b.status !== 'lost'
         );
 
         // Check if dealer has blackjack (for insurance)
         const dealerBlackjack = dealerHand?.cards.length === 2 &&
-            dealerHand && rules.isBlackjack(dealerHand as unknown as Hand);
+            dealerHand && rules.isBlackjack ? rules.isBlackjack(dealerHand as unknown as Hand) : false;
 
         for (const bet of insuranceBets) {
             if (dealerBlackjack) {
@@ -644,10 +760,17 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
     /**
      * Start the next round
      */
-    const startNextRound = useCallback((): void => {
+    startNextRound = useCallback((): void => {
         // Check if we need to reshuffle
         if (needsReshuffle) {
             resetAndCreateNewShoe();
+
+            // Track shuffle action
+            trackGameAction({
+                type: 'shuffle',
+                playerId: 'dealer',
+                timestamp: new Date()
+            });
         }
 
         // Reset hands
@@ -659,7 +782,8 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
             dealerHand: { ...dealerHand },
             playerHands: [...playerHands],
             bets: [...bets],
-            roundNumber: gameState.roundNumber || 0
+            roundNumber: gameState.roundNumber || 0,
+            actions: [...gameActions]
         };
 
         setHistory(prevHistory => [...prevHistory, roundState]);
@@ -673,10 +797,10 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
         // Move to betting phase of next round
         setGameState({
             ...gameState,
-            currentPhase: LocalGamePhase.BETTING,
+            currentPhase: 'betting' as GamePhase,
             roundNumber: (gameState.roundNumber || 0) + 1
         });
-    }, [needsReshuffle, resetAndCreateNewShoe, resetHands, players, dealerHand, playerHands, bets, gameState, clearBets]);
+    }, [needsReshuffle, resetAndCreateNewShoe, resetHands, players, dealerHand, playerHands, bets, gameState, clearBets, gameActions, trackGameAction]);
 
     /**
      * Place a bet for a player
@@ -686,7 +810,7 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
         amount: number
     ): Bet | null => {
         // Check if we're in betting phase
-        if (gameState.currentPhase !== LocalGamePhase.BETTING) {
+        if (gameState.currentPhase !== 'betting') {
             return null;
         }
 
@@ -702,10 +826,18 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
         // Deduct amount from player balance
         if (bet) {
             updateBalance(playerId, -amount);
+
+            // Track bet action
+            trackGameAction({
+                type: 'bet',
+                playerId,
+                amount,
+                timestamp: new Date()
+            });
         }
 
         return bet;
-    }, [gameState, players, placeBet, updateBalance]);
+    }, [gameState, players, placeBet, updateBalance, trackGameAction]);
 
     /**
      * Toggle auto-play mode
@@ -725,7 +857,7 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
      * Auto-play a hand according to basic strategy
      */
     useEffect(() => {
-        if (isAutoPlay && gameState.currentPhase === LocalGamePhase.PLAYER_TURN && activeHandId) {
+        if (isAutoPlay && gameState.currentPhase === 'playerTurn' && activeHandId) {
             // Get best action from basic strategy
             const bestAction = getBestAction(activeHandId);
 
@@ -738,6 +870,8 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
                 return () => clearTimeout(timeoutId);
             }
         }
+        // Default return to ensure all code paths return a value
+        return () => { };
     }, [isAutoPlay, gameState.currentPhase, activeHandId, getBestAction, handlePlayerAction, autoPlayDelay]);
 
     /**
@@ -750,10 +884,18 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
         clearBets();
         resetAndCreateNewShoe();
 
-        setGameState(createInitialGameState(rules.options));
+        setGameState(createInitialGameState(rules.options || {} as GameOptions));
         setActiveHandId(null);
         setHistory([]);
-    }, [resetPlayers, resetHands, clearBets, resetAndCreateNewShoe, rules.options]);
+        setGameActions([]);
+
+        // Track reset action
+        trackGameAction({
+            type: 'shuffle',
+            playerId: 'system',
+            timestamp: new Date()
+        });
+    }, [resetPlayers, resetHands, clearBets, resetAndCreateNewShoe, rules.options, trackGameAction]);
 
     /**
      * Check if a specific action is available for the active hand
@@ -763,7 +905,7 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
 
         switch (action) {
             case 'deal':
-                return gameState.currentPhase === LocalGamePhase.BETTING &&
+                return gameState.currentPhase === 'betting' &&
                     bets.some(bet => bet.status === 'pending');
 
             case 'hit':
@@ -772,7 +914,7 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
             case 'split':
             case 'surrender':
             case 'insurance':
-                return gameState.currentPhase === LocalGamePhase.PLAYER_TURN &&
+                return gameState.currentPhase === 'playerTurn' &&
                     isActionAvailable(activeHandId, action as HandAction);
 
             default:
@@ -792,6 +934,7 @@ export function useGame(initialOptions?: Partial<GameOptions>) {
         isAutoPlay,
         autoPlayDelay,
         history,
+        gameActions,
 
         // Game Rules
         rules,

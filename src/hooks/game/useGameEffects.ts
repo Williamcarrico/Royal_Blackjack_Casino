@@ -97,7 +97,7 @@ export const useGameEffects = (
                             bet: gameStore.bet,
                             isActive: gameStore.gamePhase === 'playerTurn',
                             isCurrentPlayer: currentPlayer.isCurrentPlayer,
-                            result: gameStore.roundResult || undefined,
+                            result: gameStore.roundResult ?? undefined,
                         };
                     }
                 }

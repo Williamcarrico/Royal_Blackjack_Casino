@@ -19,12 +19,27 @@ const config = {
       },
     },
     extend: {
+      backgroundImage: {
+        "wooden-table": "url('/texture/wooden-table.png')",
+        "table-pattern": "url('/pattern/pattern.svg')",
+        "blackjack-markings": "url('/table/blackjack-markings.svg')",
+        "felt-green": "url('/pattern/table-felt-green-vip.png')",
+        "felt-red": "url('/pattern/table-felt-red.png')",
+        "felt-blue": "url('/pattern/table-felt-blue.png')",
+        "felt-black": "url('/pattern/table-felt-black.png')",
+        "felt-dark": "url('/pattern/table-felt-dark.png')",
+        "felt-light": "url('/pattern/table-felt-light.png')",
+        "felt-vip": "url('/pattern/table-felt-vip.png')",
+        "silver-bevel-gradient":
+          "linear-gradient(to bottom, #e0e0e0, #818181, #c2c2c2)",
+      },
       colors: {
         border: "var(--border)",
         input: "var(--input)",
         ring: "var(--ring)",
         background: "var(--background)",
         foreground: "var(--foreground)",
+        "silver-bevel": "#a0a0a0",
         primary: {
           DEFAULT: "var(--primary)",
           foreground: "var(--primary-foreground)",

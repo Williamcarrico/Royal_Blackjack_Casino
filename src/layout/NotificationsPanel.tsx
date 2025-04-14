@@ -498,7 +498,7 @@ export function NotificationsPanel() {
 						open
 					>
 						{/* Ambient texture overlay */}
-						<div className="absolute inset-0 bg-[url('/public/noise.png')] opacity-[0.03] pointer-events-none mix-blend-overlay"></div>
+						<div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] pointer-events-none mix-blend-overlay"></div>
 
 						{/* Header with glow effect */}
 						<div className="relative p-4 border-b border-amber-900/30 bg-gradient-to-r from-amber-900/10 to-transparent">

@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { GameStore } from '@/types/storeTypes';
 import { SideBetType } from '@/types/betTypes';
+import { DEFAULT_STARTING_CHIPS } from '@/lib/constants/gameConstants';
+import { useGameState } from '@/hooks/game/useGameState';
 
 // Define a type for the audio elements used in the game
 interface AudioElement extends HTMLAudioElement {
@@ -30,15 +32,30 @@ export const useGameInitialization = (
   // We'll keep setPlayers in the params but use it for player initialization
   setPlayers: (players: PlayerSpot[]) => void
 ) => {
+  // Get GameState hook
+  const gameState = useGameState();
+
   // Initialize game on mount
   useEffect(() => {
     const initGame = async () => {
-      // Start analytics session with initial balance
-      if (gameStore.gameState?.players[0]?.balance) {
-        analytics.startSession(gameStore.gameState.players[0].balance);
-      } else {
-        analytics.startSession(0); // Default balance if not available
+      // Make sure we have a player with proper starting balance in gameStore
+      if (!gameStore.gameState?.players?.length) {
+        // Add player before initializing game with proper balance
+        if (gameStore.addPlayer) {
+          gameStore.addPlayer('Player', DEFAULT_STARTING_CHIPS);
+          console.log(`Added player to gameStore with starting balance: ${DEFAULT_STARTING_CHIPS}`);
+        }
       }
+
+      // Also add player to gameState
+      if (gameState.addPlayer) {
+        const playerId = gameState.addPlayer('Player', DEFAULT_STARTING_CHIPS);
+        console.log(`Added player to gameState with ID: ${playerId} and balance: ${DEFAULT_STARTING_CHIPS}`);
+      }
+
+      // Start analytics session with initial balance
+      const initialBalance = gameStore.gameState?.players[0]?.balance || DEFAULT_STARTING_CHIPS;
+      analytics.startSession(initialBalance);
 
       // Initialize game if not already initialized
       if (!gameStore.gameState?.id) {
@@ -71,6 +88,32 @@ export const useGameInitialization = (
         });
       }
 
+      // Also initialize gameState
+      if (gameState.initializeGame) {
+        gameState.initializeGame({
+          variant: 'classic',
+          numberOfDecks: 6,
+          dealerHitsSoft17: true,
+          blackjackPays: 1.5,
+          doubleAfterSplit: true,
+          resplitAces: false,
+          lateSurrender: true,
+          maxSplitHands: 4,
+          penetration: 0.75,
+          tableLimits: { minimumBet: 5, maximumBet: 500 },
+          payoutRules: {
+            blackjack: 1.5,
+            insurance: 2,
+            regularWin: 1,
+            surrender: 0.5,
+            sideBets: {} as Record<SideBetType, number | Record<string, number>>
+          },
+          allowedActions: ['hit', 'stand', 'double', 'split', 'surrender', 'insurance'],
+          availableSideBets: [],
+          deckRotationStrategy: 'perShoe'
+        });
+      }
+
       // Initialize player spots
       const initialPlayerSpots: PlayerSpot[] = [
         { id: 'spot-1', position: 1, isOccupied: false },
@@ -87,6 +130,12 @@ export const useGameInitialization = (
       });
 
       setIsLoading(false);
+
+      // Debug logs for player info
+      setTimeout(() => {
+        console.log('Player after initialization (gameStore):', gameStore.gameState?.players[0]);
+        console.log('Player after initialization (gameState):', gameState.getActivePlayer());
+      }, 500);
     };
 
     initGame();
@@ -106,7 +155,7 @@ export const useGameInitialization = (
         }
       });
     };
-  }, [gameStore, analytics, setIsLoading, setPlayers]);
+  }, [gameStore, gameState, analytics, setIsLoading, setPlayers]);
 
   // Get dealer hand data from gameState
   const dealerHand = gameStore.gameState?.dealer?.hand || null;

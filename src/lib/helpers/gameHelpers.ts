@@ -414,7 +414,7 @@ export const getDisplayResultText = (result: RoundResult | null): string => {
         'pending': 'IN PROGRESS'
     };
 
-    return resultMap[result] || result;
+    return resultMap[result] ?? result;
 };
 
 /**
@@ -436,7 +436,7 @@ export const getResultClass = (result: RoundResult | null): string => {
         'pending': 'text-gray-400'
     };
 
-    return classMap[result] || '';
+    return classMap[result] ?? '';
 };
 
 /**

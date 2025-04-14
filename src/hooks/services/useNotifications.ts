@@ -10,7 +10,7 @@ import type {
     CreateNotificationRequest
 } from '@/types/notifications';
 
-// Icons for notification types
+// Import from CommonIcons instead of direct library import
 import {
     GiCoins,
     GiDiamonds,
@@ -19,7 +19,7 @@ import {
     GiPerson,
     GiCrown,
     GiMoneyStack
-} from 'react-icons/gi';
+} from '@/components/ui/icons/CommonIcons';
 
 /**
  * Custom hook for notification functionality

@@ -20,6 +20,24 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Documentation
+
+### Architecture
+
+The system architecture is documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), which provides a comprehensive overview of:
+
+- High-level architecture
+- Core components and services
+- Data flow
+- Directory structure
+- Error handling
+- Performance considerations
+- Security considerations
+
+### Code Documentation
+
+We follow a consistent JSDoc documentation style as outlined in [docs/JSDOC_STYLE_GUIDE.md](docs/JSDOC_STYLE_GUIDE.md). All public APIs, components, and hooks should be documented according to these guidelines.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

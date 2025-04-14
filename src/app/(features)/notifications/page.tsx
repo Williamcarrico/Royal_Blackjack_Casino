@@ -141,7 +141,7 @@ const NotificationItem: React.FC<{
                                 <h4 className="font-medium truncate transition-colors text-amber-300 group-hover:text-amber-200">
                                     {notification.title}
                                     {notification.isNew && <span className="sr-only"> (New)</span>}
-                            </h4>
+                                </h4>
                                 {notification.isNew && (
                                     <motion.span
                                         initial={{ scale: 1, opacity: 0.9 }}
@@ -175,9 +175,12 @@ const NotificationItem: React.FC<{
                                                 window.location.href = notification.actionUrl;
                                             }
                                         }}
+                                        asChild
                                     >
-                                        {notification.actionLabel}
-                                        <ChevronRight className="w-3 h-3 ml-1" />
+                                        <div className="inline-flex items-center">
+                                            {notification.actionLabel}
+                                            <ChevronRight className="w-3 h-3 ml-1" />
+                                        </div>
                                     </Button>
                                 )}
                             </div>
@@ -780,212 +783,212 @@ export default function NotificationsPage() {
         return notifications.filter(n => n.type === type).length;
     };
 
-return (
-    <div className="container max-w-5xl px-4 pt-24 pb-8 mx-auto sm:px-6">
-        <div className="flex flex-col space-y-6">
-            <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-                <div className="flex flex-col items-start justify-between">
-                    <div>
-                        <h1 className="font-semibold text-amber-300">Notifications</h1>
-                        <p className="text-gray-400">
-                            {counts.all} {counts.all === 1 ? 'notification' : 'notifications'}
-                            {counts.unread > 0 && <span>, {counts.unread} unread</span>}
-                        </p>
+    return (
+        <div className="container max-w-5xl px-4 pt-24 pb-8 mx-auto sm:px-6">
+            <div className="flex flex-col space-y-6">
+                <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+                    <div className="flex flex-col items-start justify-between">
+                        <div>
+                            <h1 className="font-semibold text-amber-300">Notifications</h1>
+                            <p className="text-gray-400">
+                                {counts.all} {counts.all === 1 ? 'notification' : 'notifications'}
+                                {counts.unread > 0 && <span>, {counts.unread} unread</span>}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex items-center gap-3">
+                        <ActionButtons
+                            isSelectionMode={isSelectionMode}
+                            selectedIds={selectedIds}
+                            handleDeselectAll={handleDeselectAll}
+                            handleSelectAll={handleSelectAll}
+                            handleMarkSelectedAsRead={handleMarkSelectedAsRead}
+                            handleArchiveSelected={handleArchiveSelected}
+                            handleDeleteSelected={handleDeleteSelected}
+                            searchQuery={searchQuery}
+                            setSearchQuery={setSearchQuery}
+                            setIsSelectionMode={setIsSelectionMode}
+                            counts={counts}
+                            handleMarkAllAsRead={handleMarkAllAsRead}
+                            preferencesOpen={preferencesOpen}
+                            setPreferencesOpen={setPreferencesOpen}
+                            filterType={filterType}
+                            getTypeCount={getTypeCount}
+                            setFilterType={setFilterType}
+                        />
                     </div>
                 </div>
 
-                {/* Action buttons */}
-                <div className="flex items-center gap-3">
-                <ActionButtons
-                    isSelectionMode={isSelectionMode}
-                    selectedIds={selectedIds}
-                    handleDeselectAll={handleDeselectAll}
-                    handleSelectAll={handleSelectAll}
-                    handleMarkSelectedAsRead={handleMarkSelectedAsRead}
-                    handleArchiveSelected={handleArchiveSelected}
-                    handleDeleteSelected={handleDeleteSelected}
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
-                    setIsSelectionMode={setIsSelectionMode}
-                    counts={counts}
-                    handleMarkAllAsRead={handleMarkAllAsRead}
-                    preferencesOpen={preferencesOpen}
-                    setPreferencesOpen={setPreferencesOpen}
-                    filterType={filterType}
-                    getTypeCount={getTypeCount}
-                    setFilterType={setFilterType}
-                />
-            </div>
-        </div>
-
-        {/* Current filter indicator */}
-        {filterType !== 'all' && (
-            <div className="flex items-center">
-                <span className="mr-2 text-sm text-gray-400">Filtered by:</span>
-                <Badge className={cn("flex items-center", getNotificationTypeInfo(filterType).color)}>
-                    {getNotificationTypeInfo(filterType).icon}
-                    {getNotificationTypeInfo(filterType).label}
-                    <Button
-                        size="sm"
-                        className="h-auto p-0 ml-1 hover:bg-transparent"
-                        onClick={() => setFilterType('all')}
-                    >
-                        <X className="w-3 h-3" />
-                        <span className="sr-only">Clear filter</span>
-                    </Button>
-                </Badge>
-            </div>
-        )}
-
-    {/* Tabs */}
-    <Tabs
-        value={activeTab}
-        onValueChange={(value) => setActiveTab(value as 'all' | 'unread' | 'read' | 'archived')}
-        className="w-full border bg-black/20 border-amber-800/30"
-    >
-        <TabsList className="border bg-black/20 border-amber-800/30">
-                <TabsTrigger
-                    value="all"
-                    className="data-[state=active]:bg-amber-900/30 data-[state=active]:text-amber-300"
-                >
-                    All
-                    <Badge variant="outline" className="ml-2 bg-transparent">
-                        {counts.all}
-                    </Badge>
-                </TabsTrigger>
-                <TabsTrigger
-                    value="unread"
-                    className="data-[state=active]:bg-amber-900/30 data-[state=active]:text-amber-300"
-                >
-                    Unread
-                    <Badge variant="outline" className="ml-2 bg-transparent">
-                        {counts.unread}
-                    </Badge>
-                </TabsTrigger>
-                <TabsTrigger
-                    value="read"
-                    className="data-[state=active]:bg-amber-900/30 data-[state=active]:text-amber-300"
-                >
-                    Read
-                    <Badge variant="outline" className="ml-2 bg-transparent">
-                        {counts.read}
-                    </Badge>
-                </TabsTrigger>
-                <TabsTrigger
-                    value="archived"
-                    className="data-[state=active]:bg-amber-900/30 data-[state=active]:text-amber-300"
-                >
-                    Archived
-                    <Badge variant="outline" className="ml-2 bg-transparent">
-                        {counts.archived}
-                    </Badge>
-                </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="all" className="mt-4">
-                <NotificationContent
-                    error={error}
-                    isLoading={isLoading}
-                    filteredNotifications={filteredNotifications}
-                    searchQuery={searchQuery}
-                    noResultsMessage="No notifications match your search criteria."
-                    emptyMessage="You don't have any notifications yet."
-                    selectedIds={selectedIds}
-                    onToggleSelect={handleToggleSelect}
-                    isSelectionMode={isSelectionMode}
-                    markAsRead={markAsRead}
-                    deleteNotification={deleteNotification}
-                    archiveNotification={archiveNotification}
-                />
-            </TabsContent>
-
-            <TabsContent value="unread" className="mt-4">
-                <NotificationContent
-                    error={error}
-                    isLoading={isLoading}
-                    filteredNotifications={filteredNotifications}
-                    searchQuery={searchQuery}
-                    noResultsMessage="No unread notifications match your search criteria."
-                    emptyMessage="You don't have any unread notifications."
-                    selectedIds={selectedIds}
-                    onToggleSelect={handleToggleSelect}
-                    isSelectionMode={isSelectionMode}
-                    markAsRead={markAsRead}
-                    deleteNotification={deleteNotification}
-                    archiveNotification={archiveNotification}
-                    icon={<CheckCheck className="w-12 h-12 text-amber-500/30" />}
-                />
-            </TabsContent>
-
-            <TabsContent value="read" className="mt-4">
-                <NotificationContent
-                    error={error}
-                    isLoading={isLoading}
-                    filteredNotifications={filteredNotifications}
-                    searchQuery={searchQuery}
-                    noResultsMessage="No read notifications match your search criteria."
-                    emptyMessage="You don't have any read notifications."
-                    selectedIds={selectedIds}
-                    onToggleSelect={handleToggleSelect}
-                    isSelectionMode={isSelectionMode}
-                    markAsRead={markAsRead}
-                    deleteNotification={deleteNotification}
-                    archiveNotification={archiveNotification}
-                />
-            </TabsContent>
-
-            <TabsContent value="archived" className="mt-4">
-                <NotificationContent
-                    error={error}
-                    isLoading={isLoading}
-                    filteredNotifications={filteredNotifications}
-                    searchQuery={searchQuery}
-                    noResultsMessage="No archived notifications match your search criteria."
-                    emptyMessage="You don't have any archived notifications."
-                    selectedIds={selectedIds}
-                    onToggleSelect={handleToggleSelect}
-                    isSelectionMode={isSelectionMode}
-                    markAsRead={markAsRead}
-                    deleteNotification={deleteNotification}
-                    archiveNotification={archiveNotification}
-                    icon={<Archive className="w-12 h-12 text-amber-500/30" />}
-                />
-            </TabsContent>
-        </Tabs>
-
-        {/* Bulk actions footer */}
-        {isSelectionMode && selectedIds.size > 0 && (
-            <div className="fixed bottom-0 left-0 right-0 z-50 p-4 border-t bg-black/90 border-amber-900/40">
-                <div className="container flex items-center justify-between max-w-5xl mx-auto">
-                    <div className="text-amber-300">
-                        {selectedIds.size} {selectedIds.size === 1 ? 'notification' : 'notifications'} selected
+                {/* Current filter indicator */}
+                {filterType !== 'all' && (
+                    <div className="flex items-center">
+                        <span className="mr-2 text-sm text-gray-400">Filtered by:</span>
+                        <Badge className={cn("flex items-center", getNotificationTypeInfo(filterType).color)}>
+                            {getNotificationTypeInfo(filterType).icon}
+                            {getNotificationTypeInfo(filterType).label}
+                            <Button
+                                size="sm"
+                                className="h-auto p-0 ml-1 hover:bg-transparent"
+                                onClick={() => setFilterType('all')}
+                            >
+                                <X className="w-3 h-3" />
+                                <span className="sr-only">Clear filter</span>
+                            </Button>
+                        </Badge>
                     </div>
-                    <div className="flex gap-3">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleMarkSelectedAsRead}
-                            className="border-amber-700/50 hover:bg-amber-900/20"
+                )}
+
+                {/* Tabs */}
+                <Tabs
+                    value={activeTab}
+                    onValueChange={(value) => setActiveTab(value as 'all' | 'unread' | 'read' | 'archived')}
+                    className="w-full border bg-black/20 border-amber-800/30"
+                >
+                    <TabsList className="border bg-black/20 border-amber-800/30">
+                        <TabsTrigger
+                            value="all"
+                            className="data-[state=active]:bg-amber-900/30 data-[state=active]:text-amber-300"
                         >
-                            <CheckCheck className="w-4 h-4 mr-2" />
-                            Mark as Read
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleArchiveSelected}
-                        className="border-amber-700/50 hover:bg-amber-900/20"
-                    >
-                        <Archive className="w-4 h-4 mr-2" />
-                            Archive
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleDeleteSelected}
-                        className="border-amber-700/50 hover:bg-amber-900/20 hover:text-red-400"
-                    >
-                        <Trash2 className="w-4 h-4 mr-2" />
+                            All
+                            <Badge variant="outline" className="ml-2 bg-transparent">
+                                {counts.all}
+                            </Badge>
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="unread"
+                            className="data-[state=active]:bg-amber-900/30 data-[state=active]:text-amber-300"
+                        >
+                            Unread
+                            <Badge variant="outline" className="ml-2 bg-transparent">
+                                {counts.unread}
+                            </Badge>
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="read"
+                            className="data-[state=active]:bg-amber-900/30 data-[state=active]:text-amber-300"
+                        >
+                            Read
+                            <Badge variant="outline" className="ml-2 bg-transparent">
+                                {counts.read}
+                            </Badge>
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="archived"
+                            className="data-[state=active]:bg-amber-900/30 data-[state=active]:text-amber-300"
+                        >
+                            Archived
+                            <Badge variant="outline" className="ml-2 bg-transparent">
+                                {counts.archived}
+                            </Badge>
+                        </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="all" className="mt-4">
+                        <NotificationContent
+                            error={error}
+                            isLoading={isLoading}
+                            filteredNotifications={filteredNotifications}
+                            searchQuery={searchQuery}
+                            noResultsMessage="No notifications match your search criteria."
+                            emptyMessage="You don't have any notifications yet."
+                            selectedIds={selectedIds}
+                            onToggleSelect={handleToggleSelect}
+                            isSelectionMode={isSelectionMode}
+                            markAsRead={markAsRead}
+                            deleteNotification={deleteNotification}
+                            archiveNotification={archiveNotification}
+                        />
+                    </TabsContent>
+
+                    <TabsContent value="unread" className="mt-4">
+                        <NotificationContent
+                            error={error}
+                            isLoading={isLoading}
+                            filteredNotifications={filteredNotifications}
+                            searchQuery={searchQuery}
+                            noResultsMessage="No unread notifications match your search criteria."
+                            emptyMessage="You don't have any unread notifications."
+                            selectedIds={selectedIds}
+                            onToggleSelect={handleToggleSelect}
+                            isSelectionMode={isSelectionMode}
+                            markAsRead={markAsRead}
+                            deleteNotification={deleteNotification}
+                            archiveNotification={archiveNotification}
+                            icon={<CheckCheck className="w-12 h-12 text-amber-500/30" />}
+                        />
+                    </TabsContent>
+
+                    <TabsContent value="read" className="mt-4">
+                        <NotificationContent
+                            error={error}
+                            isLoading={isLoading}
+                            filteredNotifications={filteredNotifications}
+                            searchQuery={searchQuery}
+                            noResultsMessage="No read notifications match your search criteria."
+                            emptyMessage="You don't have any read notifications."
+                            selectedIds={selectedIds}
+                            onToggleSelect={handleToggleSelect}
+                            isSelectionMode={isSelectionMode}
+                            markAsRead={markAsRead}
+                            deleteNotification={deleteNotification}
+                            archiveNotification={archiveNotification}
+                        />
+                    </TabsContent>
+
+                    <TabsContent value="archived" className="mt-4">
+                        <NotificationContent
+                            error={error}
+                            isLoading={isLoading}
+                            filteredNotifications={filteredNotifications}
+                            searchQuery={searchQuery}
+                            noResultsMessage="No archived notifications match your search criteria."
+                            emptyMessage="You don't have any archived notifications."
+                            selectedIds={selectedIds}
+                            onToggleSelect={handleToggleSelect}
+                            isSelectionMode={isSelectionMode}
+                            markAsRead={markAsRead}
+                            deleteNotification={deleteNotification}
+                            archiveNotification={archiveNotification}
+                            icon={<Archive className="w-12 h-12 text-amber-500/30" />}
+                        />
+                    </TabsContent>
+                </Tabs>
+
+                {/* Bulk actions footer */}
+                {isSelectionMode && selectedIds.size > 0 && (
+                    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 border-t bg-black/90 border-amber-900/40">
+                        <div className="container flex items-center justify-between max-w-5xl mx-auto">
+                            <div className="text-amber-300">
+                                {selectedIds.size} {selectedIds.size === 1 ? 'notification' : 'notifications'} selected
+                            </div>
+                            <div className="flex gap-3">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleMarkSelectedAsRead}
+                                    className="border-amber-700/50 hover:bg-amber-900/20"
+                                >
+                                    <CheckCheck className="w-4 h-4 mr-2" />
+                                    Mark as Read
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleArchiveSelected}
+                                    className="border-amber-700/50 hover:bg-amber-900/20"
+                                >
+                                    <Archive className="w-4 h-4 mr-2" />
+                                    Archive
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleDeleteSelected}
+                                    className="border-amber-700/50 hover:bg-amber-900/20 hover:text-red-400"
+                                >
+                                    <Trash2 className="w-4 h-4 mr-2" />
                                     Delete
                                 </Button>
                             </div>

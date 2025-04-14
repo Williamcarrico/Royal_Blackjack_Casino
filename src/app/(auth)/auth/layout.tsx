@@ -78,7 +78,7 @@ export default function AuthLayout({ children }: { readonly children: ReactNode 
 				<div className="absolute inset-0 bg-grid-slate-500/[0.02] bg-[size:20px_20px] dark:bg-grid-slate-400/[0.01]" />
 
 				{/* Fine noise texture */}
-				<div className="absolute inset-0 opacity-[0.02] bg-[url('/public/noise.png')] dark:opacity-[0.03]" />
+				<div className="absolute inset-0 opacity-[0.02] bg-[url('/noise.png')] dark:opacity-[0.03]" />
 			</div>
 
 			{/* Content container with staggered animations */}
