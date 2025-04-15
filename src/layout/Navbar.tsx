@@ -19,31 +19,31 @@ import { cn } from '@/lib/utils/utils'
 import { Button } from '@/components/ui/layout/button'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { NotificationsPanel } from './NotificationsPanel'
-import dynamic from 'next/dynamic'
+import {
+	GiDiamonds,
+	GiBallGlow,
+	GiInfo,
+	GiRuleBook,
+	GiPerson,
+	GiCrown,
+	GiMoneyStack,
+	GiBrain,
+	GiCardAceClubs,
+	GiPokerHand,
+	GiBookmark,
+	GiBookPile,
+	GiComputing,
+	GiDatabase,
+	GiPadlock,
+	GiPaperClip,
+	GiPhone,
+	GiRelationshipBounds,
+	GiSettingsKnobs,
+	GiStigmata,
+	GiTeacher,
+	GiWorld
+} from 'react-icons/gi';
 
-// Dynamically import specific icons only when needed
-const GiDiamonds = dynamic(() => import('react-icons/gi').then(mod => mod.GiDiamonds))
-const GiCardAceClubs = dynamic(() => import('react-icons/gi').then(mod => mod.GiCardAceClubs))
-const GiPokerHand = dynamic(() => import('react-icons/gi').then(mod => mod.GiPokerHand))
-const GiPaperClip = dynamic(() => import('react-icons/gi').then(mod => mod.GiPaperClip))
-const GiDatabase = dynamic(() => import('react-icons/gi').then(mod => mod.GiDatabase))
-const GiWorld = dynamic(() => import('react-icons/gi').then(mod => mod.GiWorld))
-const GiBookPile = dynamic(() => import('react-icons/gi').then(mod => mod.GiBookPile))
-const GiTeacher = dynamic(() => import('react-icons/gi').then(mod => mod.GiTeacher))
-const GiBallGlow = dynamic(() => import('react-icons/gi').then(mod => mod.GiBallGlow))
-const GiBrain = dynamic(() => import('react-icons/gi').then(mod => mod.GiBrain))
-const GiStigmata = dynamic(() => import('react-icons/gi').then(mod => mod.GiStigmata))
-const GiComputing = dynamic(() => import('react-icons/gi').then(mod => mod.GiComputing))
-const GiRuleBook = dynamic(() => import('react-icons/gi').then(mod => mod.GiRuleBook))
-const GiInfo = dynamic(() => import('react-icons/gi').then(mod => mod.GiInfo))
-const GiRelationshipBounds = dynamic(() => import('react-icons/gi').then(mod => mod.GiRelationshipBounds))
-const GiPerson = dynamic(() => import('react-icons/gi').then(mod => mod.GiPerson))
-const GiPhone = dynamic(() => import('react-icons/gi').then(mod => mod.GiPhone))
-const GiBookmark = dynamic(() => import('react-icons/gi').then(mod => mod.GiBookmark))
-const GiCrown = dynamic(() => import('react-icons/gi').then(mod => mod.GiCrown))
-const GiSettingsKnobs = dynamic(() => import('react-icons/gi').then(mod => mod.GiSettingsKnobs))
-const GiMoneyStack = dynamic(() => import('react-icons/gi').then(mod => mod.GiMoneyStack))
-const GiPadlock = dynamic(() => import('react-icons/gi').then(mod => mod.GiPadlock))
 
 // Types
 interface NavChildLink {
@@ -225,7 +225,7 @@ const Logo = memo(() => {
 	return (
 		<Link
 			href="/"
-			className="flex items-center gap-3 group"
+			className="flex items-center gap-3 group my-2"
 			aria-label="Royal Blackjack Casino Home"
 			onMouseEnter={() => {
 				scale.set(1.03)
@@ -238,7 +238,7 @@ const Logo = memo(() => {
 		>
 			{/* Logo Image Container with Enhanced Luxury Effects */}
 			<motion.div
-				className="relative w-[76px] h-[76px]" // Slightly larger for more prominence
+				className="relative w-[60px] h-[60px]" // Reduced size for better spacing
 				style={{
 					scale,
 					rotate: rotation
@@ -278,8 +278,8 @@ const Logo = memo(() => {
 					<Image
 						src="/images/Royal-Blackjack-Logo.png"
 						alt="Royal Blackjack Casino Logo"
-						width={76}
-						height={76}
+						width={60}
+						height={60}
 						priority // Prioritize loading the logo
 						className="object-contain w-auto h-auto" // Maintain aspect ratio
 						style={{ width: 'auto', height: 'auto' }}
@@ -310,7 +310,7 @@ const Logo = memo(() => {
 				<div className="relative">
 					<motion.h1
 						key="house-edge-title"
-						className="text-xl font-bold tracking-wider text-transparent uppercase bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100 bg-clip-text cinzel-decorative-regular"
+						className="text-lg font-bold tracking-wider text-transparent uppercase bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100 bg-clip-text cinzel-decorative-regular"
 						initial={{ opacity: 0, y: 5 }}
 						animate={{ opacity: 1, y: 0 }}
 						transition={{ duration: 0.7, ease: 'easeOut' }}
@@ -327,7 +327,7 @@ const Logo = memo(() => {
 						/>
 						<motion.h1
 							key="blackjack-title"
-							className="text-2xl font-bold tracking-wider text-transparent uppercase bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100 bg-clip-text cinzel-decorative-regular" // Increased size
+							className="text-xl font-bold tracking-wider text-transparent uppercase bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100 bg-clip-text cinzel-decorative-regular" // Reduced size
 							initial={{ opacity: 0, y: 5 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ duration: 0.7, delay: 0.2, ease: 'easeOut' }}
@@ -360,7 +360,7 @@ const Logo = memo(() => {
 					transition={{ duration: 0.7, delay: 0.4 }}
 				>
 					<motion.span
-						className="relative px-2.5 py-0.5 text-[0.7rem] font-medium tracking-wider uppercase rounded-sm text-amber-100 bg-gradient-to-r from-red-900/60 to-black/60 border border-amber-500/20 shadow-[0_2px_6px_rgba(0,0,0,0.3)]"
+						className="relative px-2.5 py-0.5 text-[0.65rem] font-medium tracking-wider uppercase rounded-sm text-amber-100 bg-gradient-to-r from-red-900/60 to-black/60 border border-amber-500/20 shadow-[0_2px_6px_rgba(0,0,0,0.3)]"
 						whileHover={{
 							color: '#fcd34d',
 							borderColor: 'rgba(245, 158, 11, 0.5)',
@@ -1383,7 +1383,7 @@ export function Header() {
 					transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
 				/>
 
-				<div className="container flex items-center justify-between h-20 px-4 mx-auto sm:px-6 lg:px-8">
+				<div className="container flex items-center justify-between h-[72px] px-4 mx-auto sm:px-6 lg:px-8">
 					{/* Logo */}
 					<Logo />
 

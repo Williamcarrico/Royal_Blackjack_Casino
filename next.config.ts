@@ -31,13 +31,7 @@ const nextConfig: NextConfig = {
 			}
 		}
 
-		// Fix for react-icons loading issue
-		config.resolve.alias = {
-			...config.resolve.alias,
-			'react-icons/gi': 'react-icons/gi/index',
-			'react-icons': 'react-icons/lib',
-		}
-
+		// Remove problematic aliases
 		return config
 	},
 	// Improve transpilation for React Icons

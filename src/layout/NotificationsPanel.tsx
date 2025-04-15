@@ -8,16 +8,15 @@ import { Button } from '@/components/ui/layout/button'
 import { cn } from '@/lib/utils/utils'
 import Link from 'next/link'
 import { useOnClickOutside } from '@/hooks/useOnClickOutside'
-import dynamic from 'next/dynamic'
-
-// Dynamically import specific icons only when needed
-const GiDiamonds = dynamic(() => import('react-icons/gi').then(mod => mod.GiDiamonds))
-const GiCoins = dynamic(() => import('react-icons/gi').then(mod => mod.GiCoins))
-const GiBallGlow = dynamic(() => import('react-icons/gi').then(mod => mod.GiBallGlow))
-const GiInfo = dynamic(() => import('react-icons/gi').then(mod => mod.GiInfo))
-const GiPerson = dynamic(() => import('react-icons/gi').then(mod => mod.GiPerson))
-const GiCrown = dynamic(() => import('react-icons/gi').then(mod => mod.GiCrown))
-const GiMoneyStack = dynamic(() => import('react-icons/gi').then(mod => mod.GiMoneyStack))
+import {
+	GiDiamonds,
+	GiBallGlow,
+	GiInfo,
+	GiPerson,
+	GiCrown,
+	GiMoneyStack,
+	GiCoins
+} from 'react-icons/gi';
 
 import { useNotifications } from '@/hooks/services/useNotifications'
 import type { EnrichedNotification, NotificationType } from '@/types/notifications'
@@ -94,7 +93,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 			transition={{ duration: 0.2 }}
 			className="relative group"
 		>
-			<div
+			<button
 				className={cn(
 					'w-full text-left p-4 hover:bg-gradient-to-r hover:from-amber-900/20 hover:to-transparent focus:bg-amber-900/15 focus:outline-none transition-colors relative cursor-pointer',
 					notification.isNew && 'bg-gradient-to-r from-amber-900/15 to-transparent',
@@ -106,8 +105,6 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 				onClick={handleClick}
 				onKeyDown={handleKeyDown}
 				data-notification
-				role="button"
-				tabIndex={0}
 				aria-label={`${notification.title} notification ${notification.isNew ? ' (New)' : ''}`}
 			>
 				<div className="flex">
@@ -172,7 +169,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 						}}
 					/>
 				)}
-			</div>
+			</button>
 
 			{/* Actions dropdown menu - Moved outside the button */}
 			<div

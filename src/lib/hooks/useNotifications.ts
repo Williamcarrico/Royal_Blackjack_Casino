@@ -1,4 +1,5 @@
 import { useEffect, useCallback, useMemo } from 'react';
+import React from 'react';
 import { useNotificationStore } from '@/store/notificationStore';
 import { formatDistanceToNow, format, parseISO } from 'date-fns';
 import type {
@@ -15,11 +16,9 @@ import {
     GiDiamonds,
     GiBallGlow,
     GiInfo,
-    GiRuleBook,
     GiPerson,
     GiCrown,
-    GiMoneyStack,
-    GiBrain
+    GiMoneyStack
 } from 'react-icons/gi';
 
 /**
@@ -58,28 +57,28 @@ export function useNotifications() {
     }, [fetchNotifications, connectToNotificationHub, disconnectFromNotificationHub]);
 
     // Get icon component for a notification type
-    const getNotificationIcon = useCallback((type: NotificationType) => {
+    const getNotificationIcon = useCallback((type: NotificationType): React.ReactNode => {
         switch (type) {
             case 'bonus':
-                return <GiCoins className="w-5 h-5 text-yellow-400" />;
+                return React.createElement(GiCoins, { className: "w-5 h-5 text-yellow-400" });
             case 'tournament':
-                return <GiDiamonds className="w-5 h-5 text-blue-400" />;
+                return React.createElement(GiDiamonds, { className: "w-5 h-5 text-blue-400" });
             case 'promo':
-                return <span className="w-5 h-5 text-green-400" >% </span>;
+                return React.createElement('span', { className: "w-5 h-5 text-green-400" }, "%");
             case 'achievement':
-                return <span className="w-5 h-5 text-purple-400" >🏆</span>;
+                return React.createElement('span', { className: "w-5 h-5 text-purple-400" }, "🏆");
             case 'game':
-                return <GiBallGlow className="w-5 h-5 text-cyan-400" />;
+                return React.createElement(GiBallGlow, { className: "w-5 h-5 text-cyan-400" });
             case 'system':
-                return <GiInfo className="w-5 h-5 text-gray-400" />;
+                return React.createElement(GiInfo, { className: "w-5 h-5 text-gray-400" });
             case 'account':
-                return <GiPerson className="w-5 h-5 text-orange-400" />;
+                return React.createElement(GiPerson, { className: "w-5 h-5 text-orange-400" });
             case 'vip':
-                return <GiCrown className="w-5 h-5 text-amber-400" />;
+                return React.createElement(GiCrown, { className: "w-5 h-5 text-amber-400" });
             case 'reward':
-                return <GiMoneyStack className="w-5 h-5 text-emerald-400" />;
+                return React.createElement(GiMoneyStack, { className: "w-5 h-5 text-emerald-400" });
             default:
-                return <GiInfo className="w-5 h-5 text-gray-400" />;
+                return React.createElement(GiInfo, { className: "w-5 h-5 text-gray-400" });
         }
     }, []);
 
