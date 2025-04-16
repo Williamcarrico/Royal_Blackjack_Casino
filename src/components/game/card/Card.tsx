@@ -102,7 +102,7 @@ const getCardImagePath = (suit: Suit, rank: Rank, faceDown: boolean, cardStyle: 
 };
 
 // Card corners component
-const CardCorner = ({ rank, symbol, isRed, isRotated = false }: {
+const _CardCorner = ({ rank, symbol, isRed, isRotated = false }: {
     rank: Rank;
     symbol: string;
     isRed: boolean;
@@ -132,7 +132,7 @@ const CardCorner = ({ rank, symbol, isRed, isRotated = false }: {
 };
 
 // Card back component
-const CardBack = () => (
+const _CardBack = () => (
     <div className={cn(
         'absolute inset-0 w-full h-full backface-hidden transform rotateY-180',
         'bg-gradient-to-br from-blue-600 to-blue-800 dark:from-gray-700 dark:to-gray-900',
@@ -154,7 +154,7 @@ const Card = ({
     faceDown = false,
     highlighted = false,
     disabled = false,
-    flipped = false,
+    _flipped = false,
     className = '',
     dealt = false,
     style,
@@ -164,8 +164,8 @@ const Card = ({
     cardStyle = 'modern',
 }: CardProps) => {
     const cardRef = useRef<HTMLDivElement>(null);
-    const isRed = isRedSuit(suit);
-    const suitSymbol = getSuitSymbol(suit);
+    const _isRed = isRedSuit(suit);
+    const _suitSymbol = getSuitSymbol(suit);
 
     // Generate aria-label if not provided
     const faceUpLabel = `${rank} of ${suit}`;

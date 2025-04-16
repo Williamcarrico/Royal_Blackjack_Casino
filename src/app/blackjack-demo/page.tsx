@@ -5,8 +5,8 @@ import BlackjackGameTable from '@/components/game/BlackjackGameTable';
 
 export default function BlackjackDemoPage() {
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showRules, setShowRules] = useState(false);
+  const [_showSettings, setShowSettings] = useState(false);
+  const [_showRules, setShowRules] = useState(false);
 
   const handleToggleSound = () => {
     setSoundEnabled(!soundEnabled);

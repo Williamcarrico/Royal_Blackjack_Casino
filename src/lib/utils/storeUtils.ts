@@ -106,7 +106,7 @@ export const createLogMiddleware = <T extends object>(
         set(partial, replace);
         const newState = get();
 
-        // eslint-disable-next-line no-console
+         
         console.log(`[${name}] State updated:`, {
             previousState,
             newState,
@@ -154,7 +154,7 @@ export const createPerformanceMiddleware = <T extends object>(
                         const result = (value as any)(...args);
                         const endTime = performance.now();
 
-                        // eslint-disable-next-line no-console
+                         
                         console.log(`[${name}] ${key} took ${endTime - startTime}ms`);
 
                         return result;

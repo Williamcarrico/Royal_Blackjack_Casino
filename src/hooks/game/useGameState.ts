@@ -11,7 +11,7 @@ import {
     GamePhase,
     Player,
 } from '../../types/gameTypes';
-import { Hand, HandAction } from '../../types/handTypes';
+import { Hand, HandAction, type DealerHand } from '../../types/handTypes';
 import { GameEngine } from '../../domains/game/gameEngine';
 
 type GameStateStore = {
@@ -323,6 +323,12 @@ export function useGameState() {
         return gameState.players[gameState.activePlayerIndex] || null;
     }, [gameState]);
 
+    const getDealerHand = useCallback((): DealerHand | null => {
+        if (!gameState) return null;
+
+        return gameState.dealer.hand || null;
+    }, [gameState]);
+
     const getAvailableActions = useCallback((): HandAction[] => {
         const activeHand = getActiveHand();
         if (!activeHand) return [];
@@ -365,6 +371,7 @@ export function useGameState() {
         // Helper functions
         getActiveHand,
         getActivePlayer,
+        getDealerHand,
         getAvailableActions,
         isGamePhase,
         canPlaceBet

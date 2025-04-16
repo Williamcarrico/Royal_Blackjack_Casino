@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { WebSocketHandler } from '@/types/apiTypes';
+import { _WebSocketHandler } from '@/types/apiTypes';
 
 // Store connected WebSocket clients
 type ClientInfo = {
@@ -17,7 +17,7 @@ const clients = new Map<string, ClientInfo>();
  * you would use a more robust WebSocket server implementation.
  * This implementation provides a simulation for local development.
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   // Create a mock response since Next.js App Router doesn't have native WebSocket support
   // We're simulating the WebSocket connection for development purposes
   const clientId = crypto.randomUUID();
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
  * In a real implementation, you would use this to broadcast messages
  * to connected WebSocket clients.
  */
-export function broadcastNotification(notification: any, targetUserIds?: string[]) {
+export function broadcastNotification(notification: { id: string; type: string; message: string; timestamp: string }, targetUserIds?: string[]) {
   console.log('Simulated broadcast:', {
     notification,
     targetUsers: targetUserIds || 'all',

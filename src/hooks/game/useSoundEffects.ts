@@ -55,7 +55,7 @@ const useSoundEffects = ({
     });
 
     // Sound file mapping
-    const soundFiles: Record<SoundEffectType, string> = {
+    const soundFiles = useRef<Record<SoundEffectType, string>>({
         'card-deal': '/sounds/card-deal.mp3',
         'card-flip': '/sounds/card-flip.mp3',
         'chips': '/sounds/chips.mp3',
@@ -67,7 +67,7 @@ const useSoundEffects = ({
         'button-click': '/sounds/button-click.mp3',
         'alert': '/sounds/alert.mp3',
         'timer': '/sounds/timer.mp3'
-    };
+    }).current;
 
     // Preload sound effects
     useEffect(() => {
@@ -125,7 +125,7 @@ const useSoundEffects = ({
                 }
             });
         };
-    }, [isEnabled]);
+    }, [isEnabled, soundFiles, masterVolume, isMuted]);
 
     // Update volume for all sounds when masterVolume changes
     useEffect(() => {

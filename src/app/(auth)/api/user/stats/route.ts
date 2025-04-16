@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
-import { cookies } from 'next/headers'
 
 // Cache duration in milliseconds (2 minutes)
 const CACHE_DURATION = 120000

@@ -10,12 +10,30 @@ import PageLayout from '@/components/layouts/PageLayout';
 import LoadingOverlay from '@/components/LoadingOverlay';
 import GameFooter from '@/components/game/footer/GameFooter';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Settings } from 'lucide-react';
-import SettingsPanel from '@/components/game/settings/SettingsPanel';
-import StatisticsPanel from '@/components/game/stats/StatisticsPanel';
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetDescription,
+    SheetClose,
+    SheetFooter
+} from '@/components/ui/sheet';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+    ChevronLeft, ChevronRight, HelpCircle, Volume2, VolumeX, Cog
+} from 'lucide-react';
 import TutorialOverlay from '@/components/tutorial/TutorialOverlay';
+import AdvicePanel from '@/components/strategy/AdvicePanel';
+import StatisticsPanel from '@/components/game/stats/StatisticsPanel';
+import SettingsPanel from '@/components/game/settings/SettingsPanel';
+import { SideBetsPanel } from '@/components/betting/SideBetsPanel';
 
 import { useGameState } from '@/hooks/game/useGameState';
 import { useHandCalculator } from '@/hooks/game/useHandCalculator';
@@ -32,7 +50,7 @@ import { DEFAULT_STARTING_CHIPS } from '@/lib/constants/gameConstants';
 
 /**
  * BlackjackPage is the main component for the blackjack game experience
- * Integrates all game functionality and UI components
+ * Integrates all game functionality and UI components with a modern, sophisticated design
  */
 const BlackjackPage = () => {
     const router = useRouter();
@@ -60,7 +78,7 @@ const BlackjackPage = () => {
             isInitialized: state.isInitialized,
             isLoading: state.isLoading,
             error: state.error,
-            gamePhase: state.gamePhase,
+            gamePhase: state.gamePhase as GamePhase,
             addPlayer: state.addPlayer
         }))
     );
@@ -84,7 +102,6 @@ const BlackjackPage = () => {
     // Handle phase change from UI components
     const _handlePhaseChange = useCallback((uiPhase: UIGamePhase) => {
         if (setGamePhase) {
-            // Map UI game phase to store game phase (moved inside useCallback)
             const mapUIPhaseToStorePhase = (uiPhase: UIGamePhase): GamePhase => {
                 const phaseMap: Record<UIGamePhase, GamePhase> = {
                     'betting': 'betting',
@@ -132,15 +149,17 @@ const BlackjackPage = () => {
             await addNotification(notification);
         } catch (error) {
             console.warn('Error adding notification:', error);
-            // Just log the error without triggering another notification
         }
     }, [addNotification]);
 
+    // UI States
     const [showTutorial, setShowTutorial] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarTab, setSidebarTab] = useState('advice');
     const [showSettings, setShowSettings] = useState(false);
-    const [showStats, setShowStats] = useState(false);
+    const [showSideBets, setShowSideBets] = useState(false);
 
-    // Side bets states - use memoized object for sideBets and stable getAvailableBets reference
+    // Side bets states
     const getAvailableBets = useSideBetsStore(state => state.getAvailableBets);
     const availableBets = React.useMemo(() => getAvailableBets(), [getAvailableBets]);
     const sideBets = React.useMemo(() => ({
@@ -149,40 +168,27 @@ const BlackjackPage = () => {
         luckyLadies: availableBets['luckyLadies'] || false
     }), [availableBets]);
 
-    // Memoize callback functions for UI interactions to prevent infinite renders
-    const handleSettingsOpen = useCallback(() => {
-        setShowSettings(true);
-    }, []);
-
-    const handleStatisticsOpen = useCallback(() => {
-        setShowStats(true);
-    }, []);
-
-    const handleTutorialOpen = useCallback(() => {
-        setShowTutorial(true);
-    }, []);
-
+    // Memoize callback functions for UI interactions
     const handleToggleSound = useCallback(() => {
         toggleSound();
-    }, [toggleSound]);
+        toast.success(isSoundEnabled ? "Sound disabled" : "Sound enabled");
+    }, [toggleSound, isSoundEnabled]);
 
-    // Analytics tracking with sophisticated implementation using the analytics store for comprehensive game metrics
+    const handleToggleSidebar = useCallback(() => {
+        setSidebarOpen(prev => !prev);
+    }, []);
+
+    // Analytics tracking
     const trackEvent = useCallback((event: string, data?: Record<string, unknown>) => {
-        // Simple event logging
         console.log(`Analytics event: ${event}`, data);
     }, []);
 
     // Get active player balance
     const activePlayer = gameState.getActivePlayer();
-    // Make sure to provide DEFAULT_STARTING_CHIPS as fallback if balance is 0 or undefined
     const playerBalance = activePlayer?.balance ?? DEFAULT_STARTING_CHIPS;
 
     // Debug: Track player balance
     useEffect(() => {
-        console.log('Active player:', activePlayer);
-        console.log('Player balance updated:', playerBalance);
-
-        // Force update if balance is 0
         if (activePlayer && activePlayer.balance === 0) {
             console.log('Force updating player with DEFAULT_STARTING_CHIPS');
             gameState.addPlayer('Player', DEFAULT_STARTING_CHIPS);
@@ -191,8 +197,6 @@ const BlackjackPage = () => {
 
     // Add initialization ref to prevent multiple initializations
     const hasInitialized = useRef(false);
-
-    // Add to BlackjackPage component state
     const [isPlayerInitialized, setIsPlayerInitialized] = useState(false);
 
     // Modify the initialization effect
@@ -201,7 +205,6 @@ const BlackjackPage = () => {
             hasInitialized.current = true;
             console.log('Initializing game state...');
 
-            // Set loading state
             setIsPlayerInitialized(false);
 
             initializeGame({
@@ -246,7 +249,6 @@ const BlackjackPage = () => {
                 const playerId = gameState.addPlayer('Player', DEFAULT_STARTING_CHIPS);
                 console.log(`Player added to gameState with ID: ${playerId}`);
 
-                // Mark player as initialized
                 setIsPlayerInitialized(true);
 
                 toast.success("Game initialized", {
@@ -258,7 +260,6 @@ const BlackjackPage = () => {
         }
 
         return () => {
-            // Clean up or save game state when unmounting
             trackEvent('game_exited', {
                 duration: Date.now(),
                 chips: playerBalance
@@ -273,19 +274,18 @@ const BlackjackPage = () => {
                 description: error,
             });
 
-            // Show error notification only if there isn't already an error in notification system
             if (!error.includes('notification')) {
                 safeAddNotification({
                     title: "Error",
                     message: error,
-                    type: "system", // Using allowed notification type
+                    type: "system",
                     priority: "high"
                 });
             }
         }
     }, [error, safeAddNotification]);
 
-    // Memoize player actions to prevent infinite renders
+    // Memoize player actions
     const handleHit = useCallback(() => {
         const activePlayer = gameState.getActivePlayer();
         const activeHand = gameState.getActiveHand();
@@ -368,7 +368,6 @@ const BlackjackPage = () => {
             return;
         }
 
-        // Check if player has enough balance for the bet
         if (amount > 0 && amount > player.balance) {
             console.log(`Insufficient balance: ${player.balance} < ${amount}`);
             toast.error("Insufficient funds", {
@@ -378,22 +377,13 @@ const BlackjackPage = () => {
         }
 
         try {
-            // Place the bet - pass the amount directly to placeBet
-            // The placeBet function will add this to the current bet
             placeBet(player.id, amount);
 
-            // Play bet sound
-            if (isSoundEnabled) {
-                // Sound effect logic would go here
-            }
-
-            // Show success toast for positive bets
             if (amount > 0) {
                 toast.success("Bet placed", {
                     description: `$${amount} added to your bet`,
                 });
             } else {
-                // Show info toast for bet adjustments
                 toast.info("Bet adjusted", {
                     description: `Bet adjusted to $${Math.max(0, player.currentBet + amount)}`,
                 });
@@ -406,7 +396,7 @@ const BlackjackPage = () => {
                 description: error instanceof Error ? error.message : "An unknown error occurred",
             });
         }
-    }, [gamePhase, gameState, placeBet, trackEvent, isSoundEnabled]);
+    }, [gamePhase, gameState, placeBet, trackEvent]);
 
     // Handle dealing
     const handleDeal = useCallback(() => {
@@ -438,11 +428,8 @@ const BlackjackPage = () => {
         try {
             dealCards();
             trackEvent('deal_cards');
-
-            // Ensure UI phase is updated if not automatically done by dealCards
             setGamePhase('dealing');
 
-            // Add notification about dealing
             safeAddNotification({
                 title: "Dealing Cards",
                 message: `Starting new hand with $${player.currentBet} bet`,
@@ -469,14 +456,13 @@ const BlackjackPage = () => {
         safeAddNotification({
             title: "Game Ended",
             message: 'Game ended',
-            type: "game", // Using allowed notification type
+            type: "game",
             priority: "medium"
         });
     }, [endGame, safeAddNotification]);
 
     // Handle game reset
     const handleResetGame = useCallback(() => {
-        // Use initialize game as reset with full GameOptions
         initializeGame({
             variant: 'classic',
             numberOfDecks: 6,
@@ -511,68 +497,81 @@ const BlackjackPage = () => {
         safeAddNotification({
             title: "Game Reset",
             message: 'Game reset',
-            type: "game", // Using allowed notification type
+            type: "game",
             priority: "medium"
         });
     }, [initializeGame, safeAddNotification]);
 
-    // Handle leaving game
-    const _handleLeaveGame = useCallback(() => {
-        // Save game state or perform any cleanup
-        router.push('/');
-    }, [router]);
-
-    // Handle clear bet
+    // Handle clearing bet
     const handleClearBet = useCallback(() => {
-        // Clear the player's bet
         const player = gameState.getActivePlayer();
         if (player) {
-            // Reset the current bet to 0
-            placeBet(player.id, -playerBalance);
+            placeBet(player.id, -player.currentBet);
             trackEvent('bet_cleared');
         }
-    }, [gameState, playerBalance, placeBet, trackEvent]);
+    }, [gameState, placeBet, trackEvent]);
 
     // Handle max bet
     const handleMaxBet = useCallback(() => {
-        // Place the maximum allowed bet
         const player = gameState.getActivePlayer();
         if (player) {
-            // Use the game options to get table limits since getTableLimits() isn't available
-            const maxBet = 500; // Default max bet from initialization
-            const betAmount = Math.min(maxBet, playerBalance);
+            const maxBet = 500;
+            const betAmount = Math.min(maxBet, player.balance);
             placeBet(player.id, betAmount);
             trackEvent('max_bet_placed', { amount: betAmount });
         }
-    }, [gameState, playerBalance, placeBet, trackEvent]);
+    }, [gameState, placeBet, trackEvent]);
 
     // Handle double bet
     const handleDoubleBet = useCallback(() => {
-        // Double the current bet if possible
         const player = gameState.getActivePlayer();
         if (player) {
             const currentBet = player.currentBet || 0;
             const doubledBet = currentBet * 2;
-            const canAfford = doubledBet <= playerBalance;
-
-            // Use the default max bet from initialization
+            const canAfford = doubledBet <= player.balance;
             const maxBet = 500;
             const withinLimits = doubledBet <= maxBet;
 
             if (canAfford && withinLimits && currentBet > 0) {
-                // Place the additional bet amount instead of clearing and replacing
                 placeBet(player.id, currentBet);
                 trackEvent('bet_doubled', { amount: doubledBet });
             }
         }
-    }, [gameState, playerBalance, placeBet, trackEvent]);
+    }, [gameState, placeBet, trackEvent]);
 
+    // Side bets handling
+    const handlePlaceSideBet = useCallback((betType: string, amount: number) => {
+        console.log(`Placing side bet: ${betType} - $${amount}`);
+        // Implementation would go here
+        toast.success(`$${amount} side bet placed on ${betType}`);
+    }, []);
+
+    // Card values for advice panel
+    const activeHand = gameState.getActiveHand();
+    const playerCards = activeHand?.cards || [];
+    const dealerCards = gameState.getDealerHand()?.cards || [];
+    const dealerUpcard = dealerCards[0] || null;
+
+    // Calculate scores for advice panel
+    const playerScore = playerCards.length > 0 ?
+        handCalculator.determineBestValue(handCalculator.calculateValues(playerCards)) : 0;
+    const dealerScore = dealerCards.length > 0 ?
+        handCalculator.determineBestValue(handCalculator.calculateValues(dealerCards)) : 0;
+
+    // Determine available actions
+    const availableActions = gameState.getAvailableActions();
+    const canSplit = availableActions.includes('split');
+    const canDouble = availableActions.includes('double');
+    const canSurrender = availableActions.includes('surrender');
+
+    // Dynamic styling based on sidebar state
     const mainContainerClass = cn(
-        "flex-1 w-full max-w-[1280px] mx-auto px-4 py-6",
+        "flex-1 w-full mx-auto",
         "flex flex-col items-center justify-center",
         "h-[calc(100vh-70px)]",
-        "pr-[260px]",
-        gamePhase === 'dealer-turn' && "bg-opacity-80"
+        sidebarOpen ? "pr-[320px] transition-all duration-300 ease-in-out" : "pr-4 transition-all duration-300 ease-in-out",
+        "pl-4",
+        gamePhase === 'dealerTurn' && "bg-opacity-80"
     );
 
     // Fixed table limits
@@ -587,8 +586,13 @@ const BlackjackPage = () => {
 
     // Safely map tableColor to BlackjackTable variant
     const getTableVariant = (): 'green' | 'red' | 'blue' | 'black' | 'dark' | 'light' | 'vip' => {
-        const validVariants = ['green', 'red', 'blue', 'black', 'dark', 'light', 'vip'];
-        return (validVariants.includes(tableColor) ? tableColor : 'green') as 'green' | 'red' | 'blue' | 'black' | 'dark' | 'light' | 'vip';
+        type TableVariant = 'green' | 'red' | 'blue' | 'black' | 'dark' | 'light' | 'vip';
+        const validVariants: TableVariant[] = ['green', 'red', 'blue', 'black', 'dark', 'light', 'vip'];
+
+        const isValidVariant = (color: string): color is TableVariant =>
+            validVariants.includes(color as TableVariant);
+
+        return isValidVariant(tableColor) ? tableColor : 'green';
     };
 
     return (
@@ -607,24 +611,28 @@ const BlackjackPage = () => {
                 )}
             </AnimatePresence>
 
-            {/* Main Game Table - Using the realistic BlackjackTable as the main component */}
+            {/* Main Game Table */}
             <main className={mainContainerClass}>
                 <div className="relative flex flex-col items-center w-full h-full">
-                    {/* Message display at the top */}
-                    <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 w-[80%] max-w-[600px]">
-                        {/* Add a message display for game status */}
-                        <div className="px-4 py-2 text-center border rounded-lg bg-black/60 text-amber-300 backdrop-blur-sm border-amber-800/40">
+                    {/* Status Message */}
+                    <motion.div
+                        className="absolute top-6 left-1/2 transform -translate-x-1/2 z-30 w-[80%] max-w-[600px]"
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                    >
+                        <div className="px-4 py-2 text-center border rounded-lg shadow-lg bg-black/60 text-amber-300 backdrop-blur-sm border-amber-800/40">
                             {gamePhase === 'betting' && "Place your bet to begin"}
                             {gamePhase === 'dealing' && "Dealing cards..."}
                             {gamePhase === 'playerTurn' && "Your turn - Hit or Stand?"}
                             {gamePhase === 'dealerTurn' && "Dealer's turn"}
                             {gamePhase === 'settlement' && "Round complete!"}
                         </div>
-                    </div>
+                    </motion.div>
 
-                    {/* Main BlackjackTable */}
+                    {/* BlackjackTable */}
                     <BlackjackTable
-                        className="w-full h-full max-h-[700px]"
+                        className="w-full h-full aspect-[4/3] max-h-[calc(100vh-150px)] mx-auto"
                         variant={getTableVariant()}
                         playerBalance={playerBalance}
                         currentBet={currentBet}
@@ -637,119 +645,208 @@ const BlackjackPage = () => {
                         onDealCards={handleDeal}
                         isBettingPhase={isBettingPhase}
                         disableBetting={!isBettingPhase || !isPlayerInitialized}
+                        isPlayerInitialized={isPlayerInitialized}
                     />
 
                     {/* Player Action Controls - Only during player turn */}
                     {gamePhase === 'playerTurn' && (
-                        <div className="absolute z-30 transform -translate-x-1/2 bottom-8 left-1/2">
-                            <div className="flex gap-3 p-3 border rounded-lg bg-black/60 backdrop-blur-sm border-amber-800/40">
+                        <motion.div
+                            className="absolute z-30 transform -translate-x-1/2 bottom-8 left-1/2"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: 0.2 }}
+                        >
+                            <div className="flex gap-3 p-3 border rounded-lg shadow-lg bg-black/60 backdrop-blur-sm border-amber-800/40">
                                 <Button
                                     onClick={handleHit}
-                                    disabled={!gameState.getAvailableActions().includes('hit')}
-                                    className="bg-amber-700 hover:bg-amber-600"
+                                    disabled={!availableActions.includes('hit')}
+                                    className="text-white shadow-md bg-emerald-700 hover:bg-emerald-600"
                                 >
                                     Hit
                                 </Button>
                                 <Button
                                     onClick={handleStand}
-                                    disabled={!gameState.getAvailableActions().includes('stand')}
-                                    className="bg-amber-700 hover:bg-amber-600"
+                                    disabled={!availableActions.includes('stand')}
+                                    className="text-white shadow-md bg-rose-700 hover:bg-rose-600"
                                 >
                                     Stand
                                 </Button>
                                 <Button
                                     onClick={handleDouble}
-                                    disabled={!gameState.getAvailableActions().includes('double')}
-                                    className="bg-amber-700 hover:bg-amber-600"
+                                    disabled={!availableActions.includes('double')}
+                                    className="text-white bg-indigo-700 shadow-md hover:bg-indigo-600"
                                 >
                                     Double
                                 </Button>
                                 <Button
                                     onClick={handleSplit}
-                                    disabled={!gameState.getAvailableActions().includes('split')}
-                                    className="bg-amber-700 hover:bg-amber-600"
+                                    disabled={!availableActions.includes('split')}
+                                    className="text-white shadow-md bg-amber-700 hover:bg-amber-600"
                                 >
                                     Split
                                 </Button>
                                 <Button
                                     onClick={handleSurrender}
-                                    disabled={!gameState.getAvailableActions().includes('surrender')}
-                                    className="bg-amber-700 hover:bg-amber-600"
+                                    disabled={!availableActions.includes('surrender')}
+                                    className="text-white shadow-md bg-slate-700 hover:bg-slate-600"
                                 >
                                     Surrender
                                 </Button>
                             </div>
-                        </div>
+                        </motion.div>
                     )}
 
-                    {/* Game Controls / Sidebar - Fixed position */}
-                    <div className="fixed top-0 right-0 z-40 h-full py-4">
-                        <div className="h-full w-[250px] bg-black/50 backdrop-blur-sm flex flex-col p-4 border-l border-amber-800/40">
+                    {/* Sidebar Toggle Button */}
+                    <motion.button
+                        className="fixed top-1/2 right-[320px] z-50 -translate-y-1/2 bg-black/40 backdrop-blur-sm border border-amber-800/40 rounded-l-md p-2 shadow-lg"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleToggleSidebar}
+                        style={{ right: sidebarOpen ? "320px" : "0" }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        {sidebarOpen ? <ChevronRight className="w-5 h-5 text-amber-300" /> : <ChevronLeft className="w-5 h-5 text-amber-300" />}
+                    </motion.button>
+
+                    {/* Game Sidebar with Tabs */}
+                    <motion.div
+                        className="fixed top-0 right-0 z-40 h-screen pt-16 pb-20 border-l shadow-xl bg-black/60 backdrop-blur-md border-amber-800/40"
+                        initial={{ width: 320, x: 0 }}
+                        animate={{
+                            width: 320,
+                            x: sidebarOpen ? 0 : 320
+                        }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                    >
+                        <div className="flex flex-col h-full p-4">
                             <div className="mb-4 text-xl font-bold text-amber-300">Royal Blackjack</div>
 
-                            <div className="mb-4">
-                                <div className="text-sm text-amber-300">Player</div>
-                                <div className="font-bold text-white">{gameState.getActivePlayer()?.name ?? 'Player'}</div>
+                            {/* Player Stats */}
+                            <div className="grid grid-cols-2 gap-3 mb-6">
+                                <div className="p-3 border rounded-lg shadow-md bg-black/40 border-amber-800/60">
+                                    <div className="mb-1 text-sm text-amber-300/80">Balance</div>
+                                    <div className="text-xl font-bold text-white">${playerBalance}</div>
+                                </div>
+                                <div className="p-3 border rounded-lg shadow-md bg-black/40 border-amber-800/60">
+                                    <div className="mb-1 text-sm text-amber-300/80">Current Bet</div>
+                                    <div className="text-xl font-bold text-white">${currentBet}</div>
+                                </div>
                             </div>
 
-                            <div className="mb-4">
-                                <div className="text-sm text-amber-300">Balance</div>
-                                <div className="font-bold text-white">${playerBalance}</div>
-                            </div>
+                            {/* Sidebar Tabs */}
+                            <Tabs
+                                defaultValue={sidebarTab}
+                                value={sidebarTab}
+                                onValueChange={setSidebarTab}
+                                className="flex flex-col flex-1"
+                            >
+                                <TabsList className="grid grid-cols-3 mb-4 border bg-black/40 border-amber-800/40">
+                                    <TabsTrigger value="advice" className="data-[state=active]:bg-amber-900/60">Advice</TabsTrigger>
+                                    <TabsTrigger value="stats" className="data-[state=active]:bg-amber-900/60">Stats</TabsTrigger>
+                                    <TabsTrigger value="bets" className="data-[state=active]:bg-amber-900/60">Side Bets</TabsTrigger>
+                                </TabsList>
 
-                            <div className="mb-4">
-                                <div className="text-sm text-amber-300">Current Bet</div>
-                                <div className="font-bold text-white">${currentBet}</div>
-                            </div>
+                                <TabsContent value="advice" className="flex-1 overflow-auto">
+                                    <AdvicePanel
+                                        playerCards={playerCards}
+                                        dealerUpcard={dealerUpcard}
+                                        playerScore={playerScore}
+                                        dealerScore={dealerScore}
+                                        canSplit={canSplit}
+                                        canDouble={canDouble}
+                                        canSurrender={canSurrender}
+                                        gamePhase={mapStorePhaseToUIPhase(gamePhase)}
+                                        hintMode="basic"
+                                        useRealTimeAdvice={true}
+                                        showConfidence={true}
+                                        showExplanation={true}
+                                        className="shadow-md bg-black/20 border-amber-800/40"
+                                        onActionClick={(action) => console.log(`Action suggested: ${action}`)}
+                                    />
+                                </TabsContent>
 
-                            <div className="flex flex-col gap-2 mt-auto">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleSettingsOpen}
-                                    className="justify-start w-full bg-black/30 border-amber-800/60 text-amber-300"
-                                >
-                                    <Settings className="w-4 h-4 mr-2" /> Settings
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleTutorialOpen}
-                                    className="justify-start w-full bg-black/30 border-amber-800/60 text-amber-300"
-                                >
-                                    <motion.div className="mr-2">📘</motion.div> Game Rules
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleStatisticsOpen}
-                                    className="justify-start w-full bg-black/30 border-amber-800/60 text-amber-300"
-                                >
-                                    <motion.div className="mr-2">📊</motion.div> Statistics
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleToggleSound}
-                                    className="justify-start w-full bg-black/30 border-amber-800/60 text-amber-300"
-                                >
-                                    {isSoundEnabled ? (
-                                        <motion.div className="mr-2">🔊</motion.div>
-                                    ) : (
-                                        <motion.div className="mr-2">🔇</motion.div>
-                                    )}
-                                    {isSoundEnabled ? 'Sound On' : 'Sound Off'}
-                                </Button>
+                                <TabsContent value="stats" className="flex-1 overflow-auto">
+                                    <StatisticsPanel />
+                                </TabsContent>
+
+                                <TabsContent value="bets" className="flex-1 overflow-auto">
+                                    <SideBetsPanel
+                                        playerChips={playerBalance}
+                                        availableBets={{
+                                            'perfectPairs': true,
+                                            '21+3': true,
+                                            'luckyLadies': true
+                                        }}
+                                        currentBets={[]}
+                                        onPlaceBet={handlePlaceSideBet}
+                                    />
+                                </TabsContent>
+                            </Tabs>
+
+                            {/* Quick Actions */}
+                            <div className="flex gap-2 mt-4">
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="outline" size="icon" className="bg-black/30 border-amber-800/60 text-amber-300"
+                                                onClick={handleToggleSound}>
+                                                {isSoundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            {isSoundEnabled ? "Mute Sound" : "Enable Sound"}
+                                        </TooltipContent>
+                                    </Tooltip>
+
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="outline" size="icon" className="bg-black/30 border-amber-800/60 text-amber-300"
+                                                onClick={() => setShowSettings(true)}>
+                                                <Cog className="w-4 h-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            Game Settings
+                                        </TooltipContent>
+                                    </Tooltip>
+
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="outline" size="icon" className="bg-black/30 border-amber-800/60 text-amber-300"
+                                                onClick={() => setShowTutorial(true)}>
+                                                <HelpCircle className="w-4 h-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            Game Rules
+                                        </TooltipContent>
+                                    </Tooltip>
+
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="outline" size="icon" className="bg-black/30 border-amber-800/60 text-amber-300"
+                                                onClick={() => router.push('/')}>
+                                                <ChevronLeft className="w-4 h-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            Exit Game
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
             </main>
 
             {/* Game Footer */}
             <GameFooter
-                gamePhase={mapStorePhaseToUIPhase(gamePhase as GamePhase)}
+                gamePhase={mapStorePhaseToUIPhase(gamePhase)}
                 onPlaceBet={handlePlaceBet}
+                onClearBet={handleClearBet}
+                onMaxBet={handleMaxBet}
+                onDoubleBet={handleDoubleBet}
                 onDeal={handleDeal}
                 onHit={handleHit}
                 onStand={handleStand}
@@ -757,52 +854,26 @@ const BlackjackPage = () => {
                 onSplit={handleSplit}
                 onSurrender={handleSurrender}
                 onNextRound={handleNextRound}
+                onEndGame={handleEndGame}
+                onResetGame={handleResetGame}
                 availableActions={gameState.getAvailableActions()}
                 isPlayerTurn={gamePhase === 'playerTurn'}
                 isDealerTurn={gamePhase === 'dealerTurn'}
                 isRoundOver={['settlement', 'cleanup', 'betting'].includes(gamePhase)}
                 playerBalance={playerBalance}
                 currentBet={currentBet}
+                className="border-t bg-black/50 backdrop-blur-md border-amber-900/40"
             />
-
-            {/* Admin Actions - Moved to avoid overlapping with footer */}
-            <div className="fixed flex flex-row gap-3 bottom-[70px] right-4 z-50">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleEndGame}
-                    className={cn("bg-red-900 hover:bg-red-800", gamePhase === 'game-over' && "opacity-50 cursor-not-allowed")}
-                    disabled={gamePhase === 'game-over'}
-                >
-                    End Game
-                </Button>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleResetGame}
-                    className="bg-blue-900 hover:bg-blue-800"
-                >
-                    Reset Game
-                </Button>
-            </div>
 
             {/* Settings Sheet */}
             <Sheet open={showSettings} onOpenChange={setShowSettings}>
-                <SheetTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="fixed top-4 right-4 md:hidden"
-                        aria-label="Settings"
-                    >
-                        <Settings className="w-5 h-5" />
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="sm:max-w-md">
-                    <DialogTitle className="mb-4 text-xl font-bold">Game Settings</DialogTitle>
-                    <DialogDescription>
-                        Customize your game experience
-                    </DialogDescription>
+                <SheetContent side="right" className="bg-gray-900 border-l border-amber-800/40 w-[350px]">
+                    <SheetHeader>
+                        <SheetTitle className="text-amber-300">Game Settings</SheetTitle>
+                        <SheetDescription>
+                            Customize your game experience
+                        </SheetDescription>
+                    </SheetHeader>
                     <SettingsPanel
                         tableVariant={tableColor}
                         onTableVariantChange={setTableColor}
@@ -814,32 +885,37 @@ const BlackjackPage = () => {
                         onToggleSound={handleToggleSound}
                         sideBets={sideBets}
                     />
+                    <SheetFooter className="mt-4">
+                        <SheetClose asChild>
+                            <Button className="w-full text-white bg-amber-700 hover:bg-amber-600">
+                                Save Changes
+                            </Button>
+                        </SheetClose>
+                    </SheetFooter>
                 </SheetContent>
             </Sheet>
 
-            {/* Statistics Sheet */}
-            <Sheet open={showStats} onOpenChange={setShowStats}>
-                <SheetTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="fixed top-4 right-16 md:hidden"
-                        aria-label="Statistics"
-                    >
-                        <motion.div
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.95 }}
-                        >
-                            📊
-                        </motion.div>
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="sm:max-w-md">
-                    <DialogTitle className="mb-4 text-xl font-bold">Game Statistics</DialogTitle>
-                    <DialogDescription>
-                        Your gameplay performance
-                    </DialogDescription>
-                    <StatisticsPanel />
+            {/* Side Bets Sheet */}
+            <Sheet open={showSideBets} onOpenChange={setShowSideBets}>
+                <SheetContent side="bottom" className="bg-gray-900 border-t border-amber-800/40 h-[40vh]">
+                    <SheetHeader>
+                        <SheetTitle className="text-amber-300">Side Bets</SheetTitle>
+                        <SheetDescription>
+                            Place additional bets for bigger payouts
+                        </SheetDescription>
+                    </SheetHeader>
+                    <div className="py-4">
+                        <SideBetsPanel
+                            playerChips={playerBalance}
+                            availableBets={{
+                                'perfectPairs': true,
+                                '21+3': true,
+                                'luckyLadies': true
+                            }}
+                            currentBets={[]}
+                            onPlaceBet={handlePlaceSideBet}
+                        />
+                    </div>
                 </SheetContent>
             </Sheet>
 
@@ -848,6 +924,7 @@ const BlackjackPage = () => {
                 <TutorialOverlay
                     isActive={true}
                     targets={[]}
+                    onOverlayClick={() => setShowTutorial(false)}
                 />
             )}
         </PageLayout>

@@ -310,3 +310,9 @@ export const categoryVolumes: Record<SoundCategory, number> = {
     ambience: 0.5,
     buttons: 0.6
 };
+
+// Export specific sound effect constants for direct import
+export const BUTTON_CLICK: SoundEffect = 'buttonClick';
+export const WIN: SoundEffect = 'win';
+export const ERROR: SoundEffect = 'alertError';
+export const GAME_START: SoundEffect = 'ambienceCasino';

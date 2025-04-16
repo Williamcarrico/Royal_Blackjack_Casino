@@ -225,7 +225,7 @@ const Logo = memo(() => {
 	return (
 		<Link
 			href="/"
-			className="flex items-center gap-3 group my-2"
+			className="flex items-center gap-3 my-2 group"
 			aria-label="Royal Blackjack Casino Home"
 			onMouseEnter={() => {
 				scale.set(1.03)
@@ -238,7 +238,7 @@ const Logo = memo(() => {
 		>
 			{/* Logo Image Container with Enhanced Luxury Effects */}
 			<motion.div
-				className="relative w-[60px] h-[60px]" // Reduced size for better spacing
+				className="relative w-[40px] h-[40px]" // Reduced size for better spacing
 				style={{
 					scale,
 					rotate: rotation
@@ -278,8 +278,8 @@ const Logo = memo(() => {
 					<Image
 						src="/images/Royal-Blackjack-Logo.png"
 						alt="Royal Blackjack Casino Logo"
-						width={60}
-						height={60}
+						width={40}
+						height={40}
 						priority // Prioritize loading the logo
 						className="object-contain w-auto h-auto" // Maintain aspect ratio
 						style={{ width: 'auto', height: 'auto' }}

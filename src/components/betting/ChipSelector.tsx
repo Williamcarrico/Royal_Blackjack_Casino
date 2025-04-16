@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import * as React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils/utils';
 
@@ -88,7 +88,7 @@ const ChipSelector: React.FC<ChipSelectorProps> = ({
                     aria-pressed={selectedValue === value}
                     tabIndex={0}
                 >
-                    <span className="relative text-center font-bold text-base z-10">
+                    <span className="relative z-10 text-base font-bold text-center">
                         ${value}
                     </span>
 

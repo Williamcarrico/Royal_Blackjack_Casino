@@ -93,7 +93,7 @@ export default function ServiceExample() {
                 <div className="text-red-500">
                     Error loading services:
                     <pre className="mt-2 text-sm">
-                        {errors.map((error: Error) => (
+                        {errors.map((error: Error | null) => error && (
                             <div key={`error-${error.name}-${error.message}`}>{error.message}</div>
                         ))}
                     </pre>
@@ -119,7 +119,9 @@ export default function ServiceExample() {
                         >
                             {services.audio.settings.audioEnabled ? 'Mute' : 'Unmute'}
                         </Button>
+                        <label htmlFor="volume-control" className="sr-only">Volume</label>
                         <input
+                            id="volume-control"
                             type="range"
                             min="0"
                             max="1"

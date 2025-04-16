@@ -23,7 +23,7 @@ export interface ActionPanelProps {
 
 /**
  * ActionPanel component provides buttons for blackjack gameplay actions
- * Displays hit, stand, double, split, and surrender options based on game state
+ * Displays hit, stand, double, split, and surrender options with elegant styling
  */
 const ActionPanel: React.FC<ActionPanelProps> = ({
     className,
@@ -41,85 +41,118 @@ const ActionPanel: React.FC<ActionPanelProps> = ({
     isAnimating = false,
     compact = false,
 }) => {
-    // Button variants based on state
-    const getButtonStyles = (isEnabled: boolean) => cn(
-        'px-4 py-2.5 rounded-lg text-sm font-bold tracking-wide shadow-md transition-all',
-        'flex items-center justify-center',
-        'focus:outline-none focus:ring-2 focus:ring-offset-2',
-        isEnabled && !isAnimating
-            ? 'cursor-pointer'
-            : 'cursor-not-allowed opacity-50',
-        compact ? 'text-xs px-3 py-2' : ''
-    );
-
     // Animation variants
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1,
+                delayChildren: 0.1
+            }
+        }
+    };
+
     const buttonVariants = {
-        initial: { opacity: 0, y: 20 },
-        animate: (i: number) => ({
+        hidden: { opacity: 0, y: 20, scale: 0.9 },
+        visible: {
             opacity: 1,
             y: 0,
-            transition: { delay: 0.1 * i, duration: 0.3 }
+            scale: 1,
+            transition: {
+                type: "spring",
+                stiffness: 400,
+                damping: 15
+            }
+        },
+        hover: (disabled: boolean) => ({
+            scale: disabled ? 1 : 1.05,
+            y: disabled ? 0 : -2,
+            boxShadow: disabled ? "0 0 0 rgba(0,0,0,0)" : "0 8px 20px rgba(0,0,0,0.15)",
+            transition: {
+                type: "spring",
+                stiffness: 500,
+                damping: 15
+            }
         }),
-        hover: { scale: 1.05 },
-        tap: { scale: 0.95 },
+        tap: (disabled: boolean) => ({
+            scale: disabled ? 1 : 0.95,
+            y: disabled ? 0 : 2,
+            boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+            transition: { duration: 0.1 }
+        })
     };
+
+    // Button styles
+    const getButtonStyles = (isEnabled: boolean, color: string) => cn(
+        'relative overflow-hidden group',
+        'px-5 py-3 rounded-xl',
+        'text-sm font-bold tracking-wide',
+        'shadow-md transition-all duration-300',
+        'flex items-center justify-center gap-2',
+        'backdrop-blur-sm',
+        color,
+        isEnabled && !isAnimating
+            ? 'cursor-pointer'
+            : 'opacity-50 cursor-not-allowed',
+        compact ? 'text-xs px-3 py-2 rounded-lg' : ''
+    );
 
     if (!isPlayerTurn) {
         return null;
     }
 
     return (
-        <div
+        <motion.div
             className={cn(
-                'flex gap-2 p-3 rounded-lg backdrop-blur-md bg-black/40',
-                compact ? 'flex-col' : 'flex-row',
+                'flex items-center gap-3 p-4 rounded-xl',
+                compact ? 'flex-col' : 'flex-row flex-wrap justify-center',
                 className
             )}
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
         >
             {/* Hit button */}
             <motion.button
                 type="button"
                 onClick={canHit && !isAnimating ? onHit : undefined}
-                className={cn(
-                    getButtonStyles(canHit),
-                    'bg-green-600 hover:bg-green-500 focus:ring-green-500',
-                )}
+                className={getButtonStyles(canHit, 'bg-gradient-to-br from-emerald-600 to-emerald-800 text-white border border-emerald-500/30')}
                 disabled={!canHit || isAnimating}
                 variants={buttonVariants}
-                initial="initial"
-                animate="animate"
-                whileHover={canHit && !isAnimating ? "hover" : undefined}
-                whileTap={canHit && !isAnimating ? "tap" : undefined}
-                custom={0}
+                custom={!canHit || isAnimating}
+                whileHover="hover"
+                whileTap="tap"
                 aria-label="Hit"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-                </svg>
-                Hit
+                <span className="relative z-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 inline-block" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+                    </svg>
+                    Hit
+                </span>
+                <span className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></span>
             </motion.button>
 
             {/* Stand button */}
             <motion.button
                 type="button"
                 onClick={canStand && !isAnimating ? onStand : undefined}
-                className={cn(
-                    getButtonStyles(canStand),
-                    'bg-red-600 hover:bg-red-500 focus:ring-red-500',
-                )}
+                className={getButtonStyles(canStand, 'bg-gradient-to-br from-rose-600 to-rose-800 text-white border border-rose-500/30')}
                 disabled={!canStand || isAnimating}
                 variants={buttonVariants}
-                initial="initial"
-                animate="animate"
-                whileHover={canStand && !isAnimating ? "hover" : undefined}
-                whileTap={canStand && !isAnimating ? "tap" : undefined}
-                custom={1}
+                custom={!canStand || isAnimating}
+                whileHover="hover"
+                whileTap="tap"
                 aria-label="Stand"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
-                </svg>
-                Stand
+                <span className="relative z-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 inline-block" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
+                    </svg>
+                    Stand
+                </span>
+                <span className="absolute inset-0 bg-gradient-to-br from-rose-500 to-rose-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></span>
             </motion.button>
 
             {/* Double button */}
@@ -127,24 +160,22 @@ const ActionPanel: React.FC<ActionPanelProps> = ({
                 <motion.button
                     type="button"
                     onClick={!isAnimating ? onDouble : undefined}
-                    className={cn(
-                        getButtonStyles(true),
-                        'bg-yellow-600 hover:bg-yellow-500 focus:ring-yellow-500',
-                    )}
+                    className={getButtonStyles(true, 'bg-gradient-to-br from-indigo-600 to-indigo-800 text-white border border-indigo-500/30')}
                     disabled={isAnimating}
                     variants={buttonVariants}
-                    initial="initial"
-                    animate="animate"
-                    whileHover={!isAnimating ? "hover" : undefined}
-                    whileTap={!isAnimating ? "tap" : undefined}
-                    custom={2}
+                    custom={isAnimating}
+                    whileHover="hover"
+                    whileTap="tap"
                     aria-label="Double"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
-                        <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
-                    </svg>
-                    Double
+                    <span className="relative z-10">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 inline-block" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
+                            <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
+                        </svg>
+                        Double
+                    </span>
+                    <span className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></span>
                 </motion.button>
             )}
 
@@ -153,23 +184,21 @@ const ActionPanel: React.FC<ActionPanelProps> = ({
                 <motion.button
                     type="button"
                     onClick={!isAnimating ? onSplit : undefined}
-                    className={cn(
-                        getButtonStyles(true),
-                        'bg-blue-600 hover:bg-blue-500 focus:ring-blue-500',
-                    )}
+                    className={getButtonStyles(true, 'bg-gradient-to-br from-amber-600 to-amber-800 text-white border border-amber-500/30')}
                     disabled={isAnimating}
                     variants={buttonVariants}
-                    initial="initial"
-                    animate="animate"
-                    whileHover={!isAnimating ? "hover" : undefined}
-                    whileTap={!isAnimating ? "tap" : undefined}
-                    custom={3}
+                    custom={isAnimating}
+                    whileHover="hover"
+                    whileTap="tap"
                     aria-label="Split"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z" />
-                    </svg>
-                    Split
+                    <span className="relative z-10">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 inline-block" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z" />
+                        </svg>
+                        Split
+                    </span>
+                    <span className="absolute inset-0 bg-gradient-to-br from-amber-500 to-amber-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></span>
                 </motion.button>
             )}
 
@@ -178,26 +207,24 @@ const ActionPanel: React.FC<ActionPanelProps> = ({
                 <motion.button
                     type="button"
                     onClick={!isAnimating ? onSurrender : undefined}
-                    className={cn(
-                        getButtonStyles(true),
-                        'bg-gray-600 hover:bg-gray-500 focus:ring-gray-500',
-                    )}
+                    className={getButtonStyles(true, 'bg-gradient-to-br from-slate-600 to-slate-800 text-white border border-slate-500/30')}
                     disabled={isAnimating}
                     variants={buttonVariants}
-                    initial="initial"
-                    animate="animate"
-                    whileHover={!isAnimating ? "hover" : undefined}
-                    whileTap={!isAnimating ? "tap" : undefined}
-                    custom={4}
+                    custom={isAnimating}
+                    whileHover="hover"
+                    whileTap="tap"
                     aria-label="Surrender"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                    </svg>
-                    Surrender
+                    <span className="relative z-10">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 inline-block" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                        </svg>
+                        Surrender
+                    </span>
+                    <span className="absolute inset-0 bg-gradient-to-br from-slate-500 to-slate-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></span>
                 </motion.button>
             )}
-        </div>
+        </motion.div>
     );
 };
 

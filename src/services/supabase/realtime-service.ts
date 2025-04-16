@@ -43,7 +43,7 @@ export class RealtimeService {
             return id
         }
 
-        let channel = this.supabase
+        const channel = this.supabase
             .channel(id)
             .on(
                 'postgres_changes',

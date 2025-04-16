@@ -1366,7 +1366,7 @@ export const simulatePlayerAdvantage = (
 
         // Handle hit/stand strategy
         let currentPlayerHand = { ...playerHand };
-        let currentPlayerCards = [...playerCards];
+        const currentPlayerCards = [...playerCards];
 
         // Continue hitting until stand or bust
         while (playerAction === 'hit' && !currentPlayerHand.isBusted) {

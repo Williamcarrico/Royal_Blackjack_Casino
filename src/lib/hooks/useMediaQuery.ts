@@ -3,7 +3,7 @@
  * Useful for conditionally rendering components based on screen size
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 /**
  * Returns whether the current viewport matches the given media query
@@ -13,12 +13,12 @@ import { useState, useEffect } from 'react';
  */
 export function useMediaQuery(query: string): boolean {
     // SSR check - default to false on the server
-    const getMatches = (): boolean => {
+    const getMatches = useCallback((): boolean => {
         if (typeof window !== 'undefined') {
             return window.matchMedia(query).matches;
         }
         return false;
-    };
+    }, [query]);
 
     // State to track whether the media query matches
     const [matches, setMatches] = useState<boolean>(getMatches());
@@ -55,7 +55,7 @@ export function useMediaQuery(query: string): boolean {
                 (mediaQuery as any).removeListener(handleChange);
             }
         };
-    }, [query]);
+    }, [query, getMatches]);
 
     return matches;
 }
