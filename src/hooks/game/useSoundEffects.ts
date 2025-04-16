@@ -3,7 +3,7 @@
 /**
  * Hook for managing sound effects in blackjack game
  */
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 
 // Sound effect types
 export type SoundEffectType =
@@ -55,7 +55,7 @@ const useSoundEffects = ({
     });
 
     // Sound file mapping
-    const soundFiles = useRef<Record<SoundEffectType, string>>({
+    const soundFiles = useMemo<Record<SoundEffectType, string>>(() => ({
         'card-deal': '/sounds/card-deal.mp3',
         'card-flip': '/sounds/card-flip.mp3',
         'chips': '/sounds/chips.mp3',
@@ -67,7 +67,7 @@ const useSoundEffects = ({
         'button-click': '/sounds/button-click.mp3',
         'alert': '/sounds/alert.mp3',
         'timer': '/sounds/timer.mp3'
-    }).current;
+    }), []);
 
     // Preload sound effects
     useEffect(() => {
@@ -118,7 +118,10 @@ const useSoundEffects = ({
 
         // Cleanup on unmount
         return () => {
-            Object.values(audioRefs.current).forEach(audio => {
+            // Store ref in a variable inside the effect to avoid closure issues
+            const currentRefs = audioRefs.current;
+
+            Object.values(currentRefs).forEach(audio => {
                 if (audio) {
                     audio.pause();
                     audio.src = '';

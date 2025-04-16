@@ -8,7 +8,8 @@ import React, { useState, useRef, useEffect, useMemo, ComponentType, forwardRef 
  */
 export function withSafeUpdates<T extends object>(
     Component: ComponentType<T>,
-    displayName: string = 'SafeComponent'
+    displayName: string = 'SafeComponent',
+    getDependencies?: (props: T) => any[]
 ) {
     const WrappedComponent = forwardRef<unknown, T>((props, ref) => {
         // Track if an update is in progress to prevent loops
@@ -25,8 +26,13 @@ export function withSafeUpdates<T extends object>(
             };
         }, []);
 
+        // Extract complex expression to a memoized variable
+        const memoizedDeps = useMemo(() =>
+            getDependencies ? getDependencies(props) : [JSON.stringify(props)]
+            , [props, getDependencies]);
+
         // Memoize props to prevent unnecessary re-renders
-        const memoizedProps = useMemo(() => props, [JSON.stringify(props)]);
+        const memoizedProps = useMemo(() => props, memoizedDeps);
 
         // Create a stable ref object
         const stableRef = useRef<React.Ref<unknown>>(null);
