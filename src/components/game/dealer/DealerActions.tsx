@@ -10,7 +10,7 @@ export interface DealerActionsProps {
     gamePhase: 'betting' | 'dealing' | 'player-turn' | 'dealer-turn' | 'payout' | 'game-over';
     dealerCards: CardData[];
     dealerScore: number;
-    lastAction?: 'hit' | 'stand' | null;
+    lastAction?: 'hit' | 'stand' | 'reveal' | null;
     showActions?: boolean;
     className?: string;
 }
@@ -79,7 +79,9 @@ const DealerActions = ({
 
     // Last action text and color
     const getActionText = () => {
-        if (lastAction === 'hit') {
+        if (lastAction === 'reveal') {
+            return 'Dealer reveals hole card';
+        } else if (lastAction === 'hit') {
             return 'Dealer hits';
         } else if (lastAction === 'stand') {
             return 'Dealer stands';
@@ -88,7 +90,10 @@ const DealerActions = ({
     };
 
     const actionText = getActionText();
-    const actionColor = lastAction === 'hit' ? 'text-red-500' : 'text-green-500';
+    const actionColor =
+        lastAction === 'hit' ? 'text-red-500' :
+            lastAction === 'stand' ? 'text-green-500' :
+                'text-blue-500';
 
     return (
         <AnimatePresence mode="wait">

@@ -3,8 +3,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-
-export type OutcomeType = 'win' | 'lose' | 'push' | 'blackjack' | 'bust' | 'insurance' | 'surrender' | null;
+import type { OutcomeType } from '@types/uiTypes';
 
 export interface HandOutcomeProps {
     outcome: OutcomeType;

@@ -11,14 +11,20 @@ export type CardStyleOption = 'modern' | 'classic' | 'minimal' | 'retro';
 // Card back design options
 export type CardBackOption = 'blue' | 'red' | 'abstract' | 'abstract_scene' | 'abstract_clouds' | 'astronaut' | 'cars' | 'castle' | 'fish' | 'frog';
 
-// Game phases
-export type GamePhase =
-    | 'betting'    // Initial betting phase
-    | 'dealing'    // Cards being dealt
-    | 'playerTurn' // Player's turn to act
-    | 'dealerTurn' // Dealer's turn to act
-    | 'settlement' // Determining winners and payouts
-    | 'cleanup';   // Preparing for next round
+// Game phases enum for safer, auto-complete friendly transitions
+export enum UIGamePhase {
+    Betting = 'betting',    // Initial betting phase
+    Dealing = 'dealing',    // Cards being dealt
+    PlayerTurn = 'playerTurn', // Player's turn to act
+    DealerTurn = 'dealerTurn', // Dealer's turn to act
+    Settlement = 'settlement', // Determining winners and payouts
+    Cleanup = 'cleanup',    // Preparing for next round
+    Completed = 'completed',  // Round complete, awaiting next round
+    Error = 'error'         // Error state for handling game errors
+}
+
+// Alias the old GamePhase type to the new enum
+export type GamePhase = UIGamePhase;
 
 // Game status
 export type GameStatus =

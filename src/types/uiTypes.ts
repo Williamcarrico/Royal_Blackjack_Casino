@@ -2,6 +2,11 @@
  * UI-related type definitions for the blackjack game
  */
 
+// Shared UI primitive types
+export type ChipValue = 1 | 5 | 10 | 20 | 25 | 50 | 100 | 500 | 1000 | 5000 | 10000;
+export type ChipSize = 'sm' | 'md' | 'lg';
+export type OutcomeType = 'win' | 'lose' | 'push' | 'blackjack' | 'bust' | 'insurance' | 'surrender' | null;
+
 // UI theme settings
 export interface UITheme {
     mode: 'light' | 'dark' | 'system';

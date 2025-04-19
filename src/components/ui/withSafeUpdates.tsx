@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useMemo, ComponentType, forwardRef } from 'react';
+import React, { useRef, useEffect, useMemo, ComponentType, forwardRef } from 'react';
 
 /**
  * Higher Order Component that wraps any component to prevent
@@ -9,7 +9,7 @@ import React, { useState, useRef, useEffect, useMemo, ComponentType, forwardRef 
 export function withSafeUpdates<T extends object>(
     Component: ComponentType<T>,
     displayName: string = 'SafeComponent',
-    getDependencies?: (props: T) => any[]
+    getDependencies?: (props: React.PropsWithoutRef<T>) => React.DependencyList
 ) {
     const WrappedComponent = forwardRef<unknown, T>((props, ref) => {
         // Track if an update is in progress to prevent loops
@@ -27,12 +27,11 @@ export function withSafeUpdates<T extends object>(
         }, []);
 
         // Extract complex expression to a memoized variable
-        const memoizedDeps = useMemo(() =>
-            getDependencies ? getDependencies(props) : [JSON.stringify(props)]
-            , [props, getDependencies]);
+        const dependencies = getDependencies ? getDependencies(props) : [props];
 
         // Memoize props to prevent unnecessary re-renders
-        const memoizedProps = useMemo(() => props, memoizedDeps);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        const memoizedProps = useMemo(() => props, dependencies);
 
         // Create a stable ref object
         const stableRef = useRef<React.Ref<unknown>>(null);

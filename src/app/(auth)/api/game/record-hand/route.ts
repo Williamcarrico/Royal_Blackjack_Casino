@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GameService } from '@/services/supabase/game-service'
 import { AuthService } from '@/services/supabase/auth-service'
 import { UserService } from '@/services/supabase/user-service'
-import { Card } from '@/types/cardTypes'
+import { Card } from '@/domains/card/cardTypes'
 import { HandResult as RoundResult } from '@/types/handTypes'
 
 // Define SideBet type locally

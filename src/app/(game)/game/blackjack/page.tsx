@@ -38,6 +38,7 @@ import { SideBetsPanel } from '@/components/betting/SideBetsPanel';
 import { useGameState } from '@/hooks/game/useGameState';
 import { useHandCalculator } from '@/hooks/game/useHandCalculator';
 import { useGameStore } from '@/store/gameStore';
+import { useGamePhaseMachine } from '@/store/slices/gamePhaseSlice';
 import { useEnhancedSettingsStore } from '@/store/enhancedSettingsStore';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useSideBetsStore } from '@/store/sideBetsStore';
@@ -47,6 +48,7 @@ import { cn } from '@/lib/utils/utils';
 import { GamePhase } from '@/types/gameTypes';
 import { CreateNotificationRequest } from '@/types/notifications';
 import { DEFAULT_STARTING_CHIPS } from '@/lib/constants/gameConstants';
+import { toUIPhase, toStorePhase } from '@/utils/phase-mapping';
 
 /**
  * BlackjackPage is the main component for the blackjack game experience
@@ -73,50 +75,26 @@ const BlackjackPage = () => {
     } = useGameState();
 
     // Player and game state from store - Use useShallow to prevent infinite renders
-    const { isInitialized, isLoading, error, gamePhase, addPlayer } = useGameStore(
+    const { isInitialized, isLoading, error, addPlayer } = useGameStore(
         useShallow(state => ({
             isInitialized: state.isInitialized,
             isLoading: state.isLoading,
             error: state.error,
-            gamePhase: state.gamePhase as GamePhase,
             addPlayer: state.addPlayer
         }))
     );
 
-    // Get the transitionTo function to handle phase transitions
-    const setGamePhase = useGameStore(state => state.setGamePhase);
+    // Game phase and transitions from XState machine
+    const { currentPhase: gamePhase, transitionTo: setGamePhase } = useGamePhaseMachine();
 
-    // Map store game phase to UI game phase
-    const mapStorePhaseToUIPhase = (storePhase: GamePhase): UIGamePhase => {
-        const phaseMap: Record<GamePhase, UIGamePhase> = {
-            'betting': 'betting',
-            'dealing': 'dealing',
-            'playerTurn': 'player-turn',
-            'dealerTurn': 'dealer-turn',
-            'settlement': 'payout',
-            'cleanup': 'game-over'
-        };
-        return phaseMap[storePhase] || 'betting';
-    };
+    // Convert store phase to UI phase label
+    const uiPhase = toUIPhase(gamePhase);
 
     // Handle phase change from UI components
     const _handlePhaseChange = useCallback((uiPhase: UIGamePhase) => {
-        if (setGamePhase) {
-            const mapUIPhaseToStorePhase = (uiPhase: UIGamePhase): GamePhase => {
-                const phaseMap: Record<UIGamePhase, GamePhase> = {
-                    'betting': 'betting',
-                    'dealing': 'dealing',
-                    'player-turn': 'playerTurn',
-                    'dealer-turn': 'dealerTurn',
-                    'payout': 'settlement',
-                    'game-over': 'cleanup'
-                };
-                return phaseMap[uiPhase];
-            };
-
-            const storePhase = mapUIPhaseToStorePhase(uiPhase);
-            setGamePhase(storePhase);
-        }
+        // Map UI phase back to store phase for transitions
+        const storePhase = toStorePhase(uiPhase);
+        setGamePhase(storePhase);
     }, [setGamePhase]);
 
     const {
@@ -755,7 +733,7 @@ const BlackjackPage = () => {
                                         canSplit={canSplit}
                                         canDouble={canDouble}
                                         canSurrender={canSurrender}
-                                        gamePhase={mapStorePhaseToUIPhase(gamePhase)}
+                                        gamePhase={uiPhase}
                                         hintMode="basic"
                                         useRealTimeAdvice={true}
                                         showConfidence={true}
@@ -842,7 +820,7 @@ const BlackjackPage = () => {
 
             {/* Game Footer */}
             <GameFooter
-                gamePhase={mapStorePhaseToUIPhase(gamePhase)}
+                gamePhase={uiPhase}
                 onPlaceBet={handlePlaceBet}
                 onClearBet={handleClearBet}
                 onMaxBet={handleMaxBet}

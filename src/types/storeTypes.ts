@@ -5,6 +5,7 @@ import { GameState, GameOptions, GameStatistics, GameVariant, Player } from './g
 import { Shoe, Card } from './cardTypes';
 import { Hand, DealerHand } from './handTypes';
 import { Bet, BettingStrategy, ProgressiveBetting, TableLimits } from './betTypes';
+import type { ValidationError } from './utilTypes';
 
 // Type for hand identifiers
 export type HandId = { type: 'player'; id: string } | 'dealer';
@@ -193,27 +194,47 @@ export interface BetSlice {
     tableLimits: TableLimits;
     bettingStrategy: BettingStrategy | null;
     progressiveBetting: ProgressiveBetting;
+    // Validation methods for centralized bet validation
+    canPlace: (amount: number) => boolean;
+    validate: (amount: number) => ValidationError | null;
+
+    // Side-bet state
+    availableSideBets: SideBetsStore['availableSideBets'];
+    activeSideBets: SideBetsStore['activeSideBets'];
+    sideBetHistory: SideBetsStore['sideBetHistory'];
+    sideBetStatistics: SideBetsStore['sideBetStatistics'];
 
     // Actions
     placeBet: (playerId: string, amount: number) => Bet;
-    placeSideBet: (playerId: string, handId: string, type: string, amount: number) => Bet;
+    placeSideBet: (type: string, handId: string, playerId: string, amount: number) => SideBetsStore['activeSideBets'][0];
     updateBet: (betId: string, amount: number) => void;
     removeBet: (betId: string) => void;
     clearBets: () => void;
     settleBet: (betId: string, result: string) => number;
     calculateNextBet: () => number;
+
+    // Side-bet actions
+    evaluateSideBets: (dealerHand: DealerHand, playerHands: Hand[]) => SideBetResult[];
+    clearSideBets: () => void;
+    getRecommendedSideBets: (playerHand: Hand, dealerUpCard: Card) => Array<{ type: string; confidence: number }>;
+    resetStatistics: () => void;
 }
 
 // Player slice state
 export interface PlayerSlice {
     players: Player[];
-    activePlayerIndex: number;
+    activePlayerId: string | null;
+    spectators: Player[];
 
     // Actions
     addPlayer: (name: string, balance: number) => Player;
     removePlayer: (playerId: string) => void;
     updatePlayerBalance: (playerId: string, amount: number) => void;
-    setActivePlayer: (index: number) => void;
+    setActivePlayer: (playerId: string) => void;
+    addSpectator: (name: string, balance: number) => Player;
+    moveToSpectator: (playerId: string) => void;
+    moveToPlayers: (playerId: string) => void;
+    getCurrentPlayer: () => Player | null;
     clearPlayers: () => void;
 }
 

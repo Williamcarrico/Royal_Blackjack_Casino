@@ -3,10 +3,11 @@
 import React from 'react';
 import { cn } from '@/lib/utils/utils';
 import Card, { Suit, Rank } from '../card/Card';
+import type { CardID } from '@types/cardTypes';
 import HandValue from './HandValue';
 
 export interface CardData {
-    id: string;
+    id: CardID;
     suit: Suit;
     rank: Rank;
     faceDown?: boolean;

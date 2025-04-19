@@ -35,20 +35,13 @@ const DealerHand = ({
     animateDealing = true,
     showUpcard = false,
 }: DealerHandProps) => {
-    // Automatically hide the hole card during certain game phases
-    const shouldHideHoleCard = hideHoleCard ||
-        ['dealing', 'player-turn'].includes(gamePhase);
-
     // Calculate if the score is soft (contains an ace counted as 11)
     const isSoft = cards.some(card => card.rank === 'A') &&
         score && score <= 21 && score - 10 > 0;
 
-    // Extract the soft prefix to remove nested ternary
-    const softPrefix = isSoft ? 'Soft ' : '';
-
     // Format the score for display
     const formattedScore = score !== undefined
-        ? `${softPrefix}${score}`
+        ? `${isSoft ? 'Soft ' : ''}${score}`
         : '';
 
     // Only show the score in certain game phases
@@ -84,7 +77,7 @@ const DealerHand = ({
                     isLoser={outcome === 'lose' || outcome === 'bust'}
                     isPush={outcome === 'push'}
                     showValue={shouldShowScore}
-                    hideSecondCard={shouldHideHoleCard}
+                    hideSecondCard={hideHoleCard}
                     animate={animateDealing && gamePhase === 'dealing'}
                     handType="dealer"
                     className="dealer-hand"
@@ -92,7 +85,7 @@ const DealerHand = ({
             </motion.div>
 
             {/* Show upcard value when appropriate */}
-            {showUpcard && upcardRank && shouldHideHoleCard && (
+            {showUpcard && upcardRank && hideHoleCard && (
                 <div className="absolute mt-1 transform -translate-x-1/2 translate-y-full -bottom-1 left-1/2">
                     <div className="text-white text-xs bg-black/50 px-2 py-0.5 rounded-full whitespace-nowrap">
                         Upcard: {upcardRank}
@@ -101,7 +94,7 @@ const DealerHand = ({
             )}
 
             {/* Display score when needed but not handled by Hand component */}
-            {shouldShowScore && !shouldHideHoleCard && (
+            {shouldShowScore && !hideHoleCard && (
                 <div className="absolute mt-1 transform -translate-x-1/2 translate-y-full -bottom-1 left-1/2">
                     <div className="text-white text-xs bg-black/50 px-2 py-0.5 rounded-full whitespace-nowrap">
                         {formattedScore}

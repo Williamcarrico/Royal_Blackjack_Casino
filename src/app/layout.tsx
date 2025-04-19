@@ -10,6 +10,8 @@ import { Toaster as SonnerToaster } from 'sonner'
 import Providers from './providers'
 import AuthProviderWrapper from '@/components/providers/AuthProviderWrapper'
 import { validateConfig } from '@/lib/utils/validateConfig'
+import { initializeStores } from '@/store'
+import StoreInitializer from '@/components/core/StoreInitializer'
 
 // Add JSX namespace for intrinsic elements
 /* eslint-disable @typescript-eslint/no-namespace */
@@ -52,8 +54,8 @@ const cinzelDecorative = Cinzel_Decorative({
 
 // Enhanced metadata for better SEO and sharing
 export const metadata: Metadata = {
-	title: 'Royal Blackjack Casino | Experience Authentic Vegas Blackjack',
-	description: 'Experience the thrill of Las Vegas blackjack with our premium casino game featuring realistic physics, strategy guides, and immersive gameplay.',
+	title: 'Royal Blackjack Casino',
+	description: 'A premium blackjack experience',
 	keywords: 'blackjack, casino, card game, gambling, strategy, vegas, las vegas, 21, card counting, casino game, royal blackjack',
 	authors: [{ name: 'House Edge Gaming' }],
 	creator: 'House Edge Gaming',
@@ -150,6 +152,7 @@ export default function RootLayout({
 					'selection:bg-gold selection:text-black'
 				)}
 			>
+				<StoreInitializer />
 				{/* Ambient casino background effect overlay */}
 				<div className="fixed inset-0 z-0 pointer-events-none bg-vegas-card-pattern opacity-5" />
 				<div className="fixed inset-0 z-0 pointer-events-none ambient-lighting" />
