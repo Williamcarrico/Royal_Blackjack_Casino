@@ -57,7 +57,7 @@ export function useGameConfig(analytics?: {
 
             // Track analytics if provided
             if (analytics?.startSession) {
-                const initialBalance = players[0]?.balance || DEFAULT_STARTING_CHIPS;
+                const initialBalance = players[0]?.balance ?? DEFAULT_STARTING_CHIPS;
                 analytics.startSession(initialBalance);
             }
 
@@ -93,7 +93,7 @@ export function useGameConfig(analytics?: {
         // Cleanup on unmount
         return () => {
             if (analytics?.endSession) {
-                const finalBalance = players[0]?.balance || 0;
+                const finalBalance = players[0]?.balance ?? 0;
                 analytics.endSession(finalBalance);
             }
         };

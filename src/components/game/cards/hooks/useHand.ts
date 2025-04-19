@@ -51,7 +51,7 @@ export function useHand(gameOptions?: GameOptions) {
 
     // Default game options if not provided
     const options = useMemo(() => {
-        return gameOptions || {
+        return gameOptions ?? {
             variant: 'classic',
             numberOfDecks: 6,
             penetration: 0.75,

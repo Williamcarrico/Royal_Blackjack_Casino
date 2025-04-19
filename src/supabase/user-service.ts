@@ -70,9 +70,7 @@ let supabaseClientInstance: ReturnType<typeof createClient>
  * Get a cached Supabase client instance
  */
 const getSupabaseClient = (): SupabaseClient => {
-    if (!supabaseClientInstance) {
-        supabaseClientInstance = createClient()
-    }
+    supabaseClientInstance ??= createClient();
     return supabaseClientInstance
 }
 
@@ -141,8 +139,8 @@ export const updateUserBalance = async ({
                 p_user_id: userId,
                 p_amount: amount,
                 p_type: type,
-                p_game_id: gameId || null,
-                p_description: description || null,
+                p_game_id: gameId ?? null,
+                p_description: description ?? null,
             }
 
             const { data, error } = await supabase
@@ -370,11 +368,11 @@ const updateStatsDirect = async (
 
     if (!profile) return
 
-    updates.total_games = (profile.total_games || 0) + 1
-    updates.total_hands = (profile.total_hands || 0) + 1
+    updates.total_games = (profile.total_games ?? 0) + 1
+    updates.total_hands = (profile.total_hands ?? 0) + 1
 
     if (isWin) {
-        updates.total_wins = (profile.total_wins || 0) + 1
+        updates.total_wins = (profile.total_wins ?? 0) + 1
     }
 
     const { error: updateError } = await supabase

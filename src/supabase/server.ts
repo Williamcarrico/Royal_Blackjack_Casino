@@ -18,7 +18,7 @@ const enhanceCookieOptions = (options?: CookieOptions): CookieOptions => {
     const enhancedOptions = options ? { ...options } : {};
 
     // Set sensible defaults if not provided
-    if (enhancedOptions.path === undefined) enhancedOptions.path = '/';
+    enhancedOptions.path ??= '/';
 
     // In production, cookies should be secure by default
     if (process.env.NODE_ENV === 'production' && enhancedOptions.secure === undefined) {
@@ -26,7 +26,7 @@ const enhanceCookieOptions = (options?: CookieOptions): CookieOptions => {
     }
 
     // Apply SameSite=Lax as a sensible default if not specified
-    if (enhancedOptions.sameSite === undefined) enhancedOptions.sameSite = 'lax';
+    enhancedOptions.sameSite ??= 'lax';
 
     return enhancedOptions;
 };

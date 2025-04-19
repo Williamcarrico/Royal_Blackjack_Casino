@@ -268,7 +268,7 @@ export default function LandingPage() {
               <h2 className="mb-6 text-4xl font-bold text-amber-400 font-decorative">
                 Authentic Casino Experience
               </h2>
-              <p className="mb-8 text-xl text-zinc-300">
+              <p className="mb-8 text-xl text-zinc-500">
                 Royal Blackjack Casino recreates the exact atmosphere, rules, and excitement of a luxury Las Vegas casino. From the sound of shuffling cards to the tactile feel of placing bets, every detail has been meticulously crafted.
               </p>
               <ul className="mb-8 space-y-4">

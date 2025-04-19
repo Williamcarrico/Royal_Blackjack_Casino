@@ -296,7 +296,7 @@ export const createStatisticsSlice = (
         const endTime = new Date();
         const netProfit = finalBalance - currentSession.initialBalance;
         const winRate = currentSession.handsPlayed > 0
-            ? (currentSession.handsWon || 0) / currentSession.handsPlayed
+            ? (currentSession.handsWon ?? 0) / currentSession.handsPlayed
             : 0;
 
         const completedSession: SessionData = {
@@ -646,12 +646,12 @@ const createHandData = (
 ): HandData => {
     return {
         id: hand.id,
-        playerId: hand.playerId || '',
+        playerId: hand.playerId ?? '',
         cards: hand.cards.map(card => `${card.rank}${card.suit}`),
-        initialValue: hand.values[0] || 0,
-        finalValue: hand.values[hand.values.length - 1] || 0,
+        initialValue: hand.values[0] ?? 0,
+        finalValue: hand.values[hand.values.length - 1] ?? 0,
         dealerUpCard: hand.dealerUpCard ? `${hand.dealerUpCard.rank}${hand.dealerUpCard.suit}` : undefined,
-        action: hand.lastAction || 'stand',
+        action: hand.lastAction ?? 'stand',
         result,
         wasOptimalPlay,
         profit,
@@ -705,7 +705,7 @@ const updateCurrentSession = (
     // Extract nested ternary for win rate calculation
     let winRate;
     if (currentSession.handsPlayed > 0) {
-        winRate = ((currentSession.handsWon || 0) + (isWin ? 1 : 0)) / (currentSession.handsPlayed + 1);
+        winRate = ((currentSession.handsWon ?? 0) + (isWin ? 1 : 0)) / (currentSession.handsPlayed + 1);
     } else {
         winRate = isWin ? 1 : 0;
     }
@@ -713,7 +713,7 @@ const updateCurrentSession = (
     return {
         ...currentSession,
         handsPlayed: currentSession.handsPlayed + 1,
-        handsWon: (currentSession.handsWon || 0) + (isWin ? 1 : 0),
+        handsWon: (currentSession.handsWon ?? 0) + (isWin ? 1 : 0),
         totalWagered: currentSession.totalWagered + betAmount,
         totalWon: currentSession.totalWon + (profit > 0 ? profit : 0),
         netProfit: currentSession.netProfit + profit,
@@ -848,7 +848,7 @@ export const setupStatisticsMiddleware = (gameStore: any) => {
                             ...hand,
                             cards: hand.cards.map((cardId: string) => gameState.entities.cards[cardId]),
                             values: [hand.bestValue],
-                            lastAction: gameState.lastAction || 'stand',
+                            lastAction: gameState.lastAction ?? 'stand',
                             dealerUpCard: dealerHand.cards.length > 0
                                 ? gameState.entities.cards[dealerHand.cards[0]]
                                 : undefined

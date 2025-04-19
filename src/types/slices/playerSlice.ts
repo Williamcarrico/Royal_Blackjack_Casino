@@ -216,7 +216,7 @@ const createPlayerSlice: StateCreator<PlayerSlice> = (set, get) => ({
                 spectators: updatedSpectators,
                 players: [...state.players, { ...spectator, isActive: false, position }],
                 // If there was no active player, make this the active player
-                activePlayerId: state.activePlayerId === null ? playerId : state.activePlayerId
+                activePlayerId: state.activePlayerId ?? playerId
             };
         });
     },

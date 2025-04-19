@@ -323,7 +323,7 @@ const createBetSlice: StateCreator<BetSlice> = (set, get) => ({
         });
 
         // This will be the return value
-        return get().bets.find(b => b.id === betId)?.payout || 0;
+        return get().bets.find(b => b.id === betId)?.payout ?? 0;
     },
 
     calculateNextBet: () => {

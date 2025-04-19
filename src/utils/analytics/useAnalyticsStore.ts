@@ -561,7 +561,7 @@ const useAnalyticsStore = create<AnalyticsStoreState>()(
                             updatedSession = {
                                 ...updatedSession,
                                 handsPlayed: updatedSession.handsPlayed + 1,
-                                totalWagered: updatedSession.totalWagered + (hand.bet || 0),
+                                totalWagered: updatedSession.totalWagered + (hand.bet ?? 0),
                                 totalWon: updatedSession.totalWon + (profit > 0 ? profit : 0),
                                 netProfit: updatedSession.netProfit + profit
                             };

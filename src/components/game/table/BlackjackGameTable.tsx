@@ -101,7 +101,7 @@ const BlackjackGameTable: React.FC<BlackjackGameTableProps> = ({
 
     // Memoize derived values
     const effectivePlayerBalance = useMemo(() =>
-        (activePlayer?.balance ?? playerBalance) || 1500,
+        (activePlayer?.balance ?? playerBalance) ?? 1500,
         [activePlayer?.balance, playerBalance]);
 
     // Get hand count safely

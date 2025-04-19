@@ -173,7 +173,7 @@ const createHandSlice: StateCreator<HandSlice> = (set, get) => ({
                     values,
                     bestValue,
                     status,
-                    hasHiddenCard: state.dealerHand.hasHiddenCard || card.face === 'down'
+                    hasHiddenCard: state.dealerHand.hasHiddenCard ?? card.face === 'down'
                 }
             };
         });

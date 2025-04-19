@@ -207,7 +207,7 @@ export const getAvailableActions = (
     }
 
     // Default options if not provided
-    const gameOptions = options || {
+    const gameOptions = options ?? {
         variant: 'standard',
         numberOfDecks: 6,
         dealerHitsSoft17: true,
@@ -442,7 +442,7 @@ export const getBasicStrategyAction = (
 
     // If only one action is available, return that
     if (availableActions.length === 1) {
-        return availableActions[0] || 'stand'; // Fallback to stand if undefined
+        return availableActions[0] ?? 'stand'; // Fallback to stand if undefined
     }
 
     // Early exit if no actions available

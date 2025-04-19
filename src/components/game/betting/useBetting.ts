@@ -43,7 +43,7 @@ export function useBetting(initialTableLimits?: TableLimits) {
     // Chip selection UI state
     const [activeChips, setActiveChips] = useState<ChipValue[]>([]);
     const [selectedStrategy, setSelectedStrategy] = useState<BettingStrategyType | null>(
-        bettingStrategy?.type || null
+        bettingStrategy?.type ?? null
     );
 
     /**
@@ -57,7 +57,7 @@ export function useBetting(initialTableLimits?: TableLimits) {
      * Available chip values based on table limits
      */
     const availableChips = useMemo((): ChipValue[] => {
-        const limits = tableLimits || initialTableLimits || { minimumBet: 5, maximumBet: 500 };
+        const limits = (tableLimits ?? initialTableLimits) ?? { minimumBet: 5, maximumBet: 500 };
 
         // Standard chip values
         const allChips: ChipValue[] = [1, 5, 10, 20, 25, 50, 100, 500, 1000];
@@ -127,7 +127,7 @@ export function useBetting(initialTableLimits?: TableLimits) {
      * Check if the current bet is valid
      */
     const isValidBet = useMemo((): boolean => {
-        const limits = tableLimits || initialTableLimits || { minimumBet: 5, maximumBet: 500 };
+        const limits = (tableLimits ?? initialTableLimits) ?? { minimumBet: 5, maximumBet: 500 };
 
         return activeBetAmount >= limits.minimumBet && activeBetAmount <= limits.maximumBet;
     }, [activeBetAmount, tableLimits, initialTableLimits]);
@@ -189,7 +189,7 @@ export function useBetting(initialTableLimits?: TableLimits) {
      * Set a specific bet amount (useful for buttons like "Bet Max")
      */
     const setBetAmount = useCallback((amount: number): void => {
-        const limits = tableLimits || initialTableLimits || { minimumBet: 5, maximumBet: 500 };
+        const limits = (tableLimits ?? initialTableLimits) ?? { minimumBet: 5, maximumBet: 500 };
 
         // Ensure amount is within limits
         const validAmount = Math.max(limits.minimumBet, Math.min(amount, limits.maximumBet));
@@ -228,7 +228,7 @@ export function useBetting(initialTableLimits?: TableLimits) {
      * Set bet to table minimum
      */
     const betMin = useCallback((): void => {
-        const limits = tableLimits || initialTableLimits || { minimumBet: 5, maximumBet: 500 };
+        const limits = (tableLimits ?? initialTableLimits) ?? { minimumBet: 5, maximumBet: 500 };
         setBetAmount(limits.minimumBet);
     }, [tableLimits, initialTableLimits, setBetAmount]);
 
@@ -236,7 +236,7 @@ export function useBetting(initialTableLimits?: TableLimits) {
      * Set bet to table maximum
      */
     const betMax = useCallback((): void => {
-        const limits = tableLimits || initialTableLimits || { minimumBet: 5, maximumBet: 500 };
+        const limits = (tableLimits ?? initialTableLimits) ?? { minimumBet: 5, maximumBet: 500 };
         setBetAmount(limits.maximumBet);
     }, [tableLimits, initialTableLimits, setBetAmount]);
 
@@ -333,10 +333,10 @@ export function useBetting(initialTableLimits?: TableLimits) {
         currentBet: currentBet || activeBetAmount,
         activeChips,
         availableChips,
-        tableLimits: tableLimits || initialTableLimits,
+        tableLimits: tableLimits ?? initialTableLimits,
         minBet,
         maxBet,
-        bettingStrategy: bettingStrategy || null,
+        bettingStrategy: bettingStrategy ?? null,
         progressiveBetting,
         isValidBet,
         selectedStrategy,

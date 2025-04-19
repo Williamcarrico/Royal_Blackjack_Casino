@@ -284,13 +284,13 @@ const createHandAnalytic = (
 ): HandAnalytics => {
     return {
         id: hand.id,
-        playerId: hand.playerId || 'unknown',
+        playerId: hand.playerId ?? 'unknown',
         cards: hand.cards.map(card => `${card.rank}${card.suit}`),
-        initialValue: hand.initialValue || 0,
+        initialValue: hand.initialValue ?? 0,
         finalValue: hand.value,
         dealerUpCard: hand.dealerUpCard ? `${hand.dealerUpCard.rank}${hand.dealerUpCard.suit}` : undefined,
         result: result as 'win' | 'loss' | 'push' | 'blackjack' | 'surrender',
-        action: hand.lastAction || 'none',
+        action: hand.lastAction ?? 'none',
         optimalAction,
         wasOptimalPlay,
         profit,
@@ -693,7 +693,7 @@ export const useAnalyticsStore = create<AnalyticsStoreState>()(
                             currentSession = {
                                 ...currentSession,
                                 totalWagered: currentSession.totalWagered + bet.amount,
-                                totalWon: currentSession.totalWon + (bet.payout || 0)
+                                totalWon: currentSession.totalWon + (bet.payout ?? 0)
                             };
                         }
 
@@ -951,7 +951,7 @@ export const useAnalyticsStore = create<AnalyticsStoreState>()(
                         return null;
                     }
 
-                    const duration = session.duration ||
+                    const duration = session.duration ??
                         (session.endTime
                             ? (session.endTime.getTime() - session.startTime.getTime()) / 1000
                             : (new Date().getTime() - session.startTime.getTime()) / 1000);

@@ -36,7 +36,7 @@ export class RealtimeService {
         callback: SubscriptionCallback,
         filter?: string
     ): Promise<SubscriptionId> {
-        const id = `${table}:${event}:${filter || 'all'}`
+        const id = `${table}:${event}:${filter ?? 'all'}`
 
         if (this.channels.has(id)) {
             console.warn(`Subscription ${id} already exists. Reusing existing subscription.`)

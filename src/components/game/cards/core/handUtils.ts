@@ -149,7 +149,7 @@ export const evaluateHand = memoize((cards: Card[]) => {
  */
 export const canDouble = (hand: Hand, allowedActions: HandAction[], gameOptions?: GameOptions): boolean => {
     // Use sensible defaults if gameOptions isn't provided
-    const options = gameOptions || { doubleAfterSplit: true };
+    const options = gameOptions ?? { doubleAfterSplit: true };
 
     return allowedActions.includes('double') &&
         hand.cards.length === 2 &&
@@ -162,7 +162,7 @@ export const canDouble = (hand: Hand, allowedActions: HandAction[], gameOptions?
  */
 export const canSplit = (hand: Hand, allowedActions: HandAction[], gameOptions?: GameOptions): boolean => {
     // Use sensible defaults if gameOptions isn't provided
-    const options = gameOptions || { resplitAces: false };
+    const options = gameOptions ?? { resplitAces: false };
 
     if (!allowedActions.includes('split') ||
         hand.cards.length !== 2 ||
@@ -181,7 +181,7 @@ export const canSplit = (hand: Hand, allowedActions: HandAction[], gameOptions?:
  */
 export const canSurrender = (hand: Hand, allowedActions: HandAction[], gameOptions?: GameOptions): boolean => {
     // Use sensible defaults if gameOptions isn't provided
-    const options = gameOptions || { lateSurrender: false };
+    const options = gameOptions ?? { lateSurrender: false };
 
     return allowedActions.includes('surrender') &&
         hand.cards.length === 2 &&
@@ -210,7 +210,7 @@ export const getAvailableActions = (
         return [];
     }
 
-    const gameOptions = options || {
+    const gameOptions = options ?? {
         doubleAfterSplit: true,
         lateSurrender: false,
         resplitAces: false

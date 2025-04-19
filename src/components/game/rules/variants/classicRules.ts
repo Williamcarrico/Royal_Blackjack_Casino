@@ -100,7 +100,7 @@ const classicRules: GameRules = {
             case 'insurance':
                 return amount * 3; // Original bet + 2:1 insurance payout
             default:
-                return basePayout || 0;
+                return basePayout ?? 0;
         }
     },
 
@@ -147,8 +147,8 @@ const classicRules: GameRules = {
      */
     shouldReshuffleDeck: (deck: Deck): boolean => {
         // Check if the penetration threshold has been reached
-        const totalCards = deck.cards.length + (deck.remaining || 0);
-        const cardsRemaining = deck.remaining || 0;
+        const totalCards = deck.cards.length + (deck.remaining ?? 0);
+        const cardsRemaining = deck.remaining ?? 0;
         const penetrationThreshold = totalCards * (1 - CLASSIC_GAME_OPTIONS.penetration);
 
         // Use a simple test hand to check if a hand would be busted

@@ -109,7 +109,7 @@ export function useSessionAnalytics(sessionId?: string) {
             id: session.id,
             startTime: session.startTime,
             endTime: session.endTime,
-            duration: session.duration || 0,
+            duration: session.duration ?? 0,
             handsPlayed: session.handsPlayed,
             netProfit: session.netProfit
         }));
@@ -149,7 +149,7 @@ export function useSessionAnalytics(sessionId?: string) {
         const totalSessions = filteredSessions.length;
         const totalHands = filteredSessions.reduce((sum, s) => sum + s.handsPlayed, 0);
         const totalProfit = filteredSessions.reduce((sum, s) => sum + s.netProfit, 0);
-        const totalDuration = filteredSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+        const totalDuration = filteredSessions.reduce((sum, s) => sum + (s.duration ?? 0), 0);
 
         // Calculate averages
         const avgSessionLength = totalSessions > 0 ? totalDuration / totalSessions : 0;

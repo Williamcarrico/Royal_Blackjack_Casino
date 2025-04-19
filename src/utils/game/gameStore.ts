@@ -72,7 +72,7 @@ export const useGameStore = create<GameStore>()(
                         };
 
                         // Create a new shoe with specified number of decks
-                        createShoe(gameRules.numberOfDecks || 6);
+                        createShoe(gameRules.numberOfDecks ?? 6);
 
                         // Add the player if none exists
                         if (get().players.length === 0) {
@@ -145,7 +145,7 @@ export const useGameStore = create<GameStore>()(
                  * Get normalized entities for easier access
                  */
                 getEntities: () => {
-                    return get().entities || {};
+                    return get().entities ?? {};
                 }
             }),
             {
